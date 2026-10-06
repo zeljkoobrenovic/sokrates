@@ -4,6 +4,8 @@
 
 package nl.obren.sokrates.sourcecode.analysis.scores;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 /**
  * How easy a repository is to understand and change, for people ({@link #human}) and for AI coding agents
  * ({@link #ai}): the same measured sub-scores, weighted differently. {@link #contextLinesPerChange} is the AI
@@ -16,6 +18,24 @@ public class MaintainabilityScores {
     private MaintainabilityScore ai;
     private int contextLinesPerChange;
     private int changesMeasured;
+    // "built-in", or "custom" for the configured analysis.maintainabilityScores.customFramework
+    private String framework = BUILT_IN;
+
+    public static final String BUILT_IN = "built-in";
+    public static final String CUSTOM = "custom";
+
+    public String getFramework() {
+        return framework;
+    }
+
+    public void setFramework(String framework) {
+        this.framework = framework;
+    }
+
+    @JsonIgnore
+    public boolean isCustomFramework() {
+        return CUSTOM.equals(framework);
+    }
 
     public MaintainabilityScore getHuman() {
         return human;

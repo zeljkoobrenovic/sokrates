@@ -248,9 +248,14 @@ public class HealthSummary {
     static Tile scoreTile(String label, MaintainabilityScore score, String caption) {
         String value = String.format(Locale.US, "%.1f", score.getValue());
         String tooltip = "0-10, grade " + score.getGrade() + " (A: 8+, B: 6.5+, C: 5+, D: 3.5+, E: below)";
-        Tile tile = new Tile(label, value, caption, scoreStatus(score.getValue()), null, tooltip);
+        Tile tile = new Tile(label, value, caption, gradeStatus(score.getGrade()), null, tooltip);
         tile.grade = score.getGrade();
         return tile;
+    }
+
+    /** A and B good, C watch, D and E high: follows the grade, so configured grade thresholds carry over. */
+    static Status gradeStatus(String grade) {
+        return "A".equals(grade) || "B".equals(grade) ? Status.GOOD : ("C".equals(grade) ? Status.WATCH : Status.HIGH);
     }
 
     static Status scoreStatus(double score) {

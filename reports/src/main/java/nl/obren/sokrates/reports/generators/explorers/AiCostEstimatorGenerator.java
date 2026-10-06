@@ -132,8 +132,15 @@ public class AiCostEstimatorGenerator {
 
     /** Renders explorers/ai-cost-estimator.html (the repository report) or the landscape's page. */
     public void exportPage(AiCostEstimatorData data, File folder) {
+        exportPage(data, folder, "{}");
+    }
+
+    /** {@code assumptionsJson}: the configured default assumptions ({@code EstimateAssumptions}), {@code {}} for none. */
+    public void exportPage(AiCostEstimatorData data, File folder, String assumptionsJson) {
         try {
-            String page = new ExplorerTemplate().render("ai-cost-estimator.html", data);
+            Map<String, String> placeholders = new HashMap<>();
+            placeholders.put("assumptions", assumptionsJson != null ? assumptionsJson : "{}");
+            String page = new ExplorerTemplate().render("ai-cost-estimator.html", data, placeholders);
             folder.mkdirs();
             FileUtils.write(new File(folder, PAGE_FILE_NAME), page, UTF_8);
         } catch (IOException e) {
@@ -141,8 +148,8 @@ public class AiCostEstimatorGenerator {
         }
     }
 
-    public void exportPage(AiCostEstimatorData data) {
-        exportPage(data, new File(reportsFolder, "explorers"));
+    public void exportPage(AiCostEstimatorData data, String assumptionsJson) {
+        exportPage(data, new File(reportsFolder, "explorers"), assumptionsJson);
     }
 
     /** The scope's files with their total lines (what an agent reads); remembers the source root on the way. */

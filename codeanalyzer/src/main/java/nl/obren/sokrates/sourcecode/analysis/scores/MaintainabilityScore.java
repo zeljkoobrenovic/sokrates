@@ -17,6 +17,16 @@ public class MaintainabilityScore {
     private List<SubScore> subScores = new ArrayList<>();
     // The label of the sub-score whose weakest-link cap set the total, or "" when the geometric mean did
     private String cappedBy = "";
+    // The total is capped at the weakest sub-score + this margin (negative: no cap)
+    private double capMargin = 4;
+
+    public double getCapMargin() {
+        return capMargin;
+    }
+
+    public void setCapMargin(double capMargin) {
+        this.capMargin = capMargin;
+    }
 
     public String getCappedBy() {
         return cappedBy;

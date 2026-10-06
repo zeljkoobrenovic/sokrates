@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en-US">
 <head>
     <meta charset="UTF-8">
     ${sokrates-theme}
@@ -61,16 +61,13 @@
             outline: none;
         }
 
-        input[type=number] {
+        input.decimal {
             width: 70px;
             text-align: right;
-            -moz-appearance: textfield;
-            appearance: textfield;
         }
 
-        input[type=number]::-webkit-inner-spin-button, input[type=number]::-webkit-outer-spin-button {
-            -webkit-appearance: none;
-            margin: 0;
+        input.decimal[aria-invalid=true] {
+            border-color: #d73027;
         }
 
         #filter {
@@ -298,7 +295,7 @@
             background: var(--sk-surface);
         }
 
-        .assumption-groups input[type=number] {
+        .assumption-groups input.decimal {
             width: 52px;
         }
 
@@ -474,6 +471,7 @@
             <div class="assumption-groups" id="prior-grid"></div>
             <div class="small muted" style="margin-top: 8px">
                 Each simulation draws one value per range.
+                <span id="configured-note" hidden>The starting values come from this repository's configuration.</span>
                 <button class="action-button" onclick="resetInputs()" style="margin-left: 6px">Reset</button>
             </div>
         </div>
@@ -642,7 +640,10 @@
             ['carry', 'carry-over', 25, 75, '%', 5, 'Share of the read saving carried to other tokens (fewer steps, less tool output); 0% = reads only.']
         ], 'historical']
     ];
-    const STORAGE_KEY = 'sokrates-ai-cost-estimator';
+    // Configured assumptions (analysis.estimateAssumptions, when enabled): id -> number, [min, max] or text.
+    // They replace the built-in defaults, and the viewer's changes are then remembered per configuration.
+    const CONFIGURED = ${assumptions};
+    const STORAGE_KEY = 'sokrates-ai-cost-estimator' + (Object.keys(CONFIGURED).length ? ':' + JSON.stringify(CONFIGURED) : '');
 
     // Uncertainty levels: the share of built work redone (%), and what it is like.
     const UNCERTAINTY = [
@@ -696,8 +697,43 @@
         return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'}[c]));
     }
 
+    // Decimal fields are text fields read and written in en-US (1,234.5), like every number in the reports;
+    // a number input would show the browser's own separators (e.g. 0,5).
+    function parseDecimal(text) {
+        const t = String(text == null ? '' : text).trim();
+        if (!/^[+-]?(\d{1,3}(,\d{3})+|\d*)(\.\d*)?$/.test(t) || !/\d/.test(t)) return NaN;
+        return parseFloat(t.replace(/,/g, ''));
+    }
+
+    function decimalInput(id, value, step) {
+        return '<input type="text" inputmode="decimal" class="decimal" id="' + id + '" value="' + escapeHtml(value)
+            + '" data-step="' + escapeHtml(step) + '" autocomplete="off" spellcheck="false">';
+    }
+
+    // Validity marking and arrow-key stepping, as a number field had.
+    function enhanceDecimalInputs(container) {
+        container.querySelectorAll('input.decimal').forEach(input => {
+            input.addEventListener('input', () => markDecimal(input));
+            input.addEventListener('keydown', e => {
+                if (e.key !== 'ArrowUp' && e.key !== 'ArrowDown') return;
+                e.preventDefault();
+                const step = parseFloat(input.dataset.step) || 1;
+                const current = parseDecimal(input.value);
+                const next = Math.max(0, (isFinite(current) ? current : 0) + (e.key === 'ArrowUp' ? step : -step));
+                const decimals = (String(step).split('.')[1] || '').length;
+                input.value = String(Number(next.toFixed(decimals)));
+                input.dispatchEvent(new Event('input', {bubbles: true}));
+            });
+            markDecimal(input);
+        });
+    }
+
+    function markDecimal(input) {
+        input.setAttribute('aria-invalid', String(!(parseDecimal(input.value) >= 0)));
+    }
+
     function num(id) {
-        const v = parseFloat(document.getElementById(id).value);
+        const v = parseDecimal(document.getElementById(id).value);
         return isFinite(v) && v >= 0 ? v : 0;
     }
 
@@ -769,11 +805,9 @@
                 } else if (p[0] === 'currency') {
                     html += '<input type="text" id="currency" value="' + escapeHtml(p[2]) + '" style="width: 52px; text-align: center">';
                 } else if (p[3] == null) {
-                    html += '<input type="number" id="' + p[0] + '" value="' + p[2] + '" step="' + p[5] + '" min="0"'
-                        + (p[2] >= 1000 ? ' style="width: 72px"' : '') + '>';
+                    html += decimalInput(p[0], p[2], p[5]).replace('>', p[2] >= 1000 ? ' style="width: 72px">' : '>');
                 } else {
-                    html += '<input type="number" id="' + p[0] + '-min" value="' + p[2] + '" step="' + p[5] + '" min="0">–'
-                        + '<input type="number" id="' + p[0] + '-max" value="' + p[3] + '" step="' + p[5] + '" min="0">';
+                    html += decimalInput(p[0] + '-min', p[2], p[5]) + '–' + decimalInput(p[0] + '-max', p[3], p[5]);
                 }
                 html += '<span class="unit">' + escapeHtml(p[4]) + '</span></div>';
                 if (p[0] === 'r-level') html += '<div class="hint" id="r-level-hint"></div>';
@@ -782,6 +816,7 @@
             html += '</div>';
         });
         document.getElementById('prior-grid').innerHTML = html;
+        enhanceDecimalInputs(document.getElementById('prior-grid'));
     }
 
     function inputIds() {
@@ -791,6 +826,40 @@
             else ids.push(p[0] + '-min', p[0] + '-max');
         }));
         return ids;
+    }
+
+    // Unknown ids and values of the wrong kind are skipped (logged to the console).
+    function applyConfigured() {
+        const params = {};
+        GROUPS.forEach(group => group[1].forEach(p => params[p[0]] = p));
+        const set = (id, v) => document.getElementById(id).value = String(v);
+        const isNum = v => typeof v === 'number' && isFinite(v) && v >= 0;
+        const keys = Object.keys(CONFIGURED);
+        // The uncertainty level first, so a configured work-redone range wins over the level's range.
+        keys.sort((a, b) => (b === 'r-level') - (a === 'r-level')).forEach(id => {
+            const p = params[id], v = CONFIGURED[id];
+            if (!p) {
+                console.warn('estimateAssumptions: unknown AI Cost Estimator assumption "' + id + '"');
+            } else if (id === 'r-level') {
+                const level = UNCERTAINTY.find(l => l[0] === v);
+                if (level) {
+                    set('r-level', v);
+                    set('r-redo-min', level[2]);
+                    set('r-redo-max', level[3]);
+                } else console.warn('estimateAssumptions: unknown r-level "' + v + '"');
+            } else if (id === 'currency') {
+                if (typeof v === 'string') set('currency', v);
+            } else if (p[3] == null) {
+                if (isNum(v)) set(id, v); else console.warn('estimateAssumptions: "' + id + '" needs a number');
+            } else if (isNum(v)) {
+                set(id + '-min', v);
+                set(id + '-max', v);
+            } else if (Array.isArray(v) && v.length === 2 && isNum(v[0]) && isNum(v[1])) {
+                set(id + '-min', Math.min(v[0], v[1]));
+                set(id + '-max', Math.max(v[0], v[1]));
+            } else console.warn('estimateAssumptions: "' + id + '" needs [min, max] or a number');
+        });
+        document.getElementById('configured-note').hidden = !keys.length;
     }
 
     function toggleModel() {
@@ -856,6 +925,7 @@
     }
 
     function recompute() {
+        document.querySelectorAll('input.decimal').forEach(markDecimal);
         simulate();
         simulateRebuild();
         render();
@@ -1629,6 +1699,7 @@
 
     (function init() {
         buildPriorInputs();
+        applyConfigured();
         rememberDefaults();
         restoreInputs();
         inputIds().forEach(id => document.getElementById(id).addEventListener('input', () => {

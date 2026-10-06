@@ -1,4 +1,4 @@
-<details class="sk-est" id="sk-est" data-main-loc="${mainLoc}" data-windows="${windows}" data-default-window="${defaultWindow}">
+<details class="sk-est" id="sk-est" lang="en-US" data-main-loc="${mainLoc}" data-windows="${windows}" data-default-window="${defaultWindow}" data-assumptions="${assumptions}">
     <summary>
         <span class="sk-est-title">Rule-of-thumb estimates</span>
         <span class="sk-est-teaser" id="sk-est-teaser"></span>
@@ -26,8 +26,8 @@
         .sk-est-inputs select { text-align: left; }
         .sk-est-inputs input:hover, .sk-est-inputs select:hover { border-color: var(--sk-border-strong, #bbb); }
         .sk-est-inputs input:focus, .sk-est-inputs select:focus { outline: none; border-color: var(--sk-accent, #1a73e8); background: var(--sk-bg, white); }
-        .sk-est-inputs input[type=number] { width: 5.5em; -moz-appearance: textfield; appearance: textfield; }
-        .sk-est-inputs input::-webkit-outer-spin-button, .sk-est-inputs input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+        .sk-est-inputs input.sk-est-decimal { width: 5.5em; }
+        .sk-est-inputs input.sk-est-decimal[aria-invalid=true] { border-color: #d73027; }
         .sk-est-inputs input.sk-est-short { width: 3.5em; }
         .sk-est-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 10px; }
         .sk-est-card { border-radius: 8px; padding: 10px 14px 12px 14px; background: var(--sk-surface-2, #f6f6f6); }
@@ -43,8 +43,8 @@
                 <h4>Rebuild value</h4>
                 <div class="sk-est-inputs">
                     <label id="sk-est-activity-label" hidden><select id="sk-est-activity"></select></label>
-                    <label><input type="number" id="sk-est-loc-per-my" min="100" step="1000" value="10000"> lines of main code per man-year</label>
-                    <label><input type="number" id="sk-est-cost-per-my" min="0" step="10000" value="100000"> per man-year</label>
+                    <label><input type="text" inputmode="decimal" class="sk-est-decimal" autocomplete="off" spellcheck="false" id="sk-est-loc-per-my" data-step="1000" value="10000"> lines of main code per man-year</label>
+                    <label><input type="text" inputmode="decimal" class="sk-est-decimal" autocomplete="off" spellcheck="false" id="sk-est-cost-per-my" data-step="10000" value="100000"> per man-year</label>
                     <label>currency <input type="text" id="sk-est-currency" class="sk-est-short" maxlength="4" value="€"></label>
                 </div>
             </div>
@@ -57,7 +57,7 @@
             <div class="sk-est-heading">
                 <h4>Maintenance effort</h4>
                 <div class="sk-est-inputs">
-                    <label><input type="number" id="sk-est-maintenance" class="sk-est-short" min="0" max="100" step="1" value="15"> % of the rebuild value per year</label>
+                    <label><input type="text" inputmode="decimal" class="sk-est-decimal sk-est-short" autocomplete="off" spellcheck="false" id="sk-est-maintenance" data-step="1" value="15"> % of the rebuild value per year</label>
                 </div>
             </div>
             <div class="sk-est-cards">
@@ -69,6 +69,7 @@
             Rules of thumb, not measurements: one man-year rebuilds about 10,000 lines of main code (design, testing and
             coordination included), and keeping a code base alive takes about 15% of its rebuild value per year
             (20 man-years of rebuild value need about 3 man-years of maintenance every year).
+            <span id="sk-est-configured" hidden>The starting values come from this repository's configuration.</span>
             Your changes are remembered in this browser for every report.
             <button type="button" class="sk-est-reset" id="sk-est-reset">Reset to defaults</button>
         </div>
@@ -96,13 +97,46 @@
                 el('activity-label').hidden = false;
                 inputIds.unshift('activity');
             }
+            // Configured assumptions (analysis.estimateAssumptions, when enabled) replace the built-in defaults, and
+            // what the viewer changes is then remembered per configuration, so a config change shows up.
+            var configured = {};
+            try { configured = JSON.parse(root.dataset.assumptions || '{}') || {}; } catch (e) { }
+            Object.keys(configured).forEach(function (id) {
+                if (inputIds.indexOf(id) >= 0 && id !== 'activity' && configured[id] !== null) el(id).value = String(configured[id]);
+            });
+            if (Object.keys(configured).length) {
+                STORE_KEY += ':' + JSON.stringify(configured);
+                el('configured').hidden = false;
+            }
             var defaults = {};
             inputIds.forEach(function (id) { defaults[id] = el(id).value; });
 
+            // Decimal fields are text fields read in en-US (1,234.5), like every number in the reports;
+            // a number input would show the browser's own separators (e.g. 0,5).
+            function parseDecimal(text) {
+                var t = String(text == null ? '' : text).trim();
+                if (!/^[+-]?(\d{1,3}(,\d{3})+|\d*)(\.\d*)?$/.test(t) || !/\d/.test(t)) return NaN;
+                return parseFloat(t.replace(/,/g, ''));
+            }
             function num(id, fallback) {
-                var v = parseFloat(el(id).value);
+                var v = parseDecimal(el(id).value);
                 return isFinite(v) && v >= 0 ? v : fallback;
             }
+            function markDecimals() {
+                root.querySelectorAll('input.sk-est-decimal').forEach(function (input) {
+                    input.setAttribute('aria-invalid', String(!(parseDecimal(input.value) >= 0)));
+                });
+            }
+            root.querySelectorAll('input.sk-est-decimal').forEach(function (input) {
+                input.addEventListener('keydown', function (e) {
+                    if (e.key !== 'ArrowUp' && e.key !== 'ArrowDown') return;
+                    e.preventDefault();
+                    var step = parseFloat(input.dataset.step) || 1;
+                    var current = parseDecimal(input.value);
+                    input.value = String(Math.max(0, (isFinite(current) ? current : 0) + (e.key === 'ArrowUp' ? step : -step)));
+                    input.dispatchEvent(new Event('input', {bubbles: true}));
+                });
+            });
             function oneDecimal(v) {
                 return v < 10 ? (Math.round(v * 10) / 10).toLocaleString('en-US') : Math.round(v).toLocaleString('en-US');
             }
@@ -139,6 +173,7 @@
             }
 
             function update() {
+                markDecimals();
                 var lines = selectedMainLoc();
                 var currency = el('currency').value;
                 var locPerMy = Math.max(1, num('loc-per-my', 10000));

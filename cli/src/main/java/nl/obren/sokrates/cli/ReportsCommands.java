@@ -10,6 +10,7 @@ import nl.obren.sokrates.reports.core.ReportHtmlWriter;
 import nl.obren.sokrates.reports.core.RichTextReport;
 import nl.obren.sokrates.reports.dataexporters.DataExporter;
 import nl.obren.sokrates.reports.generators.explorers.AiCostEstimatorData;
+import nl.obren.sokrates.reports.core.EstimateAssumptions;
 import nl.obren.sokrates.reports.generators.explorers.AiCostEstimatorGenerator;
 import nl.obren.sokrates.reports.generators.explorers.CommitsExplorerGenerators;
 import nl.obren.sokrates.reports.generators.explorers.FilesExplorerGenerators;
@@ -141,7 +142,7 @@ class ReportsCommands {
                 ProcessingStopwatch.end("generating visuals");
 
                 generateAndSaveReports(sokratesConfigFile, reportsFolder, sokratesConfigFile.getParentFile(), codeAnalyzer, analysisResults);
-                new AiCostEstimatorGenerator(reportsFolder).exportPage(aiCostEstimator);
+                new AiCostEstimatorGenerator(reportsFolder).exportPage(aiCostEstimator, EstimateAssumptions.aiCostEstimatorJson(analysisResults));
             }
             saveExecutionStats(dataExporter.getDataFolder());
             // Final data step: package the whole data/ folder (incl. textual summary + execution

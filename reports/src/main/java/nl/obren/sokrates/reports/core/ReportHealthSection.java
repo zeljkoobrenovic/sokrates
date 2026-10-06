@@ -191,13 +191,23 @@ public class ReportHealthSection {
     static String scoresCard(MaintainabilityScores scores) {
         StringBuilder html = new StringBuilder("<div class='sk-hotspots-card'>");
         html.append("<div class='sk-hotspots-title'>Maintainability scores*</div>");
-        html.append("<div class='sk-hotspots-intro'>How easy the code is to understand and change, from 0 to 10: the same measured ")
-                .append("sub-scores, weighted for people and for AI coding agents. People struggle most with complex logic and with ")
-                .append("knowledge held by few; an agent pays for every line it reads, copies duplicates and needs tests to check its work. ")
-                .append("The total is a weighted geometric mean, capped at the weakest sub-score about the code + 4, so one weak spot is not averaged away. ")
-                .append("Sub-scores are ordered by <i>drag</i>: how much the (uncapped) mean would rise if that sub-score were 10. ")
-                .append("<span class='sk-score-note'>* A heuristic with fixed anchors; compare repositories rather than read it as absolute. ")
-                .append("Weights are configurable in <code>analysis.maintainabilityScores</code>.</span></div>");
+        if (scores.isCustomFramework()) {
+            html.append("<div class='sk-hotspots-intro'>How easy the code is to understand and change, from 0 to 10, by this ")
+                    .append("repository's own score framework (<code>analysis.maintainabilityScores.customFramework</code>): its sub-scores, ")
+                    .append("anchors and Human and AI weights. The total is a weighted geometric mean of the sub-scores")
+                    .append(scores.getHuman().getCapMargin() >= 0 ? ", capped at the weakest sub-score + "
+                            + margin(scores.getHuman().getCapMargin()) : "")
+                    .append(". Sub-scores are ordered by <i>drag</i>: how much the (uncapped) mean would rise if that sub-score were 10. ")
+                    .append("<span class='sk-score-note'>* Compare repositories scored by the same framework only.</span></div>");
+        } else {
+            html.append("<div class='sk-hotspots-intro'>How easy the code is to understand and change, from 0 to 10: the same measured ")
+                    .append("sub-scores, weighted for people and for AI coding agents. People struggle most with complex logic and with ")
+                    .append("knowledge held by few; an agent pays for every line it reads, copies duplicates and needs tests to check its work. ")
+                    .append("The total is a weighted geometric mean, capped at the weakest sub-score about the code + 4, so one weak spot is not averaged away. ")
+                    .append("Sub-scores are ordered by <i>drag</i>: how much the (uncapped) mean would rise if that sub-score were 10. ")
+                    .append("<span class='sk-score-note'>* A heuristic with fixed anchors; compare repositories rather than read it as absolute. ")
+                    .append("Weights, or a whole framework of your own, are configurable in <code>analysis.maintainabilityScores</code>.</span></div>");
+        }
         html.append("<div class='sk-scores'>");
         html.append(scoreColumn("Human", scores.getHuman(), ""));
         html.append(scoreColumn("AI", scores.getAi(), scores.getContextLinesPerChange() > 0
@@ -208,6 +218,10 @@ public class ReportHealthSection {
         return html.toString();
     }
 
+    private static String margin(double margin) {
+        return margin == Math.rint(margin) ? String.valueOf((long) margin) : String.format(Locale.US, "%.1f", margin);
+    }
+
     private static String scoreColumn(String label, MaintainabilityScore score, String note) {
         StringBuilder html = new StringBuilder("<div class='sk-score-col'>");
         html.append("<div class='sk-score-head'><span class='sk-score-name'>").append(label).append("</span>")
@@ -215,7 +229,7 @@ public class ReportHealthSection {
                 .append(gradeScale(score.getGrade(), true)).append("</div>");
         if (!score.getCappedBy().isEmpty()) {
             html.append("<div class='sk-score-context'>Capped by its weakest sub-score, ")
-                    .append(HtmlEscapeUtils.escape(score.getCappedBy())).append(" (+4).</div>");
+                    .append(HtmlEscapeUtils.escape(score.getCappedBy())).append(" (+").append(margin(score.getCapMargin())).append(").</div>");
         }
         if (!note.isEmpty()) {
             html.append("<div class='sk-score-context'>").append(HtmlEscapeUtils.escape(note)).append("</div>");

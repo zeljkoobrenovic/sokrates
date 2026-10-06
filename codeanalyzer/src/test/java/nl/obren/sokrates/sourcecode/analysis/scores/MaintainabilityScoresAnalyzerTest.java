@@ -1,13 +1,19 @@
 package nl.obren.sokrates.sourcecode.analysis.scores;
 
+import nl.obren.sokrates.common.io.JsonMapper;
 import nl.obren.sokrates.sourcecode.SourceFile;
+import nl.obren.sokrates.sourcecode.core.CodeConfiguration;
+import nl.obren.sokrates.sourcecode.core.MaintainabilityScoresConfig;
+import nl.obren.sokrates.sourcecode.core.ScoreFrameworkConfig;
 import nl.obren.sokrates.sourcecode.filehistory.CommitInfo;
 import nl.obren.sokrates.sourcecode.filehistory.DateUtils;
 import nl.obren.sokrates.sourcecode.filehistory.FileModificationHistory;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
+import nl.obren.sokrates.sourcecode.metrics.Metric;
 import org.junit.jupiter.api.Test;
 
+import java.io.IOException;
 import java.util.*;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -126,5 +132,110 @@ class MaintainabilityScoresAnalyzerTest {
         history.setCommits(infos);
         file.setFileModificationHistory(history);
         return file;
+    }
+
+    private static Metric metric(String id, Number value) {
+        Metric metric = new Metric();
+        metric.id(id).value(value);
+        return metric;
+    }
+
+    @Test
+    void aCustomFrameworkUsesItsOwnSubScoresAnchorsAndWeights() {
+        List<SubScore> measured = Arrays.asList(
+                new SubScore(MaintainabilityScoresAnalyzer.VOLUME, "Volume", 100_000, "100,000 lines", 6.7),
+                new SubScore(MaintainabilityScoresAnalyzer.DUPLICATION, "Duplication", 4, "4%", 8.5));
+        ScoreFrameworkConfig config = new ScoreFrameworkConfig();
+        config.getSubScores().add(new ScoreFrameworkConfig.SubScoreConfig(MaintainabilityScoresAnalyzer.VOLUME, 1, 0)
+                .anchors(new double[]{0, 10}, new double[]{200_000, 0}));
+        ScoreFrameworkConfig.SubScoreConfig todos = new ScoreFrameworkConfig.SubScoreConfig("todos", 0, 2)
+                .anchors(new double[]{100, 0}, new double[]{0, 10});
+        todos.setMetric("NUMBER_OF_TODOS");
+        todos.setDescription("TODO comments");
+        config.getSubScores().add(todos);
+        ScoreFrameworkConfig.SubScoreConfig missing = new ScoreFrameworkConfig.SubScoreConfig("missing", 1, 1).anchors(new double[]{0, 10});
+        missing.setMetric("NOT_COMPUTED");
+        config.getSubScores().add(missing);
+        config.getSubScores().add(new ScoreFrameworkConfig.SubScoreConfig("unknownKey", 1, 1));
+        config.getSubScores().add(new ScoreFrameworkConfig.SubScoreConfig(MaintainabilityScoresAnalyzer.VOLUME, 1, 1));
+        config.getSubScores().add(new ScoreFrameworkConfig.SubScoreConfig(MaintainabilityScoresAnalyzer.TEST_CODE, 1, 1));
+
+        MaintainabilityScoresAnalyzer.Framework framework = MaintainabilityScoresAnalyzer.customFramework(measured, config,
+                id -> id.equalsIgnoreCase("number_of_todos") ? metric("NUMBER_OF_TODOS", 25) : null);
+
+        // duplication is not listed; the missing metric, the unknown key, the duplicate and the unmeasured test code are skipped
+        assertEquals(Arrays.asList("volume", "todos"), framework.subScores.stream().map(SubScore::getKey).collect(java.util.stream.Collectors.toList()));
+        assertEquals(5.0, framework.subScores.get(0).getScore(), "re-scored on its own anchors");
+        assertEquals("Volume", framework.subScores.get(0).getLabel());
+        assertEquals(7.5, framework.subScores.get(1).getScore(), "anchors in any order");
+        assertEquals("25 TODO comments", framework.subScores.get(1).getMeasureText());
+        assertEquals("todos", framework.subScores.get(1).getLabel());
+
+        MaintainabilityScore human = MaintainabilityScoresAnalyzer.combine(framework.subScores, framework.humanWeights, framework.rules);
+        MaintainabilityScore ai = MaintainabilityScoresAnalyzer.combine(framework.subScores, framework.aiWeights, framework.rules);
+        assertEquals(5.0, human.getValue(), "volume only");
+        assertEquals(7.5, ai.getValue(), "TODOs only");
+    }
+
+    @Test
+    void aCustomFrameworkSetsTheCapAndTheGrades() {
+        List<SubScore> measured = Arrays.asList(new SubScore("a", "A", 0, "", 10), new SubScore("b", "B", 0, "", 2));
+        ScoreFrameworkConfig config = new ScoreFrameworkConfig();
+        config.getSubScores().add(new ScoreFrameworkConfig.SubScoreConfig("x", 1, 1).anchors(new double[]{0, 10}));
+        MaintainabilityScoresAnalyzer.Framework framework = MaintainabilityScoresAnalyzer.customFramework(measured, config, id -> null);
+        assertTrue(framework.subScores.isEmpty(), "no metric: a key that is not built in is skipped");
+
+        Map<String, Double> weights = new HashMap<>();
+        weights.put("a", 1.0);
+        weights.put("b", 1.0);
+        config.setWeakestLinkMargin(-1.0);
+        config.setGradeThresholds(Arrays.asList(9.0, 7.0, 4.0, 2.0));
+        MaintainabilityScore uncapped = MaintainabilityScoresAnalyzer.combine(measured, weights,
+                MaintainabilityScoresAnalyzer.customFramework(measured, config, id -> null).rules);
+        assertEquals(4.5, uncapped.getValue(), "no cap: the geometric mean of 10 and 2");
+        assertEquals("", uncapped.getCappedBy());
+        assertEquals("C", uncapped.getGrade(), "C from 4 with these thresholds (D with the built-in ones)");
+
+        config.setWeakestLinkMargin(1.5);
+        config.setCapExcludes(Collections.singletonList("b"));
+        MaintainabilityScore excluded = MaintainabilityScoresAnalyzer.combine(measured, weights,
+                MaintainabilityScoresAnalyzer.customFramework(measured, config, id -> null).rules);
+        assertEquals(4.5, excluded.getValue(), "b may not cap; a (10 + 1.5) does not");
+        config.setCapExcludes(null);
+        MaintainabilityScore capped = MaintainabilityScoresAnalyzer.combine(measured, weights,
+                MaintainabilityScoresAnalyzer.customFramework(measured, config, id -> null).rules);
+        assertEquals(3.5, capped.getValue());
+        assertEquals(1.5, capped.getCapMargin());
+
+        config.setGradeThresholds(Arrays.asList(5.0, 7.0, 4.0, 2.0));
+        assertEquals("D", MaintainabilityScoresAnalyzer.combine(measured, weights,
+                MaintainabilityScoresAnalyzer.customFramework(measured, config, id -> null).rules).getGrade(), "invalid thresholds: built-in grades");
+    }
+
+    @Test
+    void invalidAnchorsSkipTheSubScore() {
+        assertEquals(0, MaintainabilityScoresAnalyzer.anchors(Arrays.asList(Arrays.asList(0.0, 10.0), Collections.singletonList(5.0))).length);
+        double[][] anchors = MaintainabilityScoresAnalyzer.anchors(Arrays.asList(Arrays.asList(10.0, -3.0), Arrays.asList(0.0, 12.0)));
+        assertArrayEquals(new double[]{0, 10}, anchors[0], "sorted, score clamped to 0-10");
+        assertArrayEquals(new double[]{10, 0}, anchors[1]);
+    }
+
+    @Test
+    void theCustomFrameworkIsReadFromConfigJsonAndOffByDefault() throws IOException {
+        assertFalse(new MaintainabilityScoresConfig().isUseCustomFramework());
+        String json = "{\"analysis\": {\"maintainabilityScores\": {\"useCustomFramework\": true, \"customFramework\": {"
+                + "\"weakestLinkMargin\": 3, \"gradeThresholds\": [9, 7, 5, 3], \"subScores\": ["
+                + "{\"key\": \"duplication\", \"humanWeight\": 2, \"aiWeight\": 3},"
+                + "{\"key\": \"tests\", \"metric\": \"LINES_OF_CODE_TEST\", \"anchors\": [[0, 0], [50000, 10]], \"aiWeight\": 2}]}}}}";
+        CodeConfiguration configuration = (CodeConfiguration) new JsonMapper().getObject(json, CodeConfiguration.class);
+        MaintainabilityScoresConfig config = configuration.getAnalysis().getMaintainabilityScores();
+        assertTrue(config.isUseCustomFramework());
+        ScoreFrameworkConfig framework = config.getCustomFramework();
+        assertEquals(2, framework.getSubScores().size());
+        assertEquals(3.0, framework.getSubScores().get(0).getAiWeight());
+        assertEquals(1.0, framework.getSubScores().get(1).getHumanWeight(), "weights default to 1");
+        assertEquals("LINES_OF_CODE_TEST", framework.getSubScores().get(1).getMetric());
+        assertEquals(Arrays.asList(50000.0, 10.0), framework.getSubScores().get(1).getAnchors().get(1));
+        assertEquals(3.0, framework.getWeakestLinkMargin());
     }
 }

@@ -256,8 +256,8 @@ public class RepositoryExport {
         m.setUpdateFrequency(new RepositoryReportData.RiskBands(analysis.getFilesHistoryAnalysisResults().getOverallFileChangeDistribution()));
         MaintainabilityScores scores = analysis.getMaintainabilityScores();
         if (scores != null && scores.getHuman() != null && scores.getAi() != null) {
-            m.setHumanScore(new RepositoryReportData.Score(scores.getHuman()));
-            m.setAiScore(new RepositoryReportData.Score(scores.getAi()));
+            m.setHumanScore(new RepositoryReportData.Score(scores.getHuman(), scores.isCustomFramework()));
+            m.setAiScore(new RepositoryReportData.Score(scores.getAi(), scores.isCustomFramework()));
             m.setContextLinesPerChange(scores.getContextLinesPerChange());
         }
 

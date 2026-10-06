@@ -489,7 +489,8 @@
             return '<span style="color: var(--sk-text-muted); font-size: 70%">-</span>';
         }
         const v = score.value || 0;
-        const title = 'grade ' + score.grade + ' (A: 8+, B: 6.5+, C: 5+, D: 3.5+, E: below)'
+        const title = 'grade ' + score.grade + (score.framework === 'custom'
+                ? ' by the repository\'s own score framework (compare with care)' : ' (A: 8+, B: 6.5+, C: 5+, D: 3.5+, E: below)')
             + (score.drags ? '\nbiggest drags: ' + score.drags : '') + (extra ? '\n' + extra : '');
         return '<span title="' + esc(title) + '" style="white-space: nowrap; display: inline-flex; align-items: center; gap: 8px;">'
             + '<b style="min-width: 24px; text-align: right;">' + v.toFixed(1) + '</b>' + gradeScale(score.grade) + '</span>';

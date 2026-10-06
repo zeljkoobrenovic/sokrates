@@ -268,7 +268,7 @@ public class ReportFileExporter {
     }
 
     private static void addScoreBlock(RichTextReport report, MaintainabilityScore score, String label, String icon) {
-        HealthSummary.Status status = HealthSummary.scoreStatus(score.getValue());
+        HealthSummary.Status status = HealthSummary.gradeStatus(score.getGrade());
         String color = status == HealthSummary.Status.GOOD ? "#dff3e3" : (status == HealthSummary.Status.WATCH ? "#fdf0d5" : "#fbe1e1");
         String drags = score.getSubScores().stream().filter(s -> s.getDrag() > 0)
                 .sorted(Comparator.comparingDouble(SubScore::getDrag).reversed()).limit(3)

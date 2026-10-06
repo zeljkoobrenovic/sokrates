@@ -276,8 +276,15 @@ public class RepositoryReportData {
         private double value;
         private String grade = "";
         private String drags = "";
+        // "custom" when the repository scores with its own framework (other grades and sub-scores), else ""
+        private String framework = "";
 
         public Score() {
+        }
+
+        public Score(MaintainabilityScore score, boolean customFramework) {
+            this(score);
+            this.framework = customFramework ? "custom" : "";
         }
 
         public Score(MaintainabilityScore score) {
@@ -296,6 +303,14 @@ public class RepositoryReportData {
 
         public double getValue() {
             return value;
+        }
+
+        public String getFramework() {
+            return framework;
+        }
+
+        public void setFramework(String framework) {
+            this.framework = framework != null ? framework : "";
         }
 
         public void setValue(double value) {

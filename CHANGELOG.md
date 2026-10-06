@@ -5,6 +5,23 @@ everything listed under the most recent date.
 
 ## 2026-10-06
 
+### Your own maintainability score framework
+
+`analysis.maintainabilityScores` takes a score framework of your own: with the explicit `"useCustomFramework": true`
+(default `false`), `customFramework` sets which sub-scores count — built-in ones by key, or any analysis metric by
+id — with their anchors, labels and Human and AI weights, plus the weakest-link margin, the sub-scores that may not cap
+the total and the grade thresholds. The Highlights card and the landscape's score tooltips note when a repository uses
+its own framework. Without the switch nothing changes; unusable entries are skipped with a warning in the log.
+
+### Estimate assumptions from config.json; en-US decimal fields
+
+A repository's `config.json` can set the starting assumptions of the At a Glance "Rule-of-thumb estimates" and the
+AI Cost Estimator in `analysis.estimateAssumptions`. They are applied only with the explicit `"enabled": true` (default
+`false`, so existing configurations change nothing). Viewers can still edit the values in the page; with configured
+values their edits are remembered per configuration, so a changed config shows up. Landscapes keep the built-in
+defaults. The decimal assumption fields on both pages are now read and shown in en-US format (`0.5`, `10,000`), as
+in the rest of the reports, whatever the browser's language; an invalid value is outlined in red.
+
 ### Human and AI maintainability scores*
 
 Every repository gets two scores from 0 to 10 (grades A–E): how easy the code is for **people** and for **AI coding

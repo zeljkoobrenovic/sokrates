@@ -16,7 +16,8 @@ import java.util.List;
 /**
  * The collapsed "Rule-of-thumb estimates" block at the bottom of the At a Glance tab (repository and landscape):
  * an in-page calculator (rebuild value, maintenance effort) over the lines of main code. Only numbers go into the
- * template; the assumptions are inputs the viewer can change. A landscape also passes its totals per repository
+ * template; the assumptions are inputs the viewer can change, starting from the configured ones when
+ * {@code analysis.estimateAssumptions} is enabled. A landscape also passes its totals per repository
  * activity window, which the page offers as a "repositories" choice. (AI token costs have their own page, the
  * AI Cost Estimator.)
  */
@@ -67,14 +68,14 @@ public class RuleOfThumbEstimates {
     }
 
     public static void add(RichTextReport report, CodeAnalysisResults results) {
-        report.addHtmlContent(html(results.getMainAspectAnalysisResults().getLinesOfCode(), null));
+        report.addHtmlContent(html(results.getMainAspectAnalysisResults().getLinesOfCode(), null, EstimateAssumptions.ruleOfThumbJson(results)));
     }
 
     /** The landscape version: totals over the given repositories, per activity window (default: the past year). */
     public static void addForLandscape(RichTextReport report, List<CodeAnalysisResults> repositories) {
         List<Window> windows = windows(repositories);
         Window selected = windows.stream().filter(w -> w.id.equals(DEFAULT_WINDOW)).findFirst().orElse(windows.get(windows.size() - 1));
-        report.addHtmlContent(html(selected.mainLoc, windows));
+        report.addHtmlContent(html(selected.mainLoc, windows, "{}"));
     }
 
     /** The activity windows (by the repository's latest commit date), the last one all repositories. */
@@ -94,6 +95,11 @@ public class RuleOfThumbEstimates {
     }
 
     static String html(long mainLoc, List<Window> windows) {
+        return html(mainLoc, windows, "{}");
+    }
+
+    /** {@code assumptionsJson}: the configured defaults ({@link EstimateAssumptions}), {@code {}} for none. */
+    static String html(long mainLoc, List<Window> windows, String assumptionsJson) {
         String windowsJson = "";
         if (windows != null && !windows.isEmpty()) {
             StringBuilder json = new StringBuilder("[");
@@ -103,6 +109,7 @@ public class RuleOfThumbEstimates {
         return HtmlTemplateUtils.getResource(TEMPLATE)
                 .replace("${mainLoc}", String.valueOf(Math.max(0, mainLoc)))
                 .replace("${windows}", HtmlEscapeUtils.escape(windowsJson))
-                .replace("${defaultWindow}", DEFAULT_WINDOW);
+                .replace("${defaultWindow}", DEFAULT_WINDOW)
+                .replace("${assumptions}", HtmlEscapeUtils.escape(assumptionsJson));
     }
 }

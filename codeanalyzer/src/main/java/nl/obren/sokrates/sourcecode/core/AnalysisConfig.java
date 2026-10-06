@@ -80,6 +80,9 @@ public class AnalysisConfig {
     // The Human and AI maintainability scores (Highlights tiles, Maintainability Scores section, landscape columns)
     private MaintainabilityScoresConfig maintainabilityScores = new MaintainabilityScoresConfig();
 
+    // Configured starting values of the estimate pages' assumptions (applied only when enabled)
+    private EstimateAssumptionsConfig estimateAssumptions = new EstimateAssumptionsConfig();
+
     // Thresholds for risk profiles used in commit analysis
     private Thresholds commitFilesCountThresholds = Thresholds.defaultCommitFilesCountThresholds();
 
@@ -259,6 +262,15 @@ public class AnalysisConfig {
     // An explicit null ("maintainabilityScores": null) falls back to the defaults.
     public void setMaintainabilityScores(MaintainabilityScoresConfig maintainabilityScores) {
         this.maintainabilityScores = maintainabilityScores != null ? maintainabilityScores : new MaintainabilityScoresConfig();
+    }
+
+    public EstimateAssumptionsConfig getEstimateAssumptions() {
+        return estimateAssumptions;
+    }
+
+    // An explicit null ("estimateAssumptions": null) falls back to the defaults.
+    public void setEstimateAssumptions(EstimateAssumptionsConfig estimateAssumptions) {
+        this.estimateAssumptions = estimateAssumptions != null ? estimateAssumptions : new EstimateAssumptionsConfig();
     }
 
     public Thresholds getCommitFilesCountThresholds() {
