@@ -60,6 +60,9 @@ public class MaintainabilityScoresAnalyzer {
     public static final List<String> KEYS = Arrays.asList(VOLUME, DUPLICATION, UNIT_SIZE, UNIT_COMPLEXITY, FILE_SIZE,
             FILE_COMPLEXITY, TEST_CODE, CHANGE_ENTROPY, CONTEXT_PER_CHANGE, KNOWLEDGE);
 
+    public static final Map<String, String> LABELS = labels("Volume", "Duplication", "Unit size", "Unit complexity", "File size",
+            "File complexity", "Test code", "Change entropy", "Context per change", "Knowledge spread");
+
     public static final Map<String, Double> HUMAN_WEIGHTS = weights(1, 1, 1.5, 2, 0.75, 1, 0.75, 1, 0.5, 1.5);
     public static final Map<String, Double> AI_WEIGHTS = weights(0.75, 1.5, 1, 1, 1.75, 0.75, 1.75, 1.5, 2, 0);
 
@@ -124,9 +127,15 @@ public class MaintainabilityScoresAnalyzer {
             scores.setHuman(combine(framework.subScores, framework.humanWeights, framework.rules));
             scores.setAi(combine(framework.subScores, framework.aiWeights, framework.rules));
             scores.setFramework(MaintainabilityScores.CUSTOM);
+            setCoverage(scores.getHuman(), expectedSubScores(config.getCustomFramework(), true));
+            setCoverage(scores.getAi(), expectedSubScores(config.getCustomFramework(), false));
         } else {
-            scores.setHuman(combine(measured, merge(HUMAN_WEIGHTS, config.getHumanWeights())));
-            scores.setAi(combine(measured, merge(AI_WEIGHTS, config.getAiWeights())));
+            Map<String, Double> humanWeights = merge(HUMAN_WEIGHTS, config.getHumanWeights());
+            Map<String, Double> aiWeights = merge(AI_WEIGHTS, config.getAiWeights());
+            scores.setHuman(combine(measured, humanWeights));
+            scores.setAi(combine(measured, aiWeights));
+            setCoverage(scores.getHuman(), expectedSubScores(humanWeights));
+            setCoverage(scores.getAi(), expectedSubScores(aiWeights));
         }
         scores.setContextLinesPerChange((int) Math.round(changes.contextLines));
         scores.setChangesMeasured(changes.commits);
@@ -145,36 +154,36 @@ public class MaintainabilityScoresAnalyzer {
     private List<SubScore> measure(ChangeStats changes) {
         List<SubScore> measured = new ArrayList<>();
         int mainLoc = results.getMainAspectAnalysisResults().getLinesOfCode();
-        measured.add(new SubScore(VOLUME, "Volume", mainLoc, String.format(Locale.US, "%,d lines of main code", mainLoc),
+        measured.add(new SubScore(VOLUME, LABELS.get(VOLUME), mainLoc, String.format(Locale.US, "%,d lines of main code", mainLoc),
                 interpolate(mainLoc, VOLUME_ANCHORS)));
 
         DuplicationMetric duplication = results.getDuplicationAnalysisResults().getOverallDuplication();
         if (!results.skipDuplicationAnalysis() && duplication != null && duplication.getCleanedLinesOfCode() > 0) {
             double percentage = duplication.getDuplicationPercentage().doubleValue();
-            measured.add(new SubScore(DUPLICATION, "Duplication", percentage, percentage(percentage) + " of main code duplicated",
+            measured.add(new SubScore(DUPLICATION, LABELS.get(DUPLICATION), percentage, percentage(percentage) + " of main code duplicated",
                     interpolate(percentage, DUPLICATION_ANCHORS)));
         }
         if (results.getUnitsAnalysisResults().getTotalNumberOfUnits() > 0) {
             RiskDistributionStats unitSize = results.getUnitsAnalysisResults().getUnitSizeRiskDistribution();
-            addShare(measured, UNIT_SIZE, "Unit size", unitSize, "of unit code in units > " + unitSize.getHighRiskThreshold() + " lines", UNIT_SIZE_ANCHORS);
+            addShare(measured, UNIT_SIZE, LABELS.get(UNIT_SIZE), unitSize, "of unit code in units > " + unitSize.getHighRiskThreshold() + " lines", UNIT_SIZE_ANCHORS);
             RiskDistributionStats complexity = results.getUnitsAnalysisResults().getConditionalComplexityRiskDistribution();
-            addShare(measured, UNIT_COMPLEXITY, "Unit complexity", complexity, "of unit code with McCabe > " + complexity.getHighRiskThreshold(), UNIT_COMPLEXITY_ANCHORS);
+            addShare(measured, UNIT_COMPLEXITY, LABELS.get(UNIT_COMPLEXITY), complexity, "of unit code with McCabe > " + complexity.getHighRiskThreshold(), UNIT_COMPLEXITY_ANCHORS);
         }
         RiskDistributionStats fileSize = results.getFilesAnalysisResults().getOverallFileSizeDistribution();
-        addShare(measured, FILE_SIZE, "File size", fileSize, fileSize == null ? "" : "of main code in files > " + fileSize.getHighRiskThreshold() + " lines", FILE_SIZE_ANCHORS);
+        addShare(measured, FILE_SIZE, LABELS.get(FILE_SIZE), fileSize, fileSize == null ? "" : "of main code in files > " + fileSize.getHighRiskThreshold() + " lines", FILE_SIZE_ANCHORS);
         RiskDistributionStats fileComplexity = results.getFilesAnalysisResults().getOverallFileComplexityDistribution();
-        addShare(measured, FILE_COMPLEXITY, "File complexity", fileComplexity, fileComplexity == null ? "" : "of main code in files with McCabe sum > " + fileComplexity.getHighRiskThreshold(), FILE_COMPLEXITY_ANCHORS);
+        addShare(measured, FILE_COMPLEXITY, LABELS.get(FILE_COMPLEXITY), fileComplexity, fileComplexity == null ? "" : "of main code in files with McCabe sum > " + fileComplexity.getHighRiskThreshold(), FILE_COMPLEXITY_ANCHORS);
 
         int testLoc = results.getTestAspectAnalysisResults().getLinesOfCode();
         double testRatio = (double) testLoc / mainLoc;
-        measured.add(new SubScore(TEST_CODE, "Test code", testRatio,
+        measured.add(new SubScore(TEST_CODE, LABELS.get(TEST_CODE), testRatio,
                 String.format(Locale.US, "%,d test lines per 100 main lines", Math.round(100 * testRatio)), interpolate(testRatio, TEST_CODE_ANCHORS)));
 
         if (changes.commits >= MIN_COMMITS) {
-            measured.add(new SubScore(CHANGE_ENTROPY, "Change entropy", changes.entropy,
+            measured.add(new SubScore(CHANGE_ENTROPY, LABELS.get(CHANGE_ENTROPY), changes.entropy,
                     String.format(Locale.US, "%.2f bits per change across %s (past year)", changes.entropy, changes.componentsLabel),
                     interpolate(changes.entropy, CHANGE_ENTROPY_ANCHORS)));
-            measured.add(new SubScore(CONTEXT_PER_CHANGE, "Context per change", changes.contextLines,
+            measured.add(new SubScore(CONTEXT_PER_CHANGE, LABELS.get(CONTEXT_PER_CHANGE), changes.contextLines,
                     String.format(Locale.US, "~%,d lines (~%,d tokens) read per change (past year)",
                             Math.round(changes.contextLines), Math.round(changes.contextLines * 10)),
                     interpolate(changes.contextLines, CONTEXT_ANCHORS)));
@@ -186,7 +195,7 @@ public class MaintainabilityScoresAnalyzer {
                 .forEach(c -> commitsPerPerson.add(c.getCommitsCount365Days()));
         if (!commitsPerPerson.isEmpty()) {
             int holders = knowledgeHolders(commitsPerPerson);
-            measured.add(new SubScore(KNOWLEDGE, "Knowledge spread", holders,
+            measured.add(new SubScore(KNOWLEDGE, LABELS.get(KNOWLEDGE), holders,
                     holders + (holders == 1 ? " person makes" : " people make") + " half of the commits (past year)",
                     interpolate(holders, KNOWLEDGE_ANCHORS)));
         }
@@ -261,6 +270,43 @@ public class MaintainabilityScoresAnalyzer {
             }
         }
         return framework;
+    }
+
+    /** The built-in sub-scores that count in a score (weight > 0), key -> label. */
+    static Map<String, String> expectedSubScores(Map<String, Double> weights) {
+        Map<String, String> expected = new LinkedHashMap<>();
+        KEYS.forEach(key -> {
+            if (weights.getOrDefault(key, 0.0) > 0) {
+                expected.put(key, LABELS.get(key));
+            }
+        });
+        return expected;
+    }
+
+    /** A custom framework's sub-scores that count in the Human (or AI) score, key -> label, measurable or not. */
+    static Map<String, String> expectedSubScores(ScoreFrameworkConfig config, boolean human) {
+        Map<String, String> expected = new LinkedHashMap<>();
+        for (ScoreFrameworkConfig.SubScoreConfig definition : config.getSubScores()) {
+            String key = definition.getKey().trim();
+            if (!key.isEmpty() && (human ? definition.getHumanWeight() : definition.getAiWeight()) > 0) {
+                expected.putIfAbsent(key, !definition.getLabel().isBlank() ? definition.getLabel() : LABELS.getOrDefault(key, key));
+            }
+        }
+        return expected;
+    }
+
+    /** Records how many of the expected sub-scores the score was measured on, and which ones are missing. */
+    static void setCoverage(MaintainabilityScore score, Map<String, String> expected) {
+        Set<String> measured = new HashSet<>();
+        score.getSubScores().forEach(s -> measured.add(s.getKey()));
+        List<String> notMeasured = new ArrayList<>();
+        expected.forEach((key, label) -> {
+            if (!measured.contains(key)) {
+                notMeasured.add(label);
+            }
+        });
+        score.setSubScoresTotal(Math.max(expected.size(), score.getSubScores().size()));
+        score.setNotMeasured(notMeasured);
     }
 
     // Valid [measure, score] pairs, sorted by measure, scores kept within 0-10; empty if there are none.
@@ -489,6 +535,14 @@ public class MaintainabilityScoresAnalyzer {
             }
         });
         return merged;
+    }
+
+    private static Map<String, String> labels(String... values) {
+        Map<String, String> labels = new LinkedHashMap<>();
+        for (int i = 0; i < KEYS.size(); i++) {
+            labels.put(KEYS.get(i), values[i]);
+        }
+        return Collections.unmodifiableMap(labels);
     }
 
     private static Map<String, Double> weights(double... values) {

@@ -491,9 +491,12 @@
         const v = score.value || 0;
         const title = 'grade ' + score.grade + (score.framework === 'custom'
                 ? ' by the repository\'s own score framework (compare with care)' : ' (A: 8+, B: 6.5+, C: 5+, D: 3.5+, E: below)')
+            + (score.coverageText ? '\n' + score.coverageText : '')
             + (score.drags ? '\nbiggest drags: ' + score.drags : '') + (extra ? '\n' + extra : '');
         return '<span title="' + esc(title) + '" style="white-space: nowrap; display: inline-flex; align-items: center; gap: 8px;">'
-            + '<b style="min-width: 24px; text-align: right;">' + v.toFixed(1) + '</b>' + gradeScale(score.grade) + '</span>';
+            + '<b style="min-width: 24px; text-align: right;">' + v.toFixed(1) + '</b>' + gradeScale(score.grade)
+            + (score.coverage ? '<span style="font-size: 75%; color: var(--sk-text-muted); border: 1px dashed var(--sk-border-strong); border-radius: 3px; padding: 0 3px;">'
+                + esc(score.coverage) + '</span>' : '') + '</span>';
     }
 
     function scoreColumn(key, label, field) {
@@ -1291,11 +1294,15 @@
             const name = (r.metadata && r.metadata.name) || '';
             const title = name + '\n' + num(r.mainLinesOfCode) + ' lines of main code\n' + (scoreKind === 'aiScore' ? 'AI' : 'Human')
                 + ' score ' + (score.value || 0).toFixed(1) + ', grade ' + score.grade + (score.framework === 'custom' ? ' (own framework)' : '')
+                + (score.coverageText ? '\n' + score.coverageText : '')
                 + (score.drags ? '\nbiggest drags: ' + score.drags : '');
             const color = (GRADE_COLORS[score.grade] || GRADE_COLORS.E)[0];
             svg += '<a href="' + esc((r.reportFolderUrl || '') + 'index.html#highlights') + '" target="_blank">'
                 + '<circle cx="' + x(r.mainLinesOfCode).toFixed(1) + '" cy="' + y(score.value || 0).toFixed(1) + '" r="5.5" fill="' + color
-                + '" fill-opacity="0.85" stroke="var(--sk-text)" stroke-opacity="0.45" stroke-width="0.8"><title>' + esc(title) + '</title></circle></a>';
+                // Not all sub-scores measured: a hollow, dashed dot.
+                + (score.coverage ? '" fill-opacity="0.25" stroke="' + color + '" stroke-width="1.6" stroke-dasharray="2 1.5"'
+                    : '" fill-opacity="0.85" stroke="var(--sk-text)" stroke-opacity="0.45" stroke-width="0.8"')
+                + '><title>' + esc(title) + '</title></circle></a>';
         });
         return svg + '</svg>';
     }
@@ -1317,6 +1324,7 @@
         }
         return html + scoresChart(rows)
             + '<div style="color: var(--sk-text-faint); font-size: 80%; margin: 6px 0 14px 0;">Bands: the built-in grades (A 8+, B 6.5+, C 5+, D 3.5+). '
+            + (rows.some(r => r.repositoryMetrics[scoreKind].coverage) ? 'Hollow, dashed dots: not all sub-scores measured. ' : '')
             + 'Repositories analyzed before the scores existed are not listed. * A heuristic; compare repositories rather than read a score as absolute.</div>';
     }
 

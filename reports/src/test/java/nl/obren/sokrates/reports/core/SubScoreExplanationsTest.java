@@ -75,4 +75,24 @@ class SubScoreExplanationsTest {
         assertEquals(SubScoreExplanations.BUILT_IN.get(MaintainabilityScoresAnalyzer.DUPLICATION).getHuman(),
                 explanations.get(MaintainabilityScoresAnalyzer.DUPLICATION).getHuman(), "a built-in key keeps the text it does not replace");
     }
+
+    @Test
+    void aPartlyMeasuredScoreSaysSoOnTheTileAndTheCard() {
+        MaintainabilityScore score = score(new SubScore(MaintainabilityScoresAnalyzer.VOLUME, "Volume", 0, "", 8).withWeight(1));
+        score.setSubScoresTotal(3);
+        score.setNotMeasured(Arrays.asList("Unit size", "Unit complexity"));
+        HealthSummary.Tile tile = HealthSummary.scoreTile("human score*", score, "for people to understand and change");
+        assertEquals("measured on 1 of 3 sub-scores", tile.caption);
+        assertTrue(tile.tooltip.contains("not measured: Unit size, Unit complexity"));
+
+        MaintainabilityScores scores = new MaintainabilityScores();
+        scores.setHuman(score);
+        scores.setAi(score(new SubScore(MaintainabilityScoresAnalyzer.VOLUME, "Volume", 0, "", 8).withWeight(1)));
+        String html = ReportHealthSection.scoresCard(scores);
+        assertTrue(html.contains("sk-score-partial'>Measured on 1 of 3 sub-scores (not measured: Unit size, Unit complexity).</div>"));
+
+        score.setSubScoresTotal(1);
+        score.setNotMeasured(java.util.Collections.emptyList());
+        assertEquals("for people to understand and change", HealthSummary.scoreTile("human score*", score, "for people to understand and change").caption);
+    }
 }

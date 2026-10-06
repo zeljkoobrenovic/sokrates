@@ -278,6 +278,9 @@ public class RepositoryReportData {
         private String drags = "";
         // "custom" when the repository scores with its own framework (other grades and sub-scores), else ""
         private String framework = "";
+        // "8/10" when some sub-scores could not be measured, else ""; coverageText always (when known)
+        private String coverage = "";
+        private String coverageText = "";
 
         public Score() {
         }
@@ -288,6 +291,8 @@ public class RepositoryReportData {
         }
 
         public Score(MaintainabilityScore score) {
+            this.coverage = score.isFullyMeasured() ? "" : score.getCoverageShort();
+            this.coverageText = score.getCoverageText();
             this.value = score.getValue();
             this.grade = score.getGrade();
             this.drags = score.getSubScores().stream()
@@ -303,6 +308,22 @@ public class RepositoryReportData {
 
         public double getValue() {
             return value;
+        }
+
+        public String getCoverage() {
+            return coverage;
+        }
+
+        public void setCoverage(String coverage) {
+            this.coverage = coverage != null ? coverage : "";
+        }
+
+        public String getCoverageText() {
+            return coverageText;
+        }
+
+        public void setCoverageText(String coverageText) {
+            this.coverageText = coverageText != null ? coverageText : "";
         }
 
         public String getFramework() {

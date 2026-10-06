@@ -5,6 +5,13 @@ everything listed under the most recent date.
 
 ## 2026-10-06
 
+### Maintainability scores show their coverage
+
+A score left without some of its sub-scores (their analysis did not run: no units for a language, no git history,
+duplication skipped) now says so: "measured on 9 of 10 sub-scores (not measured: Duplication)" on the Highlights card
+and tile, "(9/10)" on the At a Glance block, and in the landscape's Scores* tab a "9/10" mark in the table and a hollow,
+dashed dot on the chart. Fully measured scores look as before; analyses from before this show no coverage.
+
 ### Landscape: Repositories › Scores*
 
 A new Scores* tab right after Overview (also in the sidebar). A chart plots every repository as a dot: lines of main

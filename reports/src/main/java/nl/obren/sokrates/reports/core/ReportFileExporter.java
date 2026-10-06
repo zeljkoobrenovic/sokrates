@@ -274,8 +274,10 @@ public class ReportFileExporter {
                 .sorted(Comparator.comparingDouble(SubScore::getDrag).reversed()).limit(3)
                 .map(s -> s.getLabel() + String.format(Locale.US, " -%.1f", s.getDrag())).collect(Collectors.joining(", "));
         String tooltip = "0-10 maintainability score*" + (drags.isEmpty() ? "" : "; biggest drags: " + drags)
-                + (score.getCappedBy().isEmpty() ? "" : "; capped by " + score.getCappedBy());
-        addInfoBlockWithColor(report, String.format(Locale.US, "%.1f", score.getValue()), label, ReportHealthSection.gradeScale(score.getGrade(), false),
+                + (score.getCappedBy().isEmpty() ? "" : "; capped by " + score.getCappedBy())
+                + (score.getCoverageText().isEmpty() ? "" : "; " + score.getCoverageText());
+        addInfoBlockWithColor(report, String.format(Locale.US, "%.1f", score.getValue()),
+                score.isFullyMeasured() ? label : label + " (" + score.getCoverageShort() + ")", ReportHealthSection.gradeScale(score.getGrade(), false),
                 color, HtmlEscapeUtils.escape(tooltip), icon, "index.html#highlights", false);
     }
 

@@ -12,6 +12,8 @@ import nl.obren.sokrates.sourcecode.analysis.scores.MaintainabilityScore;
 import nl.obren.sokrates.sourcecode.analysis.scores.MaintainabilityScores;
 import nl.obren.sokrates.sourcecode.analysis.scores.SubScore;
 
+import org.apache.commons.lang3.StringUtils;
+
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
@@ -81,6 +83,7 @@ public class ReportHealthSection {
             ".sk-score-name {font-size: 13px; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; color: var(--sk-text-muted); min-width: 52px;}\n" +
             ".sk-score-total {font-size: 28px; font-variant-numeric: tabular-nums;}\n" +
             ".sk-score-context {font-size: 12px; color: var(--sk-text-muted); margin-bottom: 4px;}\n" +
+            ".sk-score-partial {color: var(--sk-text); font-weight: 600;}\n" +
             ".sk-subscores {list-style: none; margin: 0; padding: 0;}\n" +
             ".sk-subscore {display: grid; grid-template-columns: 128px 1fr 32px 36px; grid-template-rows: auto auto; align-items: center; " +
             "column-gap: 8px; padding: 5px 0; font-size: 13px;}\n" +
@@ -248,6 +251,10 @@ public class ReportHealthSection {
         html.append("<div class='sk-score-head'><span class='sk-score-name'>").append(label).append("</span>")
                 .append(String.format(Locale.US, "<span class='sk-score-total'>%.1f</span>", score.getValue()))
                 .append(gradeScale(score.getGrade(), true)).append("</div>");
+        if (!score.getCoverageText().isEmpty()) {
+            html.append("<div class='sk-score-context").append(score.isFullyMeasured() ? "" : " sk-score-partial").append("'>")
+                    .append(HtmlEscapeUtils.escape(StringUtils.capitalize(score.getCoverageText()))).append(".</div>");
+        }
         if (!score.getCappedBy().isEmpty()) {
             html.append("<div class='sk-score-context'>Capped by ")
                     .append(HtmlEscapeUtils.escape(score.getCappedBy())).append(" + ").append(margin(score.getCapMargin())).append(".</div>");

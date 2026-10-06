@@ -238,4 +238,32 @@ class MaintainabilityScoresAnalyzerTest {
         assertEquals(Arrays.asList(50000.0, 10.0), framework.getSubScores().get(1).getAnchors().get(1));
         assertEquals(3.0, framework.getWeakestLinkMargin());
     }
+
+    @Test
+    void theCoverageSaysHowManySubScoresWereMeasured() {
+        List<SubScore> measured = Arrays.asList(new SubScore(MaintainabilityScoresAnalyzer.VOLUME, "Volume", 0, "", 8),
+                new SubScore(MaintainabilityScoresAnalyzer.KNOWLEDGE, "Knowledge spread", 0, "", 5));
+        MaintainabilityScore ai = MaintainabilityScoresAnalyzer.combine(measured, MaintainabilityScoresAnalyzer.AI_WEIGHTS);
+        MaintainabilityScoresAnalyzer.setCoverage(ai, MaintainabilityScoresAnalyzer.expectedSubScores(MaintainabilityScoresAnalyzer.AI_WEIGHTS));
+        // knowledge has AI weight 0: 9 sub-scores count, only volume was measured
+        assertEquals(9, ai.getSubScoresTotal());
+        assertEquals("1/9", ai.getCoverageShort());
+        assertFalse(ai.isFullyMeasured());
+        assertEquals("Duplication", ai.getNotMeasured().get(0));
+        assertTrue(ai.getCoverageText().startsWith("measured on 1 of 9 sub-scores (not measured: Duplication, Unit size,"));
+
+        ScoreFrameworkConfig config = new ScoreFrameworkConfig();
+        config.getSubScores().add(new ScoreFrameworkConfig.SubScoreConfig(MaintainabilityScoresAnalyzer.VOLUME, 1, 0));
+        ScoreFrameworkConfig.SubScoreConfig todos = new ScoreFrameworkConfig.SubScoreConfig("todos", 1, 1);
+        todos.setLabel("TODOs");
+        config.getSubScores().add(todos);
+        MaintainabilityScore human = MaintainabilityScoresAnalyzer.combine(measured.subList(0, 1), Collections.singletonMap("volume", 1.0));
+        MaintainabilityScoresAnalyzer.setCoverage(human, MaintainabilityScoresAnalyzer.expectedSubScores(config, true));
+        assertEquals("measured on 1 of 2 sub-scores (not measured: TODOs)", human.getCoverageText());
+        MaintainabilityScoresAnalyzer.setCoverage(human, MaintainabilityScoresAnalyzer.expectedSubScores(config, false));
+        assertEquals(1, human.getSubScoresTotal(), "never below the measured count");
+
+        assertTrue(new MaintainabilityScore().isFullyMeasured(), "unknown coverage (older analyses) is not flagged");
+        assertEquals("", new MaintainabilityScore().getCoverageText());
+    }
 }

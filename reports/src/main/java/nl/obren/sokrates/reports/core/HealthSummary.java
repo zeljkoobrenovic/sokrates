@@ -244,10 +244,14 @@ public class HealthSummary {
         return show && scores != null && scores.getHuman() != null && scores.getAi() != null ? scores : null;
     }
 
-    // No link: the breakdown card is right below the tiles.
+    // No link: the breakdown card is right below the tiles. A score missing sub-scores says so instead of its caption.
     static Tile scoreTile(String label, MaintainabilityScore score, String caption) {
         String value = String.format(Locale.US, "%.1f", score.getValue());
-        String tooltip = "0-10, grade " + score.getGrade() + " (A: 8+, B: 6.5+, C: 5+, D: 3.5+, E: below)";
+        String tooltip = "0-10, grade " + score.getGrade() + " (A: 8+, B: 6.5+, C: 5+, D: 3.5+, E: below)"
+                + (score.getCoverageText().isEmpty() ? "" : "; " + score.getCoverageText());
+        if (!score.isFullyMeasured()) {
+            caption = "measured on " + score.getSubScores().size() + " of " + score.getSubScoresTotal() + " sub-scores";
+        }
         Tile tile = new Tile(label, value, caption, gradeStatus(score.getGrade()), null, tooltip);
         tile.grade = score.getGrade();
         return tile;
