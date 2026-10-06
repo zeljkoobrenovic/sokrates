@@ -1780,6 +1780,7 @@ public class LandscapeReportGenerator {
     }
 
     private void addRepositoriesStatisticsSection(List<RepositoryAnalysisResults> repositoryAnalysisResults) {
+        ProcessingStopwatch.start("reporting/repositories/preparing");
         Collections.sort(repositoryAnalysisResults, (a, b) -> b.getAnalysisResults().getMainAspectAnalysisResults().getLinesOfCode() - a.getAnalysisResults().getMainAspectAnalysisResults().getLinesOfCode());
         ProcessingStopwatch.end("reporting/repositories/preparing");
 
