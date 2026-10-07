@@ -1,5 +1,6 @@
 package nl.obren.sokrates.reports.landscape.data;
 
+import nl.obren.sokrates.reports.core.ReportHealthSection;
 import nl.obren.sokrates.sourcecode.analysis.scores.MaintainabilityScore;
 import nl.obren.sokrates.sourcecode.stats.RiskDistributionStats;
 
@@ -276,6 +277,8 @@ public class RepositoryReportData {
         private double value;
         private String grade = "";
         private String drags = "";
+        // One line per sub-score, biggest drag first: "Knowledge spread 3.0 ×1.5 −1.2" (the weight in the total)
+        private String subScores = "";
         // "custom" when the repository scores with its own framework (other grades and sub-scores), else ""
         private String framework = "";
         // "8/10" when some sub-scores could not be measured, else ""; coverageText always (when known)
@@ -304,6 +307,19 @@ public class RepositoryReportData {
             if (!score.getCappedBy().isEmpty()) {
                 this.drags += (this.drags.isEmpty() ? "" : "; ") + "held down by " + score.getCappedBy();
             }
+            this.subScores = score.getSubScores().stream()
+                    .sorted((a, b) -> Double.compare(b.getDrag(), a.getDrag()))
+                    .map(s -> s.getLabel() + String.format(Locale.US, " %.1f ", s.getScore()) + ReportHealthSection.weightText(s.getWeight())
+                            + (s.getDrag() > 0 ? String.format(Locale.US, " −%.1f", s.getDrag()) : ""))
+                    .collect(Collectors.joining("\n"));
+        }
+
+        public String getSubScores() {
+            return subScores;
+        }
+
+        public void setSubScores(String subScores) {
+            this.subScores = subScores != null ? subScores : "";
         }
 
         public double getValue() {

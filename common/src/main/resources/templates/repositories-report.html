@@ -484,6 +484,15 @@
             }).join('') + '</span>';
     }
 
+    // The sub-scores with their score, weight in the total and drag (older data: the biggest drags only).
+    function scoreBreakdown(score) {
+        if (score.subScores) {
+            const held = (score.drags || '').split('; ').filter(p => p.indexOf('held down by ') === 0);
+            return '\nsub-scores (score, weight, drag):\n' + score.subScores + (held.length ? '\n' + held[0] : '');
+        }
+        return score.drags ? '\nbiggest drags: ' + score.drags : '';
+    }
+
     function scoreHtml(score, extra) {
         if (!score) {
             return '<span style="color: var(--sk-text-muted); font-size: 70%">-</span>';
@@ -492,7 +501,7 @@
         const title = 'grade ' + score.grade + (score.framework === 'custom'
                 ? ' by the repository\'s own score framework (compare with care)' : ' (A: 8+, B: 6.5+, C: 5+, D: 3.5+, E: below)')
             + (score.coverageText ? '\n' + score.coverageText : '')
-            + (score.drags ? '\nbiggest drags: ' + score.drags : '') + (extra ? '\n' + extra : '');
+            + scoreBreakdown(score) + (extra ? '\n' + extra : '');
         return '<span title="' + esc(title) + '" style="white-space: nowrap; display: inline-flex; align-items: center; gap: 8px;">'
             + '<b style="min-width: 24px; text-align: right;">' + v.toFixed(1) + '</b>' + gradeScale(score.grade)
             + (score.coverage ? '<span style="font-size: 75%; color: var(--sk-text-muted); border: 1px dashed var(--sk-border-strong); border-radius: 3px; padding: 0 3px;">'
@@ -1319,7 +1328,7 @@
             const title = name + '\n' + num(r.mainLinesOfCode) + ' lines of main code\n' + (scoreKind === 'aiScore' ? 'AI' : 'Human')
                 + ' ease of change ' + (score.value || 0).toFixed(1) + ', grade ' + score.grade + (score.framework === 'custom' ? ' (own framework)' : '')
                 + (score.coverageText ? '\n' + score.coverageText : '')
-                + (score.drags ? '\nbiggest drags: ' + score.drags : '');
+                + scoreBreakdown(score);
             const color = (GRADE_COLORS[score.grade] || GRADE_COLORS.E)[0];
             const cx = x(r.mainLinesOfCode), cy = y(score.value || 0);
             const side = logOf(r.mainLinesOfCode) < lo ? -1 : logOf(r.mainLinesOfCode) > hi ? 1 : 0;

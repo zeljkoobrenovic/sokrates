@@ -8,6 +8,7 @@ import nl.obren.sokrates.sourcecode.analysis.scores.SubScore;
 import nl.obren.sokrates.sourcecode.core.CodeConfiguration;
 import nl.obren.sokrates.sourcecode.core.MaintainabilityScoresConfig;
 import nl.obren.sokrates.sourcecode.core.ScoreFrameworkConfig;
+import nl.obren.sokrates.reports.landscape.data.RepositoryReportData;
 import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;
@@ -119,5 +120,14 @@ class SubScoreExplanationsTest {
         String html = ReportHealthSection.scoresCard(scores);
         assertTrue(html.contains("<span class='sk-subscore-weight'>×1.75</span>"));
         assertTrue(html.contains("<span class='sk-subscore-weight'>×1</span>"));
+    }
+
+    @Test
+    void theLandscapeScoreListsEverySubScoreWithItsWeight() {
+        SubScore knowledge = new SubScore(MaintainabilityScoresAnalyzer.KNOWLEDGE, "Knowledge spread", 1, "", 3).withWeight(1.5);
+        knowledge.setDrag(1.2);
+        SubScore volume = new SubScore(MaintainabilityScoresAnalyzer.VOLUME, "Volume", 0, "", 9.5).withWeight(1);
+        RepositoryReportData.Score exported = new RepositoryReportData.Score(score(volume, knowledge));
+        assertEquals("Knowledge spread 3.0 ×1.5 −1.2\nVolume 9.5 ×1", exported.getSubScores());
     }
 }

@@ -278,13 +278,15 @@ class MaintainabilityScoresAnalyzerTest {
     }
 
     @Test
-    void testsCountForBeingThereNotForTheirVolume() {
+    void testCodeScoreFollowsTheTestCodeAnchors() {
         double[][] anchors = MaintainabilityScoresAnalyzer.TEST_CODE_ANCHORS;
         assertEquals(1, MaintainabilityScoresAnalyzer.interpolate(0, anchors), "no tests: low, not zero");
         assertEquals(5, MaintainabilityScoresAnalyzer.interpolate(0.05, anchors));
-        assertEquals(9, MaintainabilityScoresAnalyzer.interpolate(0.15, anchors));
-        assertEquals(10, MaintainabilityScoresAnalyzer.interpolate(0.2, anchors), "a modest suite earns full credit");
+        assertEquals(3, MaintainabilityScoresAnalyzer.interpolate(0.1, anchors));
+        assertEquals(3.5, MaintainabilityScoresAnalyzer.interpolate(0.15, anchors), 1e-9);
+        assertEquals(5, MaintainabilityScoresAnalyzer.interpolate(0.3, anchors));
+        assertEquals(10, MaintainabilityScoresAnalyzer.interpolate(0.5, anchors), "half as much test code as main code earns full credit");
         assertEquals(10, MaintainabilityScoresAnalyzer.interpolate(1.5, anchors), "more test code earns nothing more");
-        assertEquals("Tests", MaintainabilityScoresAnalyzer.LABELS.get(MaintainabilityScoresAnalyzer.TEST_CODE));
+        assertEquals("Tests presence", MaintainabilityScoresAnalyzer.LABELS.get(MaintainabilityScoresAnalyzer.TEST_CODE));
     }
 }

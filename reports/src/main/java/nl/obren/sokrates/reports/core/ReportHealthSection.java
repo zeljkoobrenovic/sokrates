@@ -302,7 +302,7 @@ public class ReportHealthSection {
     }
 
     // A sub-score's weight in its total, shown as a multiplier without trailing zeros: ×1, ×1.5, ×1.75.
-    static String weightText(double weight) {
+    public static String weightText(double weight) {
         return "×" + new java.math.BigDecimal(String.format(Locale.US, "%.2f", weight)).stripTrailingZeros().toPlainString();
     }
 
