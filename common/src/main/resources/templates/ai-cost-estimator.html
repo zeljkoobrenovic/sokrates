@@ -118,6 +118,28 @@
             line-height: 1.4;
         }
 
+        .card .value .unit {
+            font-size: 55%;
+            font-weight: 400;
+            color: var(--sk-text-muted);
+        }
+
+        /* Costs are indicative (they depend on the model, product and hosting): shown after the token counts, greyed out. */
+        .cost {
+            color: var(--sk-text-faint);
+            font-weight: 400;
+        }
+
+        table.grid .cost {
+            font-size: 90%;
+        }
+
+        .card .cost-line {
+            font-size: 78%;
+            color: var(--sk-text-faint);
+            margin: -2px 0 4px 0;
+        }
+
         .scroll {
             overflow-x: auto;
         }
@@ -445,7 +467,8 @@
             re-sends the growing context.</p>
         <p class="intro rebuild-only">What an AI coding agent would spend to write the main code again the way a good team works: small commits with tests,
             fixes, refactoring, and redoing what the uncertainty says will miss.</p>
-        <p class="intro">Base AI costs: the agent's tokens only, without people's time, discovery, planning, review, integration or infrastructure. Not a budget.</p>
+        <p class="intro">Base AI costs: the agent's tokens only, without people's time, discovery, planning, review, integration or infrastructure. Not a budget.
+            Token counts come first; the <span class="cost">greyed-out costs</span> are indicative, as they depend on the model, product and hosting (see the prices in Assumptions).</p>
         <div class="toolbar">
             <span class="hist-only inline-controls">
             <input id="filter" type="text" placeholder="Filter tasks" title="repository, author, ticket, sha or type; separate alternatives with ;" oninput="schedule(render)">
@@ -502,7 +525,7 @@
         <h3>By task type</h3>
         <div class="scroll"><table class="grid" id="types"></table></div>
 
-        <h3 id="chart-title">Estimated base cost per month</h3>
+        <h3 id="chart-title">Estimated base tokens per month</h3>
         <div id="chart"><span id="chart-max"></span></div>
         <div id="chart-axis"></div>
 
@@ -569,7 +592,7 @@
             </ul>
             <ul>
                 <li><b>Further reading:</b> <a href="https://martinfowler.com/articles/exploring-gen-ai/refactoring-economic-benefit.html"
-                    target="_blank" rel="noopener">martinfowler.com/articles/exploring-gen-ai/refactoring-economic-benefit</a></li>
+                    target="_blank" rel="noopener">The Economic Benefit of Refactoring</a></li>
             </ul>
         </div>
     </div>
@@ -755,6 +778,20 @@
         if (v >= 1e6) return (v / 1e6).toFixed(1) + 'M';
         if (v >= 1e3) return (v / 1e3).toFixed(v >= 1e4 ? 0 : 1) + 'k';
         return Math.round(v).toString();
+    }
+
+    // Tokens first; the cost after it, greyed out (indicative: it depends on the model, product and hosting).
+    function costNote(v) {
+        return '<span class="cost" title="indicative cost at the assumed prices">(' + money(v) + ')</span>';
+    }
+
+    function tokensCell(tokens, cost) {
+        return compact(tokens) + ' ' + costNote(cost);
+    }
+
+    function tokensRangeCell(t, c) {
+        return compact(t.p10) + ' – ' + compact(t.p90) + ' <span class="cost" title="indicative cost at the assumed prices">('
+            + money(c.p10) + ' – ' + money(c.p90) + ')</span>';
     }
 
     function int(v) {
@@ -944,7 +981,7 @@
     let costs = new Float32Array(0), inputs = new Float32Array(0), cached = new Float32Array(0), outputs = new Float32Array(0);
     // The refactoring savings per task and draw: the cost with every file read capped (only the read tokens change), and
     // per draw the carry-over share.
-    let cappedCosts = new Float32Array(0), carryDraws = new Float64Array(0);
+    let cappedCosts = new Float32Array(0), cappedTokens = new Float32Array(0), carryDraws = new Float64Array(0);
     // A session's read lines with each file capped (sessions carry the per-file reads after the five totals).
     function cappedRead(s, cap) {
         if (s.length <= 5) return s[1];
@@ -1002,8 +1039,8 @@
         };
         const price = prices();
         const array = () => new Float64Array(R_DRAWS);
-        const out = {cost: array(), input: array(), cached: array(), output: array(), kept: array(), test: array(), other: array(),
-            kindCost: KINDS.map(array), kindSessions: KINDS.map(array), kindLines: KINDS.map(array)};
+        const out = {cost: array(), tokens: array(), input: array(), cached: array(), output: array(), kept: array(), test: array(), other: array(),
+            kindCost: KINDS.map(array), kindTokens: KINDS.map(array), kindSessions: KINDS.map(array), kindLines: KINDS.map(array)};
         for (let d = 0; d < R_DRAWS; d++) {
             const theta = drawTheta(draw);
             const test = mainLinesOfCode * draw('r-test');
@@ -1024,6 +1061,8 @@
             kinds.forEach((kind, k) => {
                 const r = session(kind.session, theta, price, kind.debug);
                 out.kindCost[k][d] = kind.count * r[0];
+                out.kindTokens[k][d] = kind.count * (r[1] + r[3]);
+                out.tokens[d] += kind.count * (r[1] + r[3]);
                 out.kindSessions[k][d] = kind.count;
                 out.kindLines[k][d] = kind.lines;
                 out.cost[d] += kind.count * r[0];
@@ -1040,63 +1079,67 @@
 
     function renderRebuild() {
         if (!rebuild) return;
-        const cost = quantiles(rebuild.cost);
-        const perK = mainLinesOfCode ? scaled(cost, 1000 / mainLinesOfCode) : {p10: 0, p50: 0, p90: 0};
+        const cost = quantiles(rebuild.cost), tokens = quantiles(rebuild.tokens);
+        const perLines = q => mainLinesOfCode ? scaled(q, 1000 / mainLinesOfCode) : {p10: 0, p50: 0, p90: 0};
+        const perK = perLines(cost), perKTokens = perLines(tokens);
         const input = quantiles(rebuild.input).p50, cachedInput = quantiles(rebuild.cached).p50, output = quantiles(rebuild.output).p50;
         const sessions = KINDS.map((k, i) => quantiles(rebuild.kindSessions[i]).p50);
         let history = '';
         if (tasks.length) {
-            history = '<br>the history: ' + money(quantiles(sums(tasks, costs)).p50) + ' (P50)';
+            history = '<br>the history: ' + compact(quantiles(tokenSums(tasks)).p50) + ' tokens ' + costNote(quantiles(sums(tasks, costs)).p50) + ' (P50)';
         }
         let html = '';
-        html += card('Estimated base AI cost', money(cost.p50), rangeText(cost) + history);
-        html += card('Per 1,000 lines of main code', money(perK.p50), rangeText(perK) + '<br>' + int(mainLinesOfCode) + ' lines of main code');
-        html += card('Tokens', compact(input + output), compact(input) + ' input (' + (input ? Math.round(100 * cachedInput / input) : 0) + '% cache reads)'
-            + '<br>' + compact(output) + ' output');
+        html += card('Estimated base AI tokens', tokensValue(tokens.p50), rangeText(tokens) + history, costLine(cost));
+        html += card('Per 1,000 lines of main code', tokensValue(perKTokens.p50), rangeText(perKTokens) + '<br>' + int(mainLinesOfCode) + ' lines of main code',
+            costLine(perK));
+        html += card('Input / output', compact(input) + ' / ' + compact(output), compact(input) + ' input tokens ('
+            + (input ? Math.round(100 * cachedInput / input) : 0) + '% cache reads)<br>' + compact(output) + ' output tokens');
         html += card('Work', int(sessions.reduce((a, b) => a + b, 0)) + ' sessions', int(sessions[0]) + ' building · ' + int(sessions[1]) + ' redoing'
             + '<br>' + int(sessions[2]) + ' fixing · ' + int(sessions[3]) + ' refactoring');
         document.getElementById('r-cards').innerHTML = html;
 
         let kinds = '<tr><th>work</th><th>what</th><th class="num">sessions</th><th class="num">lines changed</th>'
-            + '<th class="num">cost (P50)</th><th class="num">P10–P90</th><th class="num">share</th></tr>';
+            + '<th class="num">tokens (P50) <span class="cost">(cost)</span></th><th class="num">P10–P90</th><th class="num">share</th></tr>';
         KINDS.forEach((kind, i) => {
-            const q = quantiles(rebuild.kindCost[i]);
+            const q = quantiles(rebuild.kindCost[i]), t = quantiles(rebuild.kindTokens[i]);
             kinds += '<tr><td><span class="type">' + kind[1] + '</span></td><td class="muted">' + kind[2] + '</td>'
                 + '<td class="num">' + int(sessions[i]) + '</td>'
                 + '<td class="num">' + int(quantiles(rebuild.kindLines[i]).p50) + '</td>'
-                + '<td class="num">' + money(q.p50) + '</td>'
-                + '<td class="num muted">' + money(q.p10) + ' – ' + money(q.p90) + '</td>'
-                + '<td class="num">' + (cost.p50 ? Math.round(100 * q.p50 / cost.p50) : 0) + '%</td></tr>';
+                + '<td class="num">' + tokensCell(t.p50, q.p50) + '</td>'
+                + '<td class="num muted">' + tokensRangeCell(t, q) + '</td>'
+                + '<td class="num">' + (tokens.p50 ? Math.round(100 * t.p50 / tokens.p50) : 0) + '%</td></tr>';
         });
         document.getElementById('r-kinds').innerHTML = kinds;
 
-        // The cost splits over the code in proportion to its lines (every session is linear in them).
-        const scopeCost = part => quantiles(rebuild.cost.map((c, d) => rebuild.kept[d] ? c * part(d) / rebuild.kept[d] : 0));
+        // Tokens and cost split over the code in proportion to its lines (every session is linear in them).
+        const scopeSplit = (values, part) => quantiles(values.map((c, d) => rebuild.kept[d] ? c * part(d) / rebuild.kept[d] : 0));
         const scopes = [
             ['main code', 'measured', () => mainLinesOfCode],
             ['test code', 'assumed: ' + rangeLabel('r-test') + '× main', d => rebuild.test[d]],
             ['build & other code', 'assumed: ' + rangeLabel('r-other') + '% of main', d => rebuild.other[d]]
         ];
-        let scopeRows = '<tr><th>code</th><th>basis</th><th class="num">lines</th><th class="num">cost (P50)</th><th class="num">P10–P90</th><th class="num">share</th></tr>';
+        let scopeRows = '<tr><th>code</th><th>basis</th><th class="num">lines</th><th class="num">tokens (P50) <span class="cost">(cost)</span></th>'
+            + '<th class="num">P10–P90</th><th class="num">share</th></tr>';
         scopes.forEach(scope => {
-            const q = scopeCost(scope[2]);
+            const q = scopeSplit(rebuild.cost, scope[2]), t = scopeSplit(rebuild.tokens, scope[2]);
             const lines = quantiles(rebuild.kept.map((k, d) => scope[2](d))).p50;
             scopeRows += '<tr><td>' + scope[0] + '</td><td class="muted">' + escapeHtml(scope[1]) + '</td>'
                 + '<td class="num">' + int(lines) + '</td>'
-                + '<td class="num">' + money(q.p50) + '</td>'
-                + '<td class="num muted">' + money(q.p10) + ' – ' + money(q.p90) + '</td>'
-                + '<td class="num">' + (cost.p50 ? Math.round(100 * q.p50 / cost.p50) : 0) + '%</td></tr>';
+                + '<td class="num">' + tokensCell(t.p50, q.p50) + '</td>'
+                + '<td class="num muted">' + tokensRangeCell(t, q) + '</td>'
+                + '<td class="num">' + (tokens.p50 ? Math.round(100 * t.p50 / tokens.p50) : 0) + '%</td></tr>';
         });
         document.getElementById('r-scopes').innerHTML = scopeRows;
 
         document.getElementById('r-repos-section').hidden = !isLandscape;
         if (isLandscape) {
-            let rows = '<tr><th>repository</th><th class="num">lines of main code</th><th class="num">cost (P50)</th><th class="num">P10–P90</th><th class="num">share</th></tr>';
+            let rows = '<tr><th>repository</th><th class="num">lines of main code</th><th class="num">tokens (P50) <span class="cost">(cost)</span></th>'
+                + '<th class="num">P10–P90</th><th class="num">share</th></tr>';
             repositories.map((repo, i) => ({i, loc: repo.mainLinesOfCode || 0})).filter(r => r.loc > 0).sort((a, b) => b.loc - a.loc).forEach(r => {
                 const share = mainLinesOfCode ? r.loc / mainLinesOfCode : 0;
                 rows += '<tr><td>' + repoLink(r.i) + '</td><td class="num">' + int(r.loc) + '</td>'
-                    + '<td class="num">' + money(cost.p50 * share) + '</td>'
-                    + '<td class="num muted">' + money(cost.p10 * share) + ' – ' + money(cost.p90 * share) + '</td>'
+                    + '<td class="num">' + tokensCell(tokens.p50 * share, cost.p50 * share) + '</td>'
+                    + '<td class="num muted">' + tokensRangeCell(scaled(tokens, share), scaled(cost, share)) + '</td>'
                     + '<td class="num">' + Math.round(100 * share) + '%</td></tr>';
             });
             document.getElementById('r-repos').innerHTML = rows;
@@ -1119,6 +1162,7 @@
         const capped = tasks.map(task => task.sessions.map(s => [s[0], cappedRead(s, cap), s[2], s[3], s[4]]));
         tasks.forEach((task, t) => task.cappedReadLines = capped[t].reduce((sum, s) => sum + s[1], 0));
         cappedCosts = new Float32Array(n * DRAWS);
+        cappedTokens = new Float32Array(n * DRAWS);
         carryDraws = new Float64Array(DRAWS);
         // A separate random stream, so the carry-over does not shift the other draws.
         const carryRandom = mulberry32(99);
@@ -1133,11 +1177,13 @@
             const theta = drawTheta(draw);
             carryDraws[d] = carryDraw('carry') / 100;
             for (let t = 0; t < n; t++) {
-                let c = 0, i = 0, k = 0, o = 0, cc = 0;
+                let c = 0, i = 0, k = 0, o = 0, cc = 0, ct = 0;
                 const debug = tasks[t].type === 'fix' ? theta.debug : 1;
                 tasks[t].sessions.forEach((s, j) => {
                     const r = session(s, theta, price, debug);
-                    cc += session(capped[t][j], theta, price, debug)[0];
+                    const rc = session(capped[t][j], theta, price, debug);
+                    cc += rc[0];
+                    ct += rc[1] + rc[3];
                     c += r[0];
                     i += r[1];
                     k += r[2];
@@ -1146,6 +1192,7 @@
                 const at = t * DRAWS + d;
                 costs[at] = c;
                 cappedCosts[at] = cc;
+                cappedTokens[at] = ct;
                 inputs[at] = i;
                 cached[at] = k;
                 outputs[at] = o;
@@ -1158,6 +1205,10 @@
             task.p90 = q.p90;
             task.inputP50 = quantiles(inputs.subarray(t * DRAWS, (t + 1) * DRAWS)).p50;
             task.outputP50 = quantiles(outputs.subarray(t * DRAWS, (t + 1) * DRAWS)).p50;
+            const tq = quantiles(Array.from({length: DRAWS}, (_, d) => inputs[t * DRAWS + d] + outputs[t * DRAWS + d]));
+            task.tokP10 = tq.p10;
+            task.tokP50 = tq.p50;
+            task.tokP90 = tq.p90;
         });
     }
 
@@ -1169,6 +1220,12 @@
             for (let d = 0; d < DRAWS; d++) out[d] += array[offset + d];
         });
         return out;
+    }
+
+    // Per-draw token sums (input + output) over a set of tasks.
+    function tokenSums(list) {
+        const input = sums(list, inputs), output = sums(list, outputs);
+        return input.map((v, d) => v + output[d]);
     }
 
     // ------------------------------------------------------------------------------- data prep
@@ -1218,12 +1275,24 @@
 
     // ------------------------------------------------------------------------------- rendering
 
-    function card(label, value, detail) {
-        return '<div class="card"><div class="label">' + label + '</div><div class="value">' + value + '</div><div class="detail">' + detail + '</div></div>';
+    // A card; the optional cost line goes right under the value, greyed out.
+    function card(label, value, detail, cost) {
+        return '<div class="card"><div class="label">' + label + '</div><div class="value">' + value + '</div>'
+            + (cost ? '<div class="cost-line" title="indicative cost at the assumed prices">' + cost + '</div>' : '')
+            + '<div class="detail">' + detail + '</div></div>';
     }
 
-    function rangeText(q) {
-        return 'P10–P90: ' + money(q.p10) + ' – ' + money(q.p90);
+    function tokensValue(v) {
+        return compact(v) + '<span class="unit"> tokens</span>';
+    }
+
+    function rangeText(t) {
+        return 'P10–P90: ' + compact(t.p10) + ' – ' + compact(t.p90) + ' tokens';
+    }
+
+    // The indicative cost of a token figure: P50 and its P10–P90 range.
+    function costLine(c) {
+        return '≈ ' + money(c.p50) + ' (' + money(c.p10) + ' – ' + money(c.p90) + ')';
     }
 
     function scaled(q, factor) {
@@ -1231,7 +1300,7 @@
     }
 
     function renderCards(list) {
-        const cost = quantiles(sums(list, costs));
+        const cost = quantiles(sums(list, costs)), tokens = quantiles(tokenSums(list));
         const input = quantiles(sums(list, inputs)).p50;
         const cachedInput = quantiles(sums(list, cached)).p50;
         const output = quantiles(sums(list, outputs)).p50;
@@ -1240,21 +1309,22 @@
         const commits = list.reduce((s, t) => s + t.commits.length, 0);
         const devDays = new Set();
         list.forEach(t => t.commits.forEach(c => devDays.add(c.author + '|' + c.date)));
-        const perK = churn ? scaled(cost, 1000 / churn) : {p10: 0, p50: 0, p90: 0};
-        const perDay = devDays.size ? scaled(cost, 1 / devDays.size) : {p10: 0, p50: 0, p90: 0};
+        const zero = {p10: 0, p50: 0, p90: 0};
+        const perChurn = q => churn ? scaled(q, 1000 / churn) : zero, perDevDay = q => devDays.size ? scaled(q, 1 / devDays.size) : zero;
+        const perK = perChurn(cost), perKTokens = perChurn(tokens), perDay = perDevDay(cost), perDayTokens = perDevDay(tokens);
         const reference = num('reference');
         let html = '';
-        html += card('Estimated base AI cost', money(cost.p50), rangeText(cost) + '<br>for ' + int(list.length) + ' tasks');
-        html += card('Per 1,000 churned lines', money(perK.p50), rangeText(perK) + '<br>' + int(churn) + ' churned lines');
-        html += card('Per developer-day', money(perDay.p50), rangeText(perDay) + '<br>' + int(devDays.size) + ' developer-days'
-            + (reference ? ' · reference ' + money(reference) : ''));
-        html += card('Tokens', compact(input + output), compact(input) + ' input (' + (input ? Math.round(100 * cachedInput / input) : 0) + '% cache reads)'
-            + '<br>' + compact(output) + ' output');
+        html += card('Estimated base AI tokens', tokensValue(tokens.p50), rangeText(tokens) + '<br>for ' + int(list.length) + ' tasks', costLine(cost));
+        html += card('Per 1,000 churned lines', tokensValue(perKTokens.p50), rangeText(perKTokens) + '<br>' + int(churn) + ' churned lines', costLine(perK));
+        html += card('Per developer-day', tokensValue(perDayTokens.p50), rangeText(perDayTokens) + '<br>' + int(devDays.size) + ' developer-days',
+            costLine(perDay) + (reference ? ' · reference ' + money(reference) : ''));
+        html += card('Input / output', compact(input) + ' / ' + compact(output), compact(input) + ' input tokens ('
+            + (input ? Math.round(100 * cachedInput / input) : 0) + '% cache reads)<br>' + compact(output) + ' output tokens');
         html += card('Work', int(sessions) + ' sessions', int(list.length) + ' tasks · ' + int(commits) + ' commits'
             + '<br>' + (list.length ? (sessions / list.length).toFixed(1) : '0') + ' sessions per task');
         html += refactoringSavingsCard(list);
         document.getElementById('cards').innerHTML = html;
-        return cost;
+        return tokens;
     }
 
     // Refactoring savings: what files no larger than the max file size would have saved. The saving lies between the read
@@ -1267,37 +1337,39 @@
         if (!readShare) {
             return card('Refactoring savings', '–', 'no file read exceeds ' + cap + ' lines<br>lines read ' + compact(readNow));
         }
-        const all = sums(list, costs), cappedAll = sums(list, cappedCosts);
-        const saved = all.map((c, d) => {
+        // The read-only saving plus the carry-over share of the rest cut by the share of reads saved, per draw.
+        const savings = (all, cappedAll) => all.map((c, d) => {
             const readOnly = c - cappedAll[d];
             return readOnly + carryDraws[d] * Math.max(0, c * readShare - readOnly);
         });
-        const share = quantiles(saved.map((v, d) => all[d] ? v / all[d] : 0));
-        const money50 = quantiles(saved);
+        const allTokens = tokenSums(list), savedTokens = savings(allTokens, sums(list, cappedTokens));
+        const share = quantiles(savedTokens.map((v, d) => allTokens[d] ? v / allTokens[d] : 0));
+        const tokens50 = quantiles(savedTokens), money50 = quantiles(savings(sums(list, costs), sums(list, cappedCosts)));
         const oversized = (imported.editedFileLines || []).filter(lines => lines > num('max-file')).length;
         const pct = v => Math.round(100 * v) + '%';
-        return card('Refactoring savings', pct(share.p50) + ' less', money(money50.p50) + ' saved (' + pct(share.p10) + '–' + pct(share.p90) + ')'
+        return card('Refactoring savings', pct(share.p50) + '<span class="unit"> fewer tokens</span>', compact(tokens50.p50) + ' tokens saved ('
+            + pct(share.p10) + '–' + pct(share.p90) + ')'
             + '<br>files ≤ ' + cap + ' lines' + (oversized ? ' (' + int(oversized) + ' edited files larger)' : '')
-            + '<br>lines read ' + compact(readNow) + ' → ' + compact(readCapped));
+            + '<br>lines read ' + compact(readNow) + ' → ' + compact(readCapped), '≈ ' + money(money50.p50) + ' saved');
     }
 
     function renderTypes(list, total) {
         let html = '<tr><th>type</th><th>what</th><th class="num">tasks</th><th class="num">sessions</th><th class="num" title="total lines of the edited files, per session, before amplification">lines read</th><th class="num">churned lines</th>'
-            + '<th class="num">cost (P50)</th><th class="num">P10–P90</th><th class="num">share</th><th class="num">per 1,000 lines</th></tr>';
+            + '<th class="num">tokens (P50) <span class="cost">(cost)</span></th><th class="num">P10–P90</th><th class="num">share</th><th class="num">per 1,000 lines</th></tr>';
         TYPES.forEach(type => {
             const of = list.filter(t => t.type === type[0]);
             if (!of.length) return;
-            const q = quantiles(sums(of, costs));
+            const q = quantiles(sums(of, costs)), tq = quantiles(tokenSums(of));
             const churn = of.reduce((s, t) => s + t.churn, 0);
             html += '<tr><td><span class="type">' + type[1] + '</span></td><td class="muted">' + type[2] + '</td>'
                 + '<td class="num">' + int(of.length) + '</td>'
                 + '<td class="num">' + int(of.reduce((s, t) => s + t.sessions.length, 0)) + '</td>'
                 + '<td class="num">' + int(of.reduce((s, t) => s + t.readLines, 0)) + '</td>'
                 + '<td class="num">' + int(churn) + '</td>'
-                + '<td class="num">' + money(q.p50) + '</td>'
-                + '<td class="num muted">' + money(q.p10) + ' – ' + money(q.p90) + '</td>'
-                + '<td class="num">' + (total.p50 ? Math.round(100 * q.p50 / total.p50) : 0) + '%</td>'
-                + '<td class="num">' + (churn ? money(q.p50 * 1000 / churn) : '') + '</td></tr>';
+                + '<td class="num">' + tokensCell(tq.p50, q.p50) + '</td>'
+                + '<td class="num muted">' + tokensRangeCell(tq, q) + '</td>'
+                + '<td class="num">' + (total.p50 ? Math.round(100 * tq.p50 / total.p50) : 0) + '%</td>'
+                + '<td class="num">' + (churn ? tokensCell(tq.p50 * 1000 / churn, q.p50 * 1000 / churn) : '') + '</td></tr>';
         });
         document.getElementById('types').innerHTML = html;
     }
@@ -1308,7 +1380,7 @@
         return repo.url ? '<a href="' + escapeHtml(repo.url) + '" target="_top">' + escapeHtml(repo.name) + '</a>' : escapeHtml(repo.name);
     }
 
-    // Landscape only: the cost per repository, biggest first.
+    // Landscape only: the tokens (and cost) per repository, biggest first.
     function renderRepositories(list, total) {
         document.getElementById('repos-section').hidden = !isLandscape;
         if (!isLandscape) return;
@@ -1316,20 +1388,20 @@
         list.forEach(t => (byRepo[t.repo] = byRepo[t.repo] || []).push(t));
         const rows = Object.keys(byRepo).map(repo => {
             const of = byRepo[repo];
-            return {repo: Number(repo), of, q: quantiles(sums(of, costs)), churn: of.reduce((s, t) => s + t.churn, 0)};
-        }).sort((a, b) => b.q.p50 - a.q.p50);
+            return {repo: Number(repo), of, q: quantiles(sums(of, costs)), t: quantiles(tokenSums(of)), churn: of.reduce((s, t) => s + t.churn, 0)};
+        }).sort((a, b) => b.t.p50 - a.t.p50);
         let html = '<tr><th>repository</th><th class="num">tasks</th><th class="num">sessions</th><th class="num">lines read</th><th class="num">churned lines</th>'
-            + '<th class="num">cost (P50)</th><th class="num">P10–P90</th><th class="num">share</th><th class="num">per 1,000 lines</th></tr>';
+            + '<th class="num">tokens (P50) <span class="cost">(cost)</span></th><th class="num">P10–P90</th><th class="num">share</th><th class="num">per 1,000 lines</th></tr>';
         rows.forEach(r => {
             html += '<tr><td>' + repoLink(r.repo) + '</td>'
                 + '<td class="num">' + int(r.of.length) + '</td>'
                 + '<td class="num">' + int(r.of.reduce((s, t) => s + t.sessions.length, 0)) + '</td>'
                 + '<td class="num">' + int(r.of.reduce((s, t) => s + t.readLines, 0)) + '</td>'
                 + '<td class="num">' + int(r.churn) + '</td>'
-                + '<td class="num">' + money(r.q.p50) + '</td>'
-                + '<td class="num muted">' + money(r.q.p10) + ' – ' + money(r.q.p90) + '</td>'
-                + '<td class="num">' + (total.p50 ? Math.round(100 * r.q.p50 / total.p50) : 0) + '%</td>'
-                + '<td class="num">' + (r.churn ? money(r.q.p50 * 1000 / r.churn) : '') + '</td></tr>';
+                + '<td class="num">' + tokensCell(r.t.p50, r.q.p50) + '</td>'
+                + '<td class="num muted">' + tokensRangeCell(r.t, r.q) + '</td>'
+                + '<td class="num">' + (total.p50 ? Math.round(100 * r.t.p50 / total.p50) : 0) + '%</td>'
+                + '<td class="num">' + (r.churn ? tokensCell(r.t.p50 * 1000 / r.churn, r.q.p50 * 1000 / r.churn) : '') + '</td></tr>';
         });
         document.getElementById('repos').innerHTML = html;
     }
@@ -1358,14 +1430,13 @@
         // Latest period on the left, like the commits explorer's timeline.
         chartPeriods = Object.keys(periods).sort().reverse().map(key => {
             const of = periods[key];
-            const q = quantiles(sums(of, costs));
-            return {key, q, tasks: of.length, churn: of.reduce((s, t) => s + t.churn, 0)};
+            return {key, q: quantiles(sums(of, costs)), t: quantiles(tokenSums(of)), tasks: of.length, churn: of.reduce((s, t) => s + t.churn, 0)};
         });
-        document.getElementById('chart-title').textContent = 'Estimated base cost per ' + (byYear ? 'year' : 'month') + ' (P50, by task start)';
-        const max = Math.max(0, ...chartPeriods.map(p => p.q.p50));
-        let html = '<span id="chart-max">' + (max ? money(max) : '') + '</span>';
+        document.getElementById('chart-title').textContent = 'Estimated base tokens per ' + (byYear ? 'year' : 'month') + ' (P50, by task start)';
+        const max = Math.max(0, ...chartPeriods.map(p => p.t.p50));
+        let html = '<span id="chart-max">' + (max ? compact(max) + ' tokens' : '') + '</span>';
         chartPeriods.forEach((p, i) => {
-            const h = max ? Math.max(p.q.p50 ? 1 : 0, 100 * p.q.p50 / max) : 0;
+            const h = max ? Math.max(p.t.p50 ? 1 : 0, 100 * p.t.p50 / max) : 0;
             html += '<div class="col" onmousemove="chartTip(' + i + ', event)" onmouseleave="hideTip()"><div class="bar" style="height: ' + h + '%"></div></div>';
         });
         document.getElementById('chart').innerHTML = html;
@@ -1376,7 +1447,8 @@
     function chartTip(i, event) {
         const p = chartPeriods[i];
         const tip = document.getElementById('tip');
-        tip.innerHTML = '<b>' + p.key + '</b><br>' + money(p.q.p50) + ' (P10–P90 ' + money(p.q.p10) + ' – ' + money(p.q.p90) + ')<br>'
+        tip.innerHTML = '<b>' + p.key + '</b><br>' + compact(p.t.p50) + ' tokens (P10–P90 ' + compact(p.t.p10) + ' – ' + compact(p.t.p90) + ')<br>'
+            + '<span class="cost">' + costLine(p.q) + '</span><br>'
             + int(p.tasks) + ' tasks · ' + int(p.churn) + ' churned lines';
         tip.style.display = 'block';
         const x = Math.min(event.clientX + 12, window.innerWidth - tip.offsetWidth - 8);
@@ -1400,10 +1472,10 @@
         ['readLines', 'lines read', true],
         ['churn', 'churned lines', true],
         ['sessions', 'sessions', true],
-        ['p50', 'cost (P50)', true],
-        ['p90', 'P10–P90', true]
+        ['tokP50', 'tokens (P50) <span class="cost">(cost)</span>', true],
+        ['tokP90', 'P10–P90', true]
     ]);
-    let sortKey = 'p50', sortDesc = true, pageSize = 100, lastList = [];
+    let sortKey = 'tokP50', sortDesc = true, pageSize = 100, lastList = [];
 
     function sortValue(task, key) {
         switch (key) {
@@ -1451,8 +1523,8 @@
                 + '<td class="num" title="' + task.editAdded + ' added and ' + task.editDeleted + ' deleted in existing files, ' + task.newLines + ' in new files">'
                 + int(task.churn) + '</td>'
                 + '<td class="num">' + task.sessions.length + '</td>'
-                + '<td class="num">' + money(task.p50) + '</td>'
-                + '<td class="num muted">' + money(task.p10) + ' – ' + money(task.p90) + '</td></tr>';
+                + '<td class="num">' + tokensCell(task.tokP50, task.p50) + '</td>'
+                + '<td class="num muted">' + tokensRangeCell({p10: task.tokP10, p90: task.tokP90}, task) + '</td></tr>';
         });
         document.getElementById('tasks').innerHTML = html;
         document.getElementById('more').style.display = list.length > pageSize ? '' : 'none';
@@ -1650,12 +1722,13 @@
 
     function downloadCsv() {
         const header = (isLandscape ? ['repository'] : []).concat(['start', 'end', 'type', 'ticket', 'authors', 'commits', 'first_sha', 'last_sha', 'shas', 'files', 'deleted_files',
-            'read_lines', 'edit_added', 'edit_deleted', 'new_lines', 'churn', 'sessions', 'input_tokens_p50', 'output_tokens_p50', 'cost_p10', 'cost_p50', 'cost_p90']);
+            'read_lines', 'edit_added', 'edit_deleted', 'new_lines', 'churn', 'sessions', 'input_tokens_p50', 'output_tokens_p50', 'tokens_p10', 'tokens_p50', 'tokens_p90', 'cost_p10', 'cost_p50', 'cost_p90']);
         const rows = [header.join(',')];
         lastList.forEach(t => {
             rows.push((isLandscape ? [t.repoName] : []).concat([t.start, t.end, t.type, t.ticket, t.authorNames.join('; '), t.commits.length, t.commits[0].sha,
                 t.commits[t.commits.length - 1].sha, t.commits.map(c => c.sha).join(' '), t.files, t.deletedFiles, t.readLines, t.editAdded,
                 t.editDeleted, t.newLines, t.churn, t.sessions.length, Math.round(t.inputP50), Math.round(t.outputP50),
+                Math.round(t.tokP10), Math.round(t.tokP50), Math.round(t.tokP90),
                 t.p10.toFixed(4), t.p50.toFixed(4), t.p90.toFixed(4)]).map(csvCell).join(','));
         });
         const link = document.createElement('a');

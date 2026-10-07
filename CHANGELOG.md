@@ -5,6 +5,16 @@ everything listed under the most recent date.
 
 ## 2026-10-07
 
+### AI Cost Estimator: token counts first, costs as indicative
+
+Every place that showed an estimated cost now shows the estimated **tokens** (input + output) first, with the cost
+after it, greyed out: in brackets in the tables, on a line under the value in the cards, in the chart tooltip. Token
+counts depend only on the code and the history (and the agent assumptions); costs also depend on the model, product
+and hosting, so they are indicative. The headline cards, the chart, the shares, the per-1,000-lines columns, the
+repository order and the tasks' default sort now follow tokens; the Refactoring savings card shows the share of tokens
+saved. The "Tokens" card became "Input / output". The tasks CSV gains `tokens_p10`/`tokens_p50`/`tokens_p90` (the cost
+columns stay). Same model and assumptions: nothing changes in the numbers themselves.
+
 ### Ease of change: "Tests" counts a test suite, not test volume
 
 The test sub-score (key `testCode`, now labelled **Tests**) no longer rewards more test code up to 1:1 with the main
