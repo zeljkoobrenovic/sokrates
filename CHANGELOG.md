@@ -5,6 +5,14 @@ everything listed under the most recent date.
 
 ## 2026-10-07
 
+### Ease of change: "Tests presence" and a new test-code curve
+
+The test sub-score (key `testCode`) is now labelled **Tests presence** and follows new anchor points for test code
+relative to the main code: no tests 1, 5% 5, 10% 3, 30% 5, 50% or more 10 (was: 5% 5, 10% 8, 20% or more 10).
+Repositories with less than half as much test code as main code score lower on it than before. The weights are
+unchanged (human 0.75, AI 1.5). Scores change on the next analysis; a custom framework with its own `testCode`
+anchors is not affected.
+
 ### AI Cost Estimator: the Naive Rebuild by period
 
 The Naive Rebuild tab has a new chart, **Rebuild by period**: the rebuild as a sequence of 20 periods, each

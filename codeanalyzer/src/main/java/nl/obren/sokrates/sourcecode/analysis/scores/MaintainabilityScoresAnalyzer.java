@@ -85,8 +85,8 @@ public class MaintainabilityScoresAnalyzer {
     static final double[][] UNIT_COMPLEXITY_ANCHORS = {{0, 10}, {5, 8}, {15, 5}, {30, 2}, {50, 0}};
     static final double[][] FILE_SIZE_ANCHORS = {{0, 10}, {10, 8}, {30, 5}, {50, 2}, {75, 0}};
     static final double[][] FILE_COMPLEXITY_ANCHORS = {{0, 10}, {10, 8}, {25, 5}, {50, 2}, {75, 0}};
-    // Whether there is a test suite of reasonable size, not coverage (which reading the code cannot tell): no tests
-    // score low, a modest suite near full; more test code beyond 20% of the main code earns nothing.
+    // Test code relative to the main code, not coverage (which reading the code cannot tell): no tests 1, 5% 5, 10% 3,
+    // 30% 5, full marks from 50% of the main code; more test code earns nothing more.
     static final double[][] TEST_CODE_ANCHORS = {{0, 1}, {0.05, 5}, {0.1, 3}, {0.3, 5}, {0.5, 10}};
     static final double[][] CHANGE_ENTROPY_ANCHORS = {{0, 10}, {0.25, 8.5}, {0.5, 7}, {1, 4}, {2, 1}, {3, 0}};
     static final double[][] CONTEXT_ANCHORS = {{0, 10}, {500, 9}, {2_000, 7}, {5_000, 5}, {10_000, 3}, {25_000, 1}, {50_000, 0}};
