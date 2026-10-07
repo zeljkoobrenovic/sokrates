@@ -1,0 +1,14 @@
+codeanalyzer/src/main/java/nl/obren/sokrates/sourcecode/analysis/scores/MaintainabilityScoresAnalyzer.java
+  h_f6c4aeafc1bdc6 66,90
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "f774d2b01a9121d8d1c20d95dc819c0b8d2fa8b2",
+  "prompts": {},
+  "humans": {
+    "h_f6c4aeafc1bdc6": {
+      "author": "zeljkoobrenovic <zeljkoobrenovic@yahoo.com>"
+    }
+  }
+}
