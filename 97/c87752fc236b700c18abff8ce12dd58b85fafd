@@ -1,0 +1,25 @@
+CLAUDE.md
+  s_a2005407d0b1ac::t_8daff573e8a6b7 208
+codeanalyzer/src/main/java/nl/obren/sokrates/sourcecode/analysis/scores/MaintainabilityScoresAnalyzer.java
+  s_a2005407d0b1ac::t_8daff573e8a6b7 88-89
+docs/configuration.md
+  s_a2005407d0b1ac::t_8daff573e8a6b7 160
+CHANGELOG.md
+  s_a2005407d0b1ac::t_8daff573e8a6b7 8-15
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "97c87752fc236b700c18abff8ce12dd58b85fafd",
+  "prompts": {},
+  "sessions": {
+    "s_a2005407d0b1ac": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "4fb1d5ee-913b-46aa-8711-baca0d9f974f",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "zeljkoobrenovic <zeljkoobrenovic@yahoo.com>"
+    }
+  }
+}
