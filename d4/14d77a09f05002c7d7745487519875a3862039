@@ -1,0 +1,31 @@
+common/src/main/resources/templates/ai-cost-estimator.html
+  s_a2005407d0b1ac::t_7c95dd7965c16e 1082-1084,1089,1092-1096,1102,1104,1108-1110,1114-1115,1121-1122,1124,1128-1130,1136-1137,1141-1142,1278-1290,1293-1295,1303,1312-1314,1317-1322,1327,1340-1341,1345-1347,1350-1351,1353
+  s_a2005407d0b1ac::t_e345f0fb5acb2c 1358,1362,1369-1372,1383,1391-1392,1394,1401-1404,1433,1435-1437,1439,1450-1451,1475-1476,1478,1526-1527,1725,1731
+  s_a2005407d0b1ac::t_6795d655e8a1cb 528
+  s_a2005407d0b1ac::t_75e62a856fbaca 470-471
+  s_a2005407d0b1ac::t_67ef6c0aa0881a 121-142
+  s_a2005407d0b1ac::t_f2c72403b83b8c 783-796,1229
+  s_a2005407d0b1ac::t_e98d639d175e28 984,1042-1043,1064-1065,1165,1180,1184-1186,1195,1208-1211,1225-1228
+  s_a2005407d0b1ac::t_61954de60d91ab 1230
+  s_a2005407d0b1ac::t_962d9a3a3a1731 595
+CHANGELOG.md
+  s_a2005407d0b1ac::t_bd2f273193d226 8-17
+CLAUDE.md
+  s_a2005407d0b1ac::t_bd2f273193d226 211
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "d414d77a09f05002c7d7745487519875a3862039",
+  "prompts": {},
+  "sessions": {
+    "s_a2005407d0b1ac": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "4fb1d5ee-913b-46aa-8711-baca0d9f974f",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "zeljkoobrenovic <zeljkoobrenovic@yahoo.com>"
+    }
+  }
+}
