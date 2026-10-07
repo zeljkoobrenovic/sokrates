@@ -253,6 +253,102 @@
             margin-top: 3px;
         }
 
+        /* Naive Rebuild per period: stacked columns, one categorical hue per kind of work (validated, light and dark). */
+        .rebuild-only, #tip {
+            --kind-build: #2a78d6;
+            --kind-redo: #eb6834;
+            --kind-fix: #1baf7a;
+            --kind-refactor: #eda100;
+        }
+
+        @media (prefers-color-scheme: dark) {
+            :root:where(:not([data-theme="light"])) .rebuild-only, :root:where(:not([data-theme="light"])) #tip {
+                --kind-build: #3987e5;
+                --kind-redo: #d95926;
+                --kind-fix: #199e70;
+                --kind-refactor: #c98500;
+            }
+        }
+
+        :root[data-theme="dark"] .rebuild-only, :root[data-theme="dark"] #tip {
+            --kind-build: #3987e5;
+            --kind-redo: #d95926;
+            --kind-fix: #199e70;
+            --kind-refactor: #c98500;
+        }
+
+        #r-chart {
+            position: relative;
+            display: flex;
+            align-items: flex-end;
+            gap: 2px;
+            height: 180px;
+            padding-top: 16px;
+            border-bottom: 1px solid var(--sk-border-strong);
+        }
+
+        #r-chart .col {
+            flex: 1;
+            height: 100%;
+            display: flex;
+            flex-direction: column-reverse;
+            gap: 2px;
+            cursor: default;
+        }
+
+        #r-chart .seg {
+            width: 100%;
+            flex: none;
+            opacity: .85;
+        }
+
+        #r-chart .seg.top {
+            border-radius: 4px 4px 0 0;
+        }
+
+        #r-chart .col:hover .seg {
+            opacity: 1;
+        }
+
+        #r-chart-max {
+            position: absolute;
+            top: 0;
+            left: 0;
+            font-size: 70%;
+            color: var(--sk-text-faint);
+        }
+
+        #r-chart-axis {
+            display: flex;
+            justify-content: space-between;
+            font-size: 70%;
+            color: var(--sk-text-faint);
+            margin-top: 3px;
+        }
+
+        .kind-legend {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 4px 16px;
+            font-size: 80%;
+            color: var(--sk-text-muted);
+            margin: 6px 0 4px 0;
+        }
+
+        .kind-sw {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            border-radius: 2px;
+            margin-right: 5px;
+            vertical-align: -1px;
+        }
+
+        .action-button[aria-pressed="true"] {
+            background-color: var(--sk-accent-soft);
+            font-weight: 600;
+        }
+
         #tip {
             position: fixed;
             z-index: 10;
@@ -541,6 +637,19 @@
 
         <div id="rebuild" class="rebuild-only">
             <div class="cards" id="r-cards"></div>
+
+            <h3>Rebuild by period</h3>
+            <div class="toolbar" style="margin-bottom: 4px">
+                <button class="action-button" id="r-view-cumulative" aria-pressed="true" onclick="setPeriodView(true)">cumulative</button>
+                <button class="action-button" id="r-view-period" aria-pressed="false" onclick="setPeriodView(false)">per period</button>
+                <span class="small muted" id="r-periods-note"></span>
+            </div>
+            <div class="kind-legend" id="r-legend"></div>
+            <div id="r-chart"><span id="r-chart-max"></span></div>
+            <div id="r-chart-axis"></div>
+            <p class="small muted">A sequence, not a schedule: each period delivers the same share of the kept code, in many sessions. The totals are the model's;
+                how they spread over the periods is a simple profile — redoing is front-loaded (the uncertainty resolves as the work goes on),
+                fixing follows the lines built, and refactoring grows with the code already kept.</p>
 
             <h3>By kind of work</h3>
             <div class="scroll"><table class="grid" id="r-kinds"></table></div>
@@ -1097,6 +1206,7 @@
         html += card('Work', int(sessions.reduce((a, b) => a + b, 0)) + ' sessions', int(sessions[0]) + ' building · ' + int(sessions[1]) + ' redoing'
             + '<br>' + int(sessions[2]) + ' fixing · ' + int(sessions[3]) + ' refactoring');
         document.getElementById('r-cards').innerHTML = html;
+        renderPeriods();
 
         let kinds = '<tr><th>work</th><th>what</th><th class="num">sessions</th><th class="num">lines changed</th>'
             + '<th class="num">tokens (P50) <span class="cost">(cost)</span></th><th class="num">P10–P90</th><th class="num">share</th></tr>';
@@ -1147,6 +1257,94 @@
         document.getElementById('r-main-note').textContent = int(mainLinesOfCode) + (isLandscape ? ' in ' + int(repositories.length) + ' repositories' : '')
             + ', without comments and blank lines';
         document.getElementById('r-draws').textContent = int(R_DRAWS);
+    }
+
+    // ------------------------------------------------------------------------------- the rebuild per period
+
+    const PERIODS = 20;
+    const KIND_COLORS = ['var(--kind-build)', 'var(--kind-redo)', 'var(--kind-fix)', 'var(--kind-refactor)'];
+    let periodCumulative = true, periodData = [];
+
+    // How each kind of work spreads over the periods (shares summing to 1, so the totals stay the model's): building
+    // evenly, redoing front-loaded (the uncertainty resolves), fixing with the lines built (building + redoing), and
+    // refactoring with the code already kept.
+    function periodProfile() {
+        const normalize = w => {
+            const total = w.reduce((a, b) => a + b, 0);
+            return w.map(v => total ? v / total : 0);
+        };
+        const x = Array.from({length: PERIODS}, (_, i) => (i + 0.5) / PERIODS);
+        const build = normalize(x.map(() => 1));
+        const redo = normalize(x.map(v => 1 - v));
+        const lines = [quantiles(rebuild.kindLines[0]).p50, quantiles(rebuild.kindLines[1]).p50];
+        const fix = normalize(x.map((v, i) => build[i] * lines[0] + redo[i] * lines[1]));
+        const refactor = normalize(x.map(v => v));
+        return [build, redo, fix, refactor];
+    }
+
+    function setPeriodView(cumulative) {
+        periodCumulative = cumulative;
+        document.getElementById('r-view-period').setAttribute('aria-pressed', String(!cumulative));
+        document.getElementById('r-view-cumulative').setAttribute('aria-pressed', String(cumulative));
+        renderPeriods();
+    }
+
+    function renderPeriods() {
+        const profile = periodProfile();
+        // Each kind's P50, scaled so the kinds add up to the total's P50 (the headline card), which a sum of P50s does not.
+        const toTotal = (perKind, total) => {
+            const sum = perKind.reduce((x, y) => x + y, 0);
+            return perKind.map(v => sum ? v * total / sum : 0);
+        };
+        const tokens = toTotal(KINDS.map((k, i) => quantiles(rebuild.kindTokens[i]).p50), quantiles(rebuild.tokens).p50);
+        const costs = toTotal(KINDS.map((k, i) => quantiles(rebuild.kindCost[i]).p50), quantiles(rebuild.cost).p50);
+        const kept = quantiles(rebuild.kept).p50;
+        const sessions = KINDS.map((k, i) => quantiles(rebuild.kindSessions[i]).p50);
+        const running = KINDS.map(() => 0), runningCost = KINDS.map(() => 0);
+        let runningSessions = 0;
+        periodData = profile[0].map((_, i) => {
+            const own = KINDS.map((k, j) => tokens[j] * profile[j][i]), ownCost = KINDS.map((k, j) => costs[j] * profile[j][i]);
+            const ownSessions = KINDS.reduce((sum, k, j) => sum + sessions[j] * profile[j][i], 0);
+            runningSessions += ownSessions;
+            own.forEach((v, j) => { running[j] += v; runningCost[j] += ownCost[j]; });
+            return {own, ownCost, cumulative: running.slice(), cumulativeCost: runningCost.slice(), kept: kept * (i + 1) / PERIODS,
+                sessions: ownSessions, cumulativeSessions: runningSessions};
+        });
+        const values = d => periodCumulative ? d.cumulative : d.own;
+        const max = Math.max(0, ...periodData.map(d => values(d).reduce((a, b) => a + b, 0)));
+        let html = '<span id="r-chart-max">' + (max ? compact(max) + ' tokens' : '') + '</span>';
+        periodData.forEach((d, i) => {
+            const v = values(d);
+            const top = v.reduce((last, value, j) => value > 0 ? j : last, -1);
+            html += '<div class="col" onmousemove="periodTip(' + i + ', event)" onmouseleave="hideTip()">'
+                + v.map((value, j) => value > 0 ? '<div class="seg' + (j === top ? ' top' : '') + '" style="height: calc(' + (max ? 100 * value / max : 0)
+                    + '% - 2px); background: ' + KIND_COLORS[j] + '"></div>' : '').join('') + '</div>';
+        });
+        document.getElementById('r-chart').innerHTML = html;
+        document.getElementById('r-chart-axis').innerHTML = '<span>period 1</span><span>period ' + PERIODS + '</span>';
+        document.getElementById('r-legend').innerHTML = KINDS.map((kind, j) => '<span><i class="kind-sw" style="background: ' + KIND_COLORS[j] + '"></i>'
+            + kind[1] + '</span>').join('');
+        const allSessions = sessions.reduce((a, b) => a + b, 0);
+        document.getElementById('r-periods-note').textContent = PERIODS + ' periods of about ' + int(allSessions / PERIODS) + ' sessions ('
+            + int(allSessions) + ' in all), each delivering about ' + int(kept / PERIODS) + ' kept lines (P50 tokens)';
+    }
+
+    function periodTip(i, event) {
+        const d = periodData[i];
+        const v = periodCumulative ? d.cumulative : d.own, c = periodCumulative ? d.cumulativeCost : d.ownCost;
+        const total = v.reduce((a, b) => a + b, 0), totalCost = c.reduce((a, b) => a + b, 0);
+        const tip = document.getElementById('tip');
+        tip.innerHTML = '<b>Period ' + (i + 1) + ' of ' + PERIODS + (periodCumulative ? ' (cumulative)' : '') + '</b><br>'
+            + KINDS.map((kind, j) => j).reverse().filter(j => v[j] > 0).map(j => '<i class="kind-sw" style="background: ' + KIND_COLORS[j] + '"></i>'
+                + KINDS[j][1] + ': ' + tokensCell(v[j], c[j])).join('<br>')
+            + '<br><b>' + compact(total) + ' tokens</b> ' + costNote(totalCost)
+            + '<br>' + (periodCumulative ? int(d.cumulativeSessions) + ' sessions · ' : int(d.sessions) + ' sessions in this period<br>')
+            + int(d.kept) + ' kept lines so far'
+            + (periodCumulative ? '' : ' · ' + compact(d.cumulative.reduce((a, b) => a + b, 0)) + ' tokens so far');
+        tip.style.display = 'block';
+        const x = Math.min(event.clientX + 12, window.innerWidth - tip.offsetWidth - 8);
+        tip.style.left = Math.max(4, x) + 'px';
+        tip.style.top = (event.clientY + 14) + 'px';
     }
 
     function simulate() {

@@ -5,6 +5,14 @@ everything listed under the most recent date.
 
 ## 2026-10-07
 
+### AI Cost Estimator: the Naive Rebuild by period
+
+The Naive Rebuild tab has a new chart, **Rebuild by period**: the rebuild as a sequence of 20 periods, each
+delivering the same share of the kept code in many sessions, with stacked columns of tokens per kind of work (building, redoing, fixing,
+refactoring; cost in the tooltip, greyed out) and a cumulative (default) / per-period switch. The totals are the model's and
+the cumulative end equals the headline card; only their spread over the periods is a simple profile: redoing
+front-loaded, fixing following the lines built, refactoring growing with the code already kept. Nothing else changes.
+
 ### AI Cost Estimator: token counts first, costs as indicative
 
 Every place that showed an estimated cost now shows the estimated **tokens** (input + output) first, with the cost
