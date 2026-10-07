@@ -105,4 +105,19 @@ class SubScoreExplanationsTest {
         assertEquals("biggest drag: knowledge spread", HealthSummary.biggestDrag(score(volume, knowledge)));
         assertEquals("no sub-score holds it back", HealthSummary.biggestDrag(score(new SubScore("a", "A", 0, "", 10).withWeight(1))));
     }
+
+    @Test
+    void theCardShowsEachSubScoresWeight() {
+        assertEquals("×1", ReportHealthSection.weightText(1));
+        assertEquals("×1.5", ReportHealthSection.weightText(1.5));
+        assertEquals("×1.75", ReportHealthSection.weightText(1.75));
+        assertEquals("×0.25", ReportHealthSection.weightText(0.25));
+
+        MaintainabilityScores scores = new MaintainabilityScores();
+        scores.setHuman(score(new SubScore(MaintainabilityScoresAnalyzer.DUPLICATION, "Duplication", 4, "4%", 8.5).withWeight(1.75)));
+        scores.setAi(score(new SubScore(MaintainabilityScoresAnalyzer.DUPLICATION, "Duplication", 4, "4%", 8.5).withWeight(1)));
+        String html = ReportHealthSection.scoresCard(scores);
+        assertTrue(html.contains("<span class='sk-subscore-weight'>×1.75</span>"));
+        assertTrue(html.contains("<span class='sk-subscore-weight'>×1</span>"));
+    }
 }

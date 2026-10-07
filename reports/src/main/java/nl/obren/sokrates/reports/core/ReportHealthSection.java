@@ -85,7 +85,7 @@ public class ReportHealthSection {
             ".sk-score-context {font-size: 12px; color: var(--sk-text-muted); margin-bottom: 4px;}\n" +
             ".sk-score-partial {color: var(--sk-text); font-weight: 600;}\n" +
             ".sk-subscores {list-style: none; margin: 0; padding: 0;}\n" +
-            ".sk-subscore {display: grid; grid-template-columns: 128px 1fr 32px 36px; grid-template-rows: auto auto; align-items: center; " +
+            ".sk-subscore {display: grid; grid-template-columns: 128px 1fr 32px 44px 36px; grid-template-rows: auto auto; align-items: center; " +
             "column-gap: 8px; padding: 5px 0; font-size: 13px;}\n" +
             ".sk-subscore-label {font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;}\n" +
             ".sk-subscore-bar {height: 6px; border-radius: 3px; background: var(--sk-surface-3); overflow: hidden;}\n" +
@@ -93,6 +93,7 @@ public class ReportHealthSection {
             ".sk-subscore-good {background: var(--sk-risk-negligible, #1a9641);}\n" +
             ".sk-subscore-watch {background: var(--sk-risk-high, #fdae61);}\n" +
             ".sk-subscore-high {background: var(--sk-risk-very-high, #d7191c);}\n" +
+            ".sk-subscore-weight {text-align: right; font-size: 12px; color: var(--sk-text-faint); font-variant-numeric: tabular-nums; white-space: nowrap;}\n" +
             ".sk-subscore-value {text-align: right; font-variant-numeric: tabular-nums;}\n" +
             ".sk-subscore-drag {text-align: right; font-size: 12px; color: var(--sk-deleted); font-variant-numeric: tabular-nums;}\n" +
             ".sk-subscore-measure {grid-column: 1 / -1; font-size: 12px; color: var(--sk-text-muted);}\n" +
@@ -283,6 +284,7 @@ public class ReportHealthSection {
             html.append("<span class='sk-subscore-bar'><span class='sk-subscore-").append(HealthSummary.scoreStatus(subScore.getScore()).getLabel())
                     .append("' style='width: ").append(Math.max(2, width)).append("%'></span></span>");
             html.append(String.format(Locale.US, "<span class='sk-subscore-value'>%.1f</span>", subScore.getScore()));
+            html.append("<span class='sk-subscore-weight'>").append(weightText(subScore.getWeight())).append("</span>");
             html.append("<span class='sk-subscore-drag'>").append(subScore.getDrag() > 0 ? String.format(Locale.US, "−%.1f", subScore.getDrag()) : "").append("</span>");
             html.append("<span class='sk-subscore-measure'>").append(HtmlEscapeUtils.escape(subScore.getMeasureText())).append("</span>");
             html.append("</div>");
@@ -297,6 +299,11 @@ public class ReportHealthSection {
         }
         html.append("</ul></div>");
         return html.toString();
+    }
+
+    // A sub-score's weight in its total, shown as a multiplier without trailing zeros: ×1, ×1.5, ×1.75.
+    static String weightText(double weight) {
+        return "×" + new java.math.BigDecimal(String.format(Locale.US, "%.2f", weight)).stripTrailingZeros().toPlainString();
     }
 
     static String hotspotsCard(List<HealthSummary.Hotspot> hotspots, boolean history, boolean viewerLinks) {
