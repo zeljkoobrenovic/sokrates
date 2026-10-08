@@ -67,7 +67,7 @@ public class SubScoreExplanations {
                 "Complex files concentrate risk: understanding one means keeping many paths in mind.",
                 "Much to read and much logic to get right in one place: the costliest combination for an agent."));
         why.put(TEST_CODE, new Why(
-                "A test suite documents the intended behaviour and makes changes safe. Counted is whether there is one of reasonable size, not its coverage.",
+                "A test suite documents the intended behaviour and makes changes safe. Counted is the size of the test code next to the main code, not its coverage: full marks from about half the main code.",
                 "Tests let an agent check its own work; without them its mistakes surface later, in review or in production."));
         why.put(CHANGE_ENTROPY, new Why(
                 "When a typical change touches many components, every task needs knowledge of many parts, and the boundaries do not match how the code changes.",
