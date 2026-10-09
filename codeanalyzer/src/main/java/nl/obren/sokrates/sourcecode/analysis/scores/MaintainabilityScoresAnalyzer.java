@@ -33,8 +33,12 @@ import java.util.function.Function;
  * whose analysis did not run (no units, no history, no duplication) is left out and
  * the weights of the others carry the score. The two scores weigh the same sub-scores differently
  * ({@link #HUMAN_WEIGHTS}, {@link #AI_WEIGHTS}): people struggle most with complex logic and with knowledge held
- * by one person; an agent pays for every line it reads (large files, scattered changes, the lines read per
- * change), copies duplicates, and needs tests to check its work.
+ * by one person; an agent pays for the places a change touches and the window it reads around each of them
+ * (scattered changes, the lines read per change), copies duplicates, and needs tests to check its work. Unit and
+ * file length below an agent's read budget do not count in the AI score: a controlled experiment (the same tasks
+ * on a codebase and on a twin with every file under 500 LOC and every unit under 50 lines) measured no difference
+ * in what the agent spent — it finds the place by search and reads a window, whatever the length of the file. Only
+ * files beyond one read ({@link #AGENT_READ_BUDGET_LINES} physical lines) count, as {@link #FILE_READ_BUDGET}.
  * <p>
  * The total is the weighted geometric mean of the sub-scores (so a strong sub-score cannot hide a weak one the
  * way an average would), with a soft weakest-link cap: of what the mean rises above the weakest sub-score about the
@@ -53,6 +57,8 @@ public class MaintainabilityScoresAnalyzer {
     public static final String UNIT_SIZE = "unitSize";
     public static final String UNIT_COMPLEXITY = "unitComplexity";
     public static final String FILE_SIZE = "fileSize";
+    /** Share of main code in files longer than an agent reads in one call (physical lines); the AI score's file measure. */
+    public static final String FILE_READ_BUDGET = "fileReadBudget";
     public static final String FILE_COMPLEXITY = "fileComplexity";
     public static final String TEST_CODE = "testCode";
     public static final String CHANGE_ENTROPY = "changeEntropy";
@@ -60,13 +66,25 @@ public class MaintainabilityScoresAnalyzer {
     public static final String KNOWLEDGE = "knowledge";
 
     public static final List<String> KEYS = Arrays.asList(VOLUME, DUPLICATION, UNIT_SIZE, UNIT_COMPLEXITY, FILE_SIZE,
-            FILE_COMPLEXITY, TEST_CODE, CHANGE_ENTROPY, CONTEXT_PER_CHANGE, KNOWLEDGE);
+            FILE_READ_BUDGET, FILE_COMPLEXITY, TEST_CODE, CHANGE_ENTROPY, CONTEXT_PER_CHANGE, KNOWLEDGE);
 
     public static final Map<String, String> LABELS = labels("Volume", "Duplication", "Unit size", "Unit complexity", "File size",
-            "File complexity", "Tests presence", "Change entropy", "Context per change", "Knowledge spread");
+            "Files beyond read budget", "File complexity", "Tests presence", "Change entropy", "Context per change", "Knowledge spread");
 
-    public static final Map<String, Double> HUMAN_WEIGHTS = weights(1, 1, 1.5, 2, 0.75, 1, 0.75, 1, 0.5, 1.5);
-    public static final Map<String, Double> AI_WEIGHTS = weights(0.75, 1.5, 1, 1, 1.75, 0.75, 1.5, 1.5, 2, 0);
+    // volume, duplication, unitSize, unitComplexity, fileSize, fileReadBudget, fileComplexity, testCode, changeEntropy,
+    // contextPerChange, knowledge
+    public static final Map<String, Double> HUMAN_WEIGHTS = weights(1, 1, 1.5, 2, 0.75, 0, 1, 0.75, 1, 0.5, 1.5);
+    public static final Map<String, Double> AI_WEIGHTS = weights(0.75, 1.5, 0, 1, 0, 0.75, 0.75, 1.5, 1.5, 2, 0);
+
+    /** The lines an agent gets from one file read (Claude Code's Read tool pages at 2,000); a longer file costs paging. */
+    public static final int AGENT_READ_BUDGET_LINES = 2_000;
+    /** Only files with more code than this are counted in physical lines for the read budget (the others cannot exceed it). */
+    static final int READ_BUDGET_CANDIDATE_LOC = 500;
+    /**
+     * What an agent reads of a file a change touches: a window around the place, not the file. Measured windows were
+     * 40–70 lines for a model that searches and a few hundred for one that reads whole files; 200 is the middle.
+     */
+    public static final int CONTEXT_WINDOW_LINES = 200;
 
     static final double WEAKEST_LINK_MARGIN = 4;
     // The share of the excess above the weakest link + margin that the cap removes (1 = hard cap, 0 = none).
@@ -84,6 +102,8 @@ public class MaintainabilityScoresAnalyzer {
     static final double[][] UNIT_SIZE_ANCHORS = {{0, 10}, {10, 8}, {25, 5}, {50, 2}, {75, 0}};
     static final double[][] UNIT_COMPLEXITY_ANCHORS = {{0, 10}, {5, 8}, {15, 5}, {30, 2}, {50, 0}};
     static final double[][] FILE_SIZE_ANCHORS = {{0, 10}, {10, 8}, {30, 5}, {50, 2}, {75, 0}};
+    // Share of main code in files beyond the read budget: steeper than file size, as one such file costs paging on every change.
+    static final double[][] FILE_READ_BUDGET_ANCHORS = {{0, 10}, {5, 8}, {15, 5}, {30, 2}, {50, 0}};
     static final double[][] FILE_COMPLEXITY_ANCHORS = {{0, 10}, {10, 8}, {25, 5}, {50, 2}, {75, 0}};
     // Test code relative to the main code, not coverage (which reading the code cannot tell): no tests 1, 5% 5, 10% 3,
     // 30% 5, full marks from 50% of the main code; more test code earns nothing more.
@@ -178,6 +198,15 @@ public class MaintainabilityScoresAnalyzer {
         }
         RiskDistributionStats fileSize = results.getFilesAnalysisResults().getOverallFileSizeDistribution();
         addShare(measured, FILE_SIZE, LABELS.get(FILE_SIZE), fileSize, fileSize == null ? "" : "of main code in files > " + fileSize.getHighRiskThreshold() + " lines", FILE_SIZE_ANCHORS);
+        if (fileSize != null && fileSize.getTotalValue() > 0) {
+            List<SourceFile> mainFiles = results.getMainAspectAnalysisResults().getAspect() == null
+                    ? Collections.emptyList() : results.getMainAspectAnalysisResults().getAspect().getSourceFiles();
+            ReadBudgetShare share = readBudgetShare(mainFiles, f -> f.getLines().size());
+            measured.add(new SubScore(FILE_READ_BUDGET, LABELS.get(FILE_READ_BUDGET), share.percentage,
+                    percentage(share.percentage) + " of main code in " + share.files + (share.files == 1 ? " file" : " files")
+                            + String.format(Locale.US, " > %,d lines", AGENT_READ_BUDGET_LINES),
+                    interpolate(share.percentage, FILE_READ_BUDGET_ANCHORS)));
+        }
         RiskDistributionStats fileComplexity = results.getFilesAnalysisResults().getOverallFileComplexityDistribution();
         addShare(measured, FILE_COMPLEXITY, LABELS.get(FILE_COMPLEXITY), fileComplexity, fileComplexity == null ? "" : "of main code in files with McCabe sum > " + fileComplexity.getHighRiskThreshold(), FILE_COMPLEXITY_ANCHORS);
 
@@ -192,8 +221,8 @@ public class MaintainabilityScoresAnalyzer {
                     String.format(Locale.US, "%.2f bits per change across %s (past year)", changes.entropy, changes.componentsLabel),
                     interpolate(changes.entropy, CHANGE_ENTROPY_ANCHORS)));
             measured.add(new SubScore(CONTEXT_PER_CHANGE, LABELS.get(CONTEXT_PER_CHANGE), changes.contextLines,
-                    String.format(Locale.US, "~%,d lines (~%,d tokens) read per change (past year)",
-                            Math.round(changes.contextLines), Math.round(changes.contextLines * 10)),
+                    String.format(Locale.US, "~%,d lines (~%,d tokens) read per change (past year; at most %,d per touched file)",
+                            Math.round(changes.contextLines), Math.round(changes.contextLines * 10), CONTEXT_WINDOW_LINES),
                     interpolate(changes.contextLines, CONTEXT_ANCHORS)));
         }
 
@@ -341,6 +370,31 @@ public class MaintainabilityScoresAnalyzer {
                 ? String.format(Locale.US, "%,d", (long) value) : String.format(Locale.US, "%,.2f", value);
     }
 
+    static class ReadBudgetShare {
+        double percentage;
+        int files;
+    }
+
+    /**
+     * The share (%) of the main lines of code in files with more than {@link #AGENT_READ_BUDGET_LINES} physical lines,
+     * and how many such files. Physical lines (comments and blanks included, as an agent reads them) are counted
+     * only for files with more than {@link #READ_BUDGET_CANDIDATE_LOC} lines of code, through {@code physicalLines}.
+     */
+    static ReadBudgetShare readBudgetShare(List<SourceFile> mainFiles, java.util.function.ToIntFunction<SourceFile> physicalLines) {
+        ReadBudgetShare share = new ReadBudgetShare();
+        long total = 0;
+        long beyond = 0;
+        for (SourceFile file : mainFiles) {
+            total += file.getLinesOfCode();
+            if (file.getLinesOfCode() > READ_BUDGET_CANDIDATE_LOC && physicalLines.applyAsInt(file) > AGENT_READ_BUDGET_LINES) {
+                beyond += file.getLinesOfCode();
+                share.files++;
+            }
+        }
+        share.percentage = total > 0 ? 100.0 * beyond / total : 0;
+        return share;
+    }
+
     private static void addShare(List<SubScore> measured, String key, String label, RiskDistributionStats stats, String text, double[][] anchors) {
         if (stats == null || stats.getTotalValue() <= 0) {
             return;
@@ -389,8 +443,9 @@ public class MaintainabilityScoresAnalyzer {
     /**
      * Groups the main files' changes of the past year by commit (bots and bulk commits left out) and returns the
      * mean Shannon entropy (bits) of each commit's files over their components — 0 when a change stays in one
-     * component, 1 when it is split evenly over two — and the mean current lines of code of the files a commit
-     * touched, what a change makes one read.
+     * component, 1 when it is split evenly over two — and the mean lines a change makes one read: per touched file
+     * its current lines of code, at most {@link #CONTEXT_WINDOW_LINES} (an agent reads a window around the place,
+     * not the file, so a change to a long file costs no more than one to a short file above the window).
      */
     static ChangeStats changeStats(List<SourceFile> mainFiles, Function<SourceFile, String> componentOf, Set<String> bots) {
         Map<String, List<SourceFile>> filesByCommit = new HashMap<>();
@@ -418,7 +473,7 @@ public class MaintainabilityScoresAnalyzer {
             Map<String, Integer> perComponent = new HashMap<>();
             files.forEach(f -> perComponent.merge(componentOf.apply(f), 1, Integer::sum));
             entropySum += entropy(perComponent.values(), files.size());
-            linesSum += files.stream().mapToInt(SourceFile::getLinesOfCode).sum();
+            linesSum += files.stream().mapToInt(f -> Math.min(f.getLinesOfCode(), CONTEXT_WINDOW_LINES)).sum();
             stats.commits++;
         }
         if (stats.commits > 0) {

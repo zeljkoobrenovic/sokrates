@@ -3,6 +3,31 @@
 User-visible behaviour changes, newest first. `:latest` of the Docker image and the `master` branch carry
 everything listed under the most recent date.
 
+## 2026-10-09
+
+### AI ease of change: length below the read budget no longer counts
+
+A controlled experiment (the same twelve changes, made repeatedly by a coding agent on a codebase and on a twin with
+every file under 500 LOC and every unit under 50 lines, with controls and acceptance tests) measured no difference in
+the agent's tokens, turns or cost: it finds the place by search and reads a window around it, whatever the length of
+the file. The AI score follows the measurement:
+
+- `unitSize` and `fileSize` (the 500-LOC share) have AI weight **0** (were 1 and 1.75); they stay in the Human score.
+- New sub-score **`fileReadBudget`** ("Files beyond read budget", AI weight 0.75, Human 0): the share of main code
+  in files of more than 2,000 physical lines, what an agent cannot take in with one read (counted for files over
+  500 LOC). Anchors: 0% 10, 5% 8, 15% 5, 30% 2, 50% 0.
+- `contextPerChange` counts at most 200 lines per touched file (a window around the place, not the file), so it
+  no longer rises for a change to a long file; the `AI_CONTEXT_LINES_PER_CHANGE` metric follows.
+- The "why it matters for AI agents" texts of these sub-scores say what was measured.
+
+AI scores change on the next analysis (a repository whose long files are all below 2,000 lines scores higher; one
+with files beyond the budget may score lower); Human scores move only through `contextPerChange` (weight 0.5),
+usually by a tenth. On the experiment's two variants the AI score went from 6.6 / 7.7 (original / split) to
+7.2 / 7.3, and the predicted context per change from 1,690 / 774 lines to 571 / 552, in line with the measured
+cost, which was the same for both. A custom framework is not affected;
+`aiWeights: {"unitSize": 1, "fileSize": 1.75}` restores the old weighting. The experiment and its data are in the
+separate `sokrates-size-experiment` repository.
+
 ## 2026-10-07
 
 ### Ease of change: "Tests presence" and a new test-code curve

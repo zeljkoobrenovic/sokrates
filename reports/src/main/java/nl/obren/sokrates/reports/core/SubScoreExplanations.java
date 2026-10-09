@@ -56,16 +56,19 @@ public class SubScoreExplanations {
                 "Agents copy the patterns they find, so duplicates multiply; a change to one copy misses the others, and every copy costs context."));
         why.put(UNIT_SIZE, new Why(
                 "Long functions do many things at once: they are hard to name, read, test and reuse.",
-                "To change one line, an agent reads and often rewrites the whole function: bigger edits, more tokens, more breakage."));
+                "Not in the AI rating by default: a controlled experiment measured no extra cost for an agent in units of 50 to 130 lines. It finds the line by search and reads a window around it; the rest of the function is not read for a local change."));
         why.put(UNIT_COMPLEXITY, new Why(
                 "Every branch is another path to understand and test; complex logic is where mistakes are made and missed in review.",
-                "Nested conditions are where generated changes break edge cases; complex units need more tests and review before an agent's change can be trusted."));
+                "Nested conditions are where generated changes break edge cases; complex units need more tests and review before an agent's change can be trusted. Kept at a modest weight: this is reasoning about correctness, not a measured token cost."));
         why.put(FILE_SIZE, new Why(
                 "Large files are hard to navigate, mix responsibilities and attract merge conflicts.",
-                "Agents read whole files into their context: every change to a large file costs many tokens and crowds out other relevant code."));
+                "Not in the AI rating by default: a controlled experiment measured no difference in an agent's tokens between files of 500 to 1,800 lines and the same code split under 500. An agent does not read the file; it searches and reads a window. Files beyond one read are counted separately."));
+        why.put(FILE_READ_BUDGET, new Why(
+                "Files of thousands of lines are where people get lost; they are also what an agent cannot take in at once.",
+                "A file longer than one read (2,000 lines) has to be paged or read blind on every change, and a search in it returns many hits. The one published saving from splitting a file came from a 17,000-line file; below one read none was measured."));
         why.put(FILE_COMPLEXITY, new Why(
                 "Complex files concentrate risk: understanding one means keeping many paths in mind.",
-                "Much to read and much logic to get right in one place: the costliest combination for an agent."));
+                "Much logic to get right in one place; kept at a modest weight, as it is reasoning about correctness rather than a measured token cost."));
         why.put(TEST_CODE, new Why(
                 "A test suite documents the intended behaviour and makes changes safe. Counted is the size of the test code next to the main code, not its coverage: full marks from about half the main code.",
                 "Tests let an agent check its own work; without them its mistakes surface later, in review or in production."));
@@ -74,7 +77,7 @@ public class SubScoreExplanations {
                 "Scattered changes make an agent find and load many places per task; each extra component adds context and another place to miss."));
         why.put(CONTEXT_PER_CHANGE, new Why(
                 "The code people look at around a change: the more there is, the slower the change and its review.",
-                "Lines read per change drive an agent's token cost and accuracy: the more it reads, the costlier and more error-prone each task."));
+                "What a change makes an agent read: a window of up to 200 lines around each place it touches. Measured runs show the bill follows the number of places and turns, not the length of the files, so a change spread over many files is the costly one."));
         why.put(KNOWLEDGE, new Why(
                 "When a few people make most changes, the knowledge sits with them: their absence slows everyone, and reviews and onboarding depend on them.",
                 "Not in the AI rating by default: an agent reads the code, not people's memory, though it gains when that knowledge is written down."));

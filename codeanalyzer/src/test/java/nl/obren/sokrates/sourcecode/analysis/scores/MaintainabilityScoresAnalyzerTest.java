@@ -93,6 +93,33 @@ class MaintainabilityScoresAnalyzerTest {
         assertEquals(MaintainabilityScoresAnalyzer.KEYS, new ArrayList<>(MaintainabilityScoresAnalyzer.AI_WEIGHTS.keySet()));
         assertTrue(MaintainabilityScoresAnalyzer.AI_WEIGHTS.get("contextPerChange") > MaintainabilityScoresAnalyzer.HUMAN_WEIGHTS.get("contextPerChange"));
         assertTrue(MaintainabilityScoresAnalyzer.HUMAN_WEIGHTS.get("knowledge") > MaintainabilityScoresAnalyzer.AI_WEIGHTS.get("knowledge"));
+        // length below the read budget is not an agent cost (measured): unit size and the 500-LOC file size are out of the AI score
+        assertEquals(0.0, MaintainabilityScoresAnalyzer.AI_WEIGHTS.get("unitSize"));
+        assertEquals(0.0, MaintainabilityScoresAnalyzer.AI_WEIGHTS.get("fileSize"));
+        assertTrue(MaintainabilityScoresAnalyzer.AI_WEIGHTS.get("fileReadBudget") > 0);
+        assertEquals(0.0, MaintainabilityScoresAnalyzer.HUMAN_WEIGHTS.get("fileReadBudget"));
+        assertFalse(MaintainabilityScoresAnalyzer.expectedSubScores(MaintainabilityScoresAnalyzer.AI_WEIGHTS).containsKey("unitSize"));
+        assertTrue(MaintainabilityScoresAnalyzer.expectedSubScores(MaintainabilityScoresAnalyzer.HUMAN_WEIGHTS).containsKey("unitSize"));
+    }
+
+    @Test
+    void readBudgetShareCountsCodeInFilesLongerThanOneRead() {
+        // physical lines are looked up only for files over 500 LOC; a 1,500-LOC file of 2,600 lines is beyond the budget
+        SourceFile small = file("a/Small.java", 400);
+        SourceFile medium = file("a/Medium.java", 600);
+        SourceFile huge = file("a/Huge.java", 1500);
+        Map<String, Integer> physical = new HashMap<>();
+        physical.put("a/Medium.java", 900);
+        physical.put("a/Huge.java", 2600);
+        List<String> lookedUp = new ArrayList<>();
+
+        MaintainabilityScoresAnalyzer.ReadBudgetShare share = MaintainabilityScoresAnalyzer.readBudgetShare(
+                Arrays.asList(small, medium, huge), f -> { lookedUp.add(f.getRelativePath()); return physical.get(f.getRelativePath()); });
+
+        assertEquals(1, share.files);
+        assertEquals(60.0, share.percentage, 1e-9);
+        assertEquals(Arrays.asList("a/Medium.java", "a/Huge.java"), lookedUp);
+        assertEquals(0.0, MaintainabilityScoresAnalyzer.readBudgetShare(Collections.emptyList(), f -> 0).percentage);
     }
 
     @Test
@@ -104,8 +131,8 @@ class MaintainabilityScoresAnalyzerTest {
 
     @Test
     void changeStatsMeasureEntropyOverComponentsAndLinesReadPerChange() {
-        // c1 stays in one component (entropy 0, 300 lines), c2 is split evenly over two (entropy 1, 400 lines),
-        // c3 is too old, c4 is a bot's
+        // c1 stays in one component (entropy 0, 300 lines), c2 is split evenly over two (entropy 1, 100 + 300 lines,
+        // the 300 capped at the 200-line window), c3 is too old, c4 is a bot's
         SourceFile a1 = file("a/One.java", 100, "c1:2026-09-01:x@a", "c2:2026-09-02:x@a", "c3:2024-01-01:x@a");
         SourceFile a2 = file("a/Two.java", 200, "c1:2026-09-01:x@a", "c4:2026-09-03:bot@a");
         SourceFile b1 = file("b/Three.java", 300, "c2:2026-09-02:x@a");
@@ -115,7 +142,7 @@ class MaintainabilityScoresAnalyzerTest {
 
         assertEquals(2, stats.commits);
         assertEquals(0.5, stats.entropy, 1e-9);
-        assertEquals(350, stats.contextLines, 1e-9);
+        assertEquals(300, stats.contextLines, 1e-9);
     }
 
     private static SourceFile file(String path, int loc, String... commits) {
@@ -255,12 +282,12 @@ class MaintainabilityScoresAnalyzerTest {
                 new SubScore(MaintainabilityScoresAnalyzer.KNOWLEDGE, "Knowledge spread", 0, "", 5));
         MaintainabilityScore ai = MaintainabilityScoresAnalyzer.combine(measured, MaintainabilityScoresAnalyzer.AI_WEIGHTS);
         MaintainabilityScoresAnalyzer.setCoverage(ai, MaintainabilityScoresAnalyzer.expectedSubScores(MaintainabilityScoresAnalyzer.AI_WEIGHTS));
-        // knowledge has AI weight 0: 9 sub-scores count, only volume was measured
-        assertEquals(9, ai.getSubScoresTotal());
-        assertEquals("1/9", ai.getCoverageShort());
+        // knowledge, unit size and file size have AI weight 0: 8 sub-scores count, only volume was measured
+        assertEquals(8, ai.getSubScoresTotal());
+        assertEquals("1/8", ai.getCoverageShort());
         assertFalse(ai.isFullyMeasured());
         assertEquals("Duplication", ai.getNotMeasured().get(0));
-        assertTrue(ai.getCoverageText().startsWith("measured on 1 of 9 sub-scores (not measured: Duplication, Unit size,"));
+        assertTrue(ai.getCoverageText().startsWith("measured on 1 of 8 sub-scores (not measured: Duplication, Unit complexity, Files beyond read budget,"));
 
         ScoreFrameworkConfig config = new ScoreFrameworkConfig();
         config.getSubScores().add(new ScoreFrameworkConfig.SubScoreConfig(MaintainabilityScoresAnalyzer.VOLUME, 1, 0));
