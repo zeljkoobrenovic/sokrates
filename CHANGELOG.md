@@ -28,6 +28,14 @@ cost, which was the same for both. A custom framework is not affected;
 `aiWeights: {"unitSize": 1, "fileSize": 1.75}` restores the old weighting. The experiment and its data are in the
 separate `sokrates-size-experiment` repository.
 
+### AI Cost Estimator*: the Refactoring savings card is removed
+
+The Historical tab no longer has the **Refactoring savings** card or its Assumptions group ("max file size",
+"carry-over"); the Model diagram loses its savings branch. The card assumed that smaller files mean fewer read
+tokens, which the size experiment above did not find. The repositories' `aiCostEstimator.json` no longer carries
+the per-file read sizes in each session or `editedFileLines`. Older data still loads: the page ignores the extra values.
+The estimates themselves do not change.
+
 ## 2026-10-07
 
 ### Ease of change: "Tests presence" and a new test-code curve

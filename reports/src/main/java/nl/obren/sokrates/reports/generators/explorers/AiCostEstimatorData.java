@@ -22,18 +22,6 @@ public class AiCostEstimatorData {
     // Total lines (comments and blank lines included, like git's line counts) of the analyzed scopes' current files: with
     // the lines the history added, it tells how much work was redone in hindsight. Landscape: repositories with history data.
     private long linesInScopes = 0;
-    // The current total lines of each file the estimated history edited (still in the codebase): the Refactoring ROI
-    // prices splitting the ones above the max file size.
-    private List<Integer> editedFileLines = new ArrayList<>();
-
-    public List<Integer> getEditedFileLines() {
-        return editedFileLines;
-    }
-
-    public void setEditedFileLines(List<Integer> editedFileLines) {
-        this.editedFileLines = editedFileLines;
-    }
-
     public long getLinesInScopes() {
         return linesInScopes;
     }

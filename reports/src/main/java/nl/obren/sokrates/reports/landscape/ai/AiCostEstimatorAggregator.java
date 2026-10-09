@@ -104,7 +104,6 @@ public class AiCostEstimatorAggregator {
             }
             merged.getNoise().add(repository.getNoise());
             merged.setLinesInScopes(merged.getLinesInScopes() + repository.getLinesInScopes());
-            merged.getEditedFileLines().addAll(repository.getEditedFileLines());
             merged.setTotalCommitsCount(merged.getTotalCommitsCount() + repository.getTotalCommitsCount());
             merged.setKeptCommitsCount(merged.getKeptCommitsCount() + repository.getKeptCommitsCount());
             merged.setAnalyzedCommitsCount(merged.getAnalyzedCommitsCount() + repository.getAnalyzedCommitsCount());

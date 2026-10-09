@@ -65,11 +65,9 @@ class AiCostEstimatorGeneratorTest {
         assertEquals(3, first.getEditDeleted());
         // One session; the big file's read is capped at 2,000 lines.
         assertEquals(1, first.getSessions().size());
-        assertArrayEquals(new int[]{2, 2000 + 100, 20, 3, 0, 2000, 100}, first.getSessions().get(0), "per-file reads appended");
+        assertArrayEquals(new int[]{2, 2000 + 100, 20, 3, 0}, first.getSessions().get(0));
         assertEquals(AiCostEstimatorGenerator.TYPE_FIX, first.getType());
         assertEquals(2, data.getAuthors().size());
-        // The current total lines of the files the history edited (sorted by path: Big, Other, Small).
-        assertEquals(Arrays.asList(5000, 300, 100), data.getEditedFileLines());
     }
 
     @Test

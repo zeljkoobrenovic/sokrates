@@ -338,14 +338,6 @@ public class AiCostEstimatorGenerator {
             addCommit(task, commit, author);
         }
 
-        Set<String> edited = new TreeSet<>();
-        tasks.forEach(builder -> builder.work.forEach((lower, work) -> {
-            if (work.kind != DELETE && currentSize.containsKey(lower)) {
-                edited.add(lower);
-            }
-        }));
-        edited.forEach(lower -> data.getEditedFileLines().add(currentSize.get(lower)));
-
         tasks.forEach(builder -> {
             finish(builder, currentSize, sizeProxy);
             if (builder.task.churn() > 0) {
@@ -455,7 +447,6 @@ public class AiCostEstimatorGenerator {
         AiCostEstimatorData.Task task = builder.task;
         int[] session = null;
         List<int[]> sessions = new ArrayList<>();
-        List<List<Integer>> fileReads = new ArrayList<>();
         int files = 0;
         for (FileWork work : builder.work.values()) {
             if (work.kind == DELETE) {
@@ -485,13 +476,9 @@ public class AiCostEstimatorGenerator {
                 if (session == null || session[0] + 1 > SESSION_MAX_FILES || session[2] + session[3] + session[4] + partChurn > SESSION_MAX_CHURN) {
                     session = new int[5];
                     sessions.add(session);
-                    fileReads.add(new ArrayList<>());
                 }
                 session[0]++;
                 session[1] += readLines;
-                if (readLines > 0) {
-                    fileReads.get(fileReads.size() - 1).add(readLines);
-                }
                 if (work.kind == NEW) {
                     session[4] += added;
                 } else {
@@ -500,17 +487,8 @@ public class AiCostEstimatorGenerator {
                 }
             }
         }
-        // [files, readLines, editAdded, editDeleted, newLines, then the read lines of each edited file] - the
-        // per-file sizes let the page cap them (the Refactoring ROI: what reads would cost with smaller files).
-        for (int i = 0; i < sessions.size(); i++) {
-            int[] totals = sessions.get(i);
-            List<Integer> reads = fileReads.get(i);
-            int[] full = Arrays.copyOf(totals, 5 + reads.size());
-            for (int r = 0; r < reads.size(); r++) {
-                full[5 + r] = reads.get(r);
-            }
-            task.getSessions().add(full);
-        }
+        // [files, readLines, editAdded, editDeleted, newLines]
+        task.getSessions().addAll(sessions);
         task.setFiles(files);
         task.setType(typeOf(task));
     }

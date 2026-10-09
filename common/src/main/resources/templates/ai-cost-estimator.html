@@ -687,8 +687,6 @@
                     × amplification. New files are written, not read; deleted files are free.</li>
                 <li><b>Output:</b> changed lines × tokens per line × write overhead, plus output per step.</li>
                 <li><b>Cost:</b> new context at the cache-write price, re-sent context at the cache-read price (misses at the input price), output at the output price.</li>
-                <li><b>Refactoring savings:</b> files capped at the max file size (1,200 lines count as 400, 330 as 330; same files and commits). Read tokens drop,
-                    and a carry-over share of the rest drops by the same ratio. Excludes the refactoring itself; optimistic when a change needs several parts of a split file.</li>
                 <li><b>Task type</b> groups the results: <i>new code</i> (mostly new files), <i>refactoring</i> (broad, deletes about as much as it adds),
                     <i>fix</i> (at most 60 lines in 3 files), <i>feature</i> (the rest). Only fixes change the model.</li>
                 <li><b>A range, not a measurement:</b> git cannot see the agent, so steps, tool output, output per step and cache misses are assumed;
@@ -766,11 +764,7 @@
             ['reason', 'output per step', 150, 600, '', 50, 'Reasoning and messages, besides code.'],
             ['edit', 'write overhead', 1.3, 2.5, '×', 0.1, 'Per changed line: edits repeat old text and context.'],
             ['miss', 'cache misses', 5, 20, '%', 1, 'Share of re-sent context at the input price.']
-        ]],
-        ['Refactoring savings', [
-            ['max-file', 'max file size', 400, null, '', 50, 'Lines; larger files count as this size, as if split.'],
-            ['carry', 'carry-over', 25, 75, '%', 5, 'Share of the read saving carried to other tokens (fewer steps, less tool output); 0% = reads only.']
-        ], 'historical']
+        ]]
     ];
     // Configured assumptions (analysis.estimateAssumptions, when enabled): id -> number, [min, max] or text.
     // They replace the built-in defaults, and the viewer's changes are then remembered per configuration.
@@ -1088,16 +1082,6 @@
     // Draws per task: enough for stable P10/P90 while the arrays stay small on big histories.
     const DRAWS = Math.max(40, Math.min(200, Math.floor(3000000 / Math.max(1, tasks.length))));
     let costs = new Float32Array(0), inputs = new Float32Array(0), cached = new Float32Array(0), outputs = new Float32Array(0);
-    // The refactoring savings per task and draw: the cost with every file read capped (only the read tokens change), and
-    // per draw the carry-over share.
-    let cappedCosts = new Float32Array(0), cappedTokens = new Float32Array(0), carryDraws = new Float64Array(0);
-    // A session's read lines with each file capped (sessions carry the per-file reads after the five totals).
-    function cappedRead(s, cap) {
-        if (s.length <= 5) return s[1];
-        let sum = 0;
-        for (let i = 5; i < s.length; i++) sum += Math.min(s[i], cap);
-        return sum;
-    }
 
     // One session's tokens and cost for one draw of the priors (theta): every step re-sends the context.
     function session(s, theta, prices, debug) {
@@ -1356,32 +1340,16 @@
         const price = prices();
         const n = tasks.length;
         costs = new Float32Array(n * DRAWS);
-        const cap = Math.max(1, num('max-file'));
-        const capped = tasks.map(task => task.sessions.map(s => [s[0], cappedRead(s, cap), s[2], s[3], s[4]]));
-        tasks.forEach((task, t) => task.cappedReadLines = capped[t].reduce((sum, s) => sum + s[1], 0));
-        cappedCosts = new Float32Array(n * DRAWS);
-        cappedTokens = new Float32Array(n * DRAWS);
-        carryDraws = new Float64Array(DRAWS);
-        // A separate random stream, so the carry-over does not shift the other draws.
-        const carryRandom = mulberry32(99);
-        const carryDraw = id => {
-            const r = range(id);
-            return r[0] + (r[1] - r[0]) * carryRandom();
-        };
         inputs = new Float32Array(n * DRAWS);
         cached = new Float32Array(n * DRAWS);
         outputs = new Float32Array(n * DRAWS);
         for (let d = 0; d < DRAWS; d++) {
             const theta = drawTheta(draw);
-            carryDraws[d] = carryDraw('carry') / 100;
             for (let t = 0; t < n; t++) {
-                let c = 0, i = 0, k = 0, o = 0, cc = 0, ct = 0;
+                let c = 0, i = 0, k = 0, o = 0;
                 const debug = tasks[t].type === 'fix' ? theta.debug : 1;
-                tasks[t].sessions.forEach((s, j) => {
+                tasks[t].sessions.forEach(s => {
                     const r = session(s, theta, price, debug);
-                    const rc = session(capped[t][j], theta, price, debug);
-                    cc += rc[0];
-                    ct += rc[1] + rc[3];
                     c += r[0];
                     i += r[1];
                     k += r[2];
@@ -1389,8 +1357,6 @@
                 });
                 const at = t * DRAWS + d;
                 costs[at] = c;
-                cappedCosts[at] = cc;
-                cappedTokens[at] = ct;
                 inputs[at] = i;
                 cached[at] = k;
                 outputs[at] = o;
@@ -1520,35 +1486,8 @@
             + (input ? Math.round(100 * cachedInput / input) : 0) + '% cache reads)<br>' + compact(output) + ' output tokens');
         html += card('Work', int(sessions) + ' sessions', int(list.length) + ' tasks · ' + int(commits) + ' commits'
             + '<br>' + (list.length ? (sessions / list.length).toFixed(1) : '0') + ' sessions per task');
-        html += refactoringSavingsCard(list);
         document.getElementById('cards').innerHTML = html;
         return tokens;
-    }
-
-    // Refactoring savings: what files no larger than the max file size would have saved. The saving lies between the read
-    // tokens alone (the sessions re-run with every file capped) and the whole cost cut by the share of reads saved; the
-    // carry-over says where.
-    function refactoringSavingsCard(list) {
-        const readNow = list.reduce((s, t) => s + t.readLines, 0), readCapped = list.reduce((s, t) => s + (t.cappedReadLines || 0), 0);
-        const readShare = readNow ? 1 - readCapped / readNow : 0;
-        const cap = int(num('max-file'));
-        if (!readShare) {
-            return card('Refactoring savings', '–', 'no file read exceeds ' + cap + ' lines<br>lines read ' + compact(readNow));
-        }
-        // The read-only saving plus the carry-over share of the rest cut by the share of reads saved, per draw.
-        const savings = (all, cappedAll) => all.map((c, d) => {
-            const readOnly = c - cappedAll[d];
-            return readOnly + carryDraws[d] * Math.max(0, c * readShare - readOnly);
-        });
-        const allTokens = tokenSums(list), savedTokens = savings(allTokens, sums(list, cappedTokens));
-        const share = quantiles(savedTokens.map((v, d) => allTokens[d] ? v / allTokens[d] : 0));
-        const tokens50 = quantiles(savedTokens), money50 = quantiles(savings(sums(list, costs), sums(list, cappedCosts)));
-        const oversized = (imported.editedFileLines || []).filter(lines => lines > num('max-file')).length;
-        const pct = v => Math.round(100 * v) + '%';
-        return card('Refactoring savings', pct(share.p50) + '<span class="unit"> fewer tokens</span>', compact(tokens50.p50) + ' tokens saved ('
-            + pct(share.p10) + '–' + pct(share.p90) + ')'
-            + '<br>files ≤ ' + cap + ' lines' + (oversized ? ' (' + int(oversized) + ' edited files larger)' : '')
-            + '<br>lines read ' + compact(readNow) + ' → ' + compact(readCapped), '≈ ' + money(money50.p50) + ' saved');
     }
 
     function renderTypes(list, total) {
@@ -1821,19 +1760,14 @@
             e('OUT', '× output price', 'COST'),
             'PP --> COST',
             e('COST', 'summed per task, per simulation', 'RES'),
-            prior('PM', 'refactoring', 'files ≤ ' + short(num('max-file')) + ' lines', 'carry-over ' + rangeLabel('carry') + '%'),
-            n('SAV', 'Refactoring savings', 'read tokens with files capped', '+ carry-over × the rest of the', 'cost cut by the share of reads saved'),
-            e('LR', 'capped per file', 'SAV'),
-            e('COST', 'again, smaller files', 'SAV'),
-            'PM --> SAV',
             'classDef data fill:#e3edfb,stroke:#6b8fc4,color:#1d2b3a',
             'classDef prior fill:#fff3d6,stroke:#c9962e,color:#3a2c0e',
             'classDef calc fill:#f2f2f2,stroke:#9a9a9a,color:#222',
             'classDef result fill:#e3f3e5,stroke:#4f9457,color:#173a1c',
             'class C,T,S,F,LR,LC,TY data',
-            'class PS,PC,PO,PP,PM prior',
+            'class PS,PC,PO,PP prior',
             'class ST,OUT,IN,COST calc',
-            'class RES,SAV result'
+            'class RES result'
         ].join('\n');
     }
 
