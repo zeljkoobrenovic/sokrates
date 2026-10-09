@@ -1,0 +1,27 @@
+reports/src/test/java/nl/obren/sokrates/reports/generators/explorers/AiCostEstimatorGeneratorTest.java
+  s_a2005407d0b1ac::t_83b0748c73f77e 68
+CLAUDE.md
+  s_a2005407d0b1ac::t_18fcd9c6e53b92 211
+reports/src/main/java/nl/obren/sokrates/reports/generators/explorers/AiCostEstimatorGenerator.java
+  s_a2005407d0b1ac::t_83b0748c73f77e 490-491
+common/src/main/resources/templates/ai-cost-estimator.html
+  s_a2005407d0b1ac::t_df5ca2077e2704 767,1349,1351,1768,1770
+CHANGELOG.md
+  s_a2005407d0b1ac::t_f9106a45bcb46b 31-38
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "9c568a20a7e764654f9cc5c2955440c119c369b4",
+  "prompts": {},
+  "sessions": {
+    "s_a2005407d0b1ac": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "4fb1d5ee-913b-46aa-8711-baca0d9f974f",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "zeljkoobrenovic <zeljkoobrenovic@yahoo.com>"
+    }
+  }
+}
