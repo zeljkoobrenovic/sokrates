@@ -1,0 +1,31 @@
+codeanalyzer/src/test/java/nl/obren/sokrates/sourcecode/analysis/scores/MaintainabilityScoresAnalyzerTest.java
+  s_0af420b20b4753::t_d4ece608bbebf7 96-122,134-135,145
+  s_0af420b20b4753::t_1c9972a63b388a 285-287,290
+CLAUDE.md
+  s_0af420b20b4753::t_8b41e9994685e2 208
+docs/configuration.md
+  s_0af420b20b4753::t_8b41e9994685e2 160
+CHANGELOG.md
+  s_0af420b20b4753::t_8b41e9994685e2 6-27
+  s_0af420b20b4753::t_ee145267acd4bd 28-30
+reports/src/main/java/nl/obren/sokrates/reports/core/SubScoreExplanations.java
+  s_0af420b20b4753::t_d4ece608bbebf7 59,62,65-68,71,80
+codeanalyzer/src/main/java/nl/obren/sokrates/sourcecode/analysis/scores/MaintainabilityScoresAnalyzer.java
+  s_0af420b20b4753::t_d4ece608bbebf7 36-41,60-61,69,72,74-87,105-106,201-209,224-225,373-397,446-448,476
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "e127f1a040592191fa03f8d6558150ef72d3531f",
+  "prompts": {},
+  "sessions": {
+    "s_0af420b20b4753": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "f8fc5201-db12-4f99-a873-2c992f5fc97e",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "zeljkoobrenovic <zeljkoobrenovic@yahoo.com>"
+    }
+  }
+}
