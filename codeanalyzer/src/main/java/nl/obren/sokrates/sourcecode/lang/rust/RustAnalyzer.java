@@ -28,9 +28,13 @@ public class RustAnalyzer extends LanguageAnalyzer {
     private CommentsAndEmptyLinesCleaner getCleaner() {
         CommentsAndEmptyLinesCleaner cleaner = new CommentsAndEmptyLinesCleaner();
 
+        cleaner.addCommentBlockHelper("/*", "*/");
         cleaner.addCommentBlockHelper("//", "\n");
+        // raw strings have no escapes and may contain "; they start before the plain " so they win
+        cleaner.addStringBlockHelper("r##\"", "\"##", "");
+        cleaner.addStringBlockHelper("r#\"", "\"#", "");
         cleaner.addStringBlockHelper("\"", "\\");
-        cleaner.addStringBlockHelper("'", "\\");
+        cleaner.getCodeBlockParsers().add(new RustCharLiteralParser());
         return cleaner;
     }
 

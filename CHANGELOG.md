@@ -3,6 +3,27 @@
 User-visible behaviour changes, newest first. `:latest` of the Docker image and the `master` branch carry
 everything listed under the most recent date.
 
+## 2026-10-28
+
+### Rust: lifetimes no longer cut files short, block comments are comments, functions with modifiers are units
+
+Three fixes to the Rust analyzer (issues #127 and #128):
+
+- A lifetime (`'a`, `'static`) was read as the start of a char literal. When the line had an odd number of `'`, the
+  rest of the file was dropped before any analysis. Only a complete char literal (`'x'`, `'\n'`, `b'x'`, `'\u{…}'`)
+  now counts as one. Raw strings (`r#"…"#`, `r##"…"##`) are also recognised, so the quotes inside them no longer
+  derail the cleaning.
+- `/* … */` block comments counted as code; they are now comments (nested block comments end at the first `*/`).
+- Only bare `fn` was a unit. `pub`, `pub(…)`, `const`, `async`, `unsafe`, `extern "…"` and `default` functions are
+  now units too, named `fn <name>()`, with their parameters counted. Trait method declarations without a body
+  (also when the signature spans several lines) are not units. Before, they absorbed the next block.
+
+What to check: Rust lines of code change on the next analysis. Files that were cut short grow (on stalwartlabs/stalwart,
+`crates/store/src/dispatch/blob.rs` went from 12 to 242 LOC), and license headers in block comments no longer count.
+Unit counts roughly double on code with many public or async functions, so unit size, conditional complexity, unit
+duplication and the scores built on them shift, as do trends that span this change. Other languages are not
+affected.
+
 ## 2026-10-09
 
 ### AI ease of change: length below the read budget no longer counts
