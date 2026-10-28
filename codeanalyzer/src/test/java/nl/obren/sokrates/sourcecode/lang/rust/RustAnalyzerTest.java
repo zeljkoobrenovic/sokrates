@@ -275,4 +275,34 @@ public class RustAnalyzerTest {
                 "    loop { break; }\n" +
                 "    0\n"));
     }
+
+    @Test
+    public void macroArgumentsAreNotDecisions() {
+        // a lookup table written with =>, not a match
+        assertEquals(1, mcCabe("    hashify::map!(\n" +
+                "        s.as_bytes(),\n" +
+                "        \"a\" => 1,\n" +
+                "        \"b\" => 2,\n" +
+                "        \"c\" => 3,\n" +
+                "    );\n" +
+                "    let v = vec![x.is_some() && s.is_empty()];\n" +
+                "    println!(\"{}\", if v.len() > 1 { 1 } else { 2 });\n" +
+                "    0\n"));
+        // the code around a macro still counts, as does a negation !( ... )
+        assertEquals(5, mcCabe("    if !(x.is_some() && s.is_empty()) { }\n" +
+                "    assert!(s.len() > 1 || x.is_none());\n" +
+                "    match x {\n" +
+                "        Some(_) => format!(\"{}\", match s { _ => 1 }),\n" +
+                "        None => String::new(),\n" +
+                "    };\n" +
+                "    if s != \"\" { }\n" +
+                "    0\n"));
+    }
+
+    @Test
+    public void withoutMacroArguments() {
+        assertEquals("a!( ;b![ ;c!{ ;!(x) != y", RustHeuristicUnitsExtractor.withoutMacroArguments(
+                "a!(x => (y), [z]);b![1 => 2];c!{ {d} };!(x) != y"));
+        assertEquals("open!( ", RustHeuristicUnitsExtractor.withoutMacroArguments("open!(never closed => 1"));
+    }
 }

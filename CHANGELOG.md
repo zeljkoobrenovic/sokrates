@@ -17,6 +17,9 @@ The Rust units used C-style complexity keywords (issue #129). Calls such as `to_
   without parameters (`|| 0`, `move || 0`) don't count.
 - The `for` of `impl Trait for Type` and of a higher-ranked bound (`for<'a> Fn`) is not a loop.
 - `if`, `if let`, `else if`, `while`, `while let` and `for` count as before. The `?` operator doesn't count.
+- Macro arguments (`name!(…)`, `name![…]`, `name!{…}`) don't count. Their `=>` are often table entries (e.g.
+  `hashify::map!`), not match arms. The price is the branches of macros such as `tokio::select!`. On
+  stalwartlabs/stalwart, a 620-entry `hashify::map!` lookup had been the most complex unit, at McCabe 618.
 
 What to check: the McCabe index of Rust units changes on the next analysis. It rises for functions built around a
 `match`, and falls where lookalikes or `loop` were counted. Conditional complexity, file complexity and the scores
