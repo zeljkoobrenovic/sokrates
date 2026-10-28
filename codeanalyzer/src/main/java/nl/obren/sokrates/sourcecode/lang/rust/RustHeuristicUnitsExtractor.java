@@ -20,6 +20,8 @@ public class RustHeuristicUnitsExtractor extends CStyleHeuristicUnitsExtractor {
     private static final Pattern FN_NAME = Pattern.compile("\\bfn\\s+([\\p{L}\\p{N}_]+)");
     // "||" that starts a closure without parameters (after "(" the search body has no space before it)
     private static final Pattern EMPTY_CLOSURE = Pattern.compile("([,=]|=>|\\bmove|\\breturn)\\s+\\|\\|\\s");
+    // a macro invocation: name!( name![ name!{ (an identifier right before "!", so "!(" negation and "!=" don't match)
+    private static final Pattern MACRO_START = Pattern.compile("[\\p{L}\\p{N}_]!\\s*[(\\[{]");
 
     public RustHeuristicUnitsExtractor() {
         // match arms are counted as "=>", one per match is subtracted in getMcCabeIndex;
@@ -35,6 +37,7 @@ public class RustHeuristicUnitsExtractor extends CStyleHeuristicUnitsExtractor {
 
     @Override
     protected int getMcCabeIndex(String body) {
+        body = withoutMacroArguments(body);
         String bodyForSearch = getBodyForMcCabeSearch(body);
         int mcCabeIndex = super.getMcCabeIndex(body);
         // a match with n arms is n - 1 decisions
@@ -44,6 +47,28 @@ public class RustHeuristicUnitsExtractor extends CStyleHeuristicUnitsExtractor {
             mcCabeIndex--;
         }
         return Math.max(1, mcCabeIndex);
+    }
+
+    // macro arguments are not counted: their => are often table entries (e.g. hashify::map!), not match arms,
+    // at the price of the branches of macros such as tokio::select!
+    static String withoutMacroArguments(String body) {
+        StringBuilder result = new StringBuilder();
+        Matcher matcher = MACRO_START.matcher(body);
+        int from = 0;
+        while (from < body.length() && matcher.find(from)) {
+            result.append(body, from, matcher.end());
+            int depth = 1;
+            int i = matcher.end();
+            for (; i < body.length() && depth > 0; i++) {
+                char c = body.charAt(i);
+                if (c == '(' || c == '[' || c == '{') depth++;
+                else if (c == ')' || c == ']' || c == '}') depth--;
+            }
+            result.append(' ');
+            from = i;
+        }
+        result.append(body, Math.min(from, body.length()), body.length());
+        return result.toString();
     }
 
     @Override
