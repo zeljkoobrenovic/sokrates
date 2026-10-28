@@ -1,0 +1,19 @@
+CLAUDE.md
+  s_5e71eeb7af282b::t_939f053293ddba 203-211
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "5152c4541e75db600c186b4b0e9a54c789636526",
+  "prompts": {},
+  "sessions": {
+    "s_5e71eeb7af282b": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "e2119cd2-b9a0-4ea2-90ce-59d11b07b17a",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "zeljkoobrenovic <zeljkoobrenovic@yahoo.com>"
+    }
+  }
+}
