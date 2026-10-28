@@ -1,0 +1,26 @@
+codeanalyzer/src/main/java/nl/obren/sokrates/sourcecode/units/CStyleHeuristicUnitsExtractor.java
+  s_5e71eeb7af282b::t_3a8e62e569fe11 218,222-226
+CHANGELOG.md
+  s_5e71eeb7af282b::t_42e704a78b0f0f 8-24
+codeanalyzer/src/main/java/nl/obren/sokrates/sourcecode/lang/rust/RustHeuristicUnitsExtractor.java
+  s_5e71eeb7af282b::t_f78143cfb995e2 9,21-22,25-26,31-46,75-77
+codeanalyzer/src/test/java/nl/obren/sokrates/sourcecode/lang/rust/RustAnalyzerTest.java
+  s_5e71eeb7af282b::t_1e404b30d2ff01 68-69,229-252,254-277
+  s_5e71eeb7af282b::t_dc64c778c6b30a 253
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "0ff3015d89d4a6dc5fc27b6be27ce68e1153c0e8",
+  "prompts": {},
+  "sessions": {
+    "s_5e71eeb7af282b": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "e2119cd2-b9a0-4ea2-90ce-59d11b07b17a",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "zeljkoobrenovic <zeljkoobrenovic@yahoo.com>"
+    }
+  }
+}
