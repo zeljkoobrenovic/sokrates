@@ -65,7 +65,8 @@ public class RustAnalyzerTest {
 
         assertEquals("fn b()", units.get(2).getShortName());
         assertEquals(5, units.get(2).getLinesOfCode());
-        assertEquals(2, units.get(2).getMcCabeIndex());
+        // loop has no condition; its exits (if ... break) are counted where they are
+        assertEquals(1, units.get(2).getMcCabeIndex());
         assertEquals(1, units.get(2).getNumberOfParameters());
         assertEquals(14, units.get(2).getStartLine());
         assertEquals(18, units.get(2).getEndLine());
@@ -224,5 +225,54 @@ public class RustAnalyzerTest {
         assertEquals(1, units.get(0).getNumberOfParameters());
         assertEquals(3, units.get(1).getLinesOfCode());
         assertEquals("fn h()", units.get(2).getShortName());
+    }
+
+    private static int mcCabe(String body) {
+        List<UnitInfo> units = units("fn f(x: Option<u8>, s: &str) -> u8 {\n" + body + "}\n");
+        assertEquals(1, units.size());
+        return units.get(0).getMcCabeIndex();
+    }
+
+    @Test
+    public void matchArmsAreDecisions() {
+        assertEquals(3, mcCabe("    match x {\n" +
+                "        Some(0) => 0,\n" +
+                "        Some(n) => n,\n" +
+                "        None => 1,\n" +
+                "    }\n"));
+        assertEquals(1, mcCabe("    match x { _ => 0 }\n"));
+        // a guard is a decision of its own
+        assertEquals(3, mcCabe("    match x {\n" +
+                "        Some(n) if n > 1 => n,\n" +
+                "        _ => 0,\n" +
+                "    }\n"));
+    }
+
+    @Test
+    public void conditionsAndLoopsAreDecisions() {
+        assertEquals(7, mcCabe("    if let Some(n) = x { return n; } else if s.is_empty() { return 1; }\n" +
+                "    while let Some(n) = x { break; }\n" +
+                "    for c in s.chars() { }\n" +
+                "    if s.len() > 1 && s.len() < 9 { }\n"));
+        assertEquals(3, mcCabe("    let ok = s.is_empty()\n" +
+                "        || s.len() > 9\n" +
+                "        || x.is_none();\n" +
+                "    0\n"));
+    }
+
+    @Test
+    public void lookalikesAreNotDecisions() {
+        assertEquals(1, mcCabe("    let a = s.to_lowercase();\n" +
+                "    let b = s.to_uppercase();\n" +
+                "    let c: &&str = &&s;\n" +
+                "    let d = [1, 2].iter().filter(|&&v| v > 1).count();\n" +
+                "    let e = x.unwrap_or_else(|| 0);\n" +
+                "    let g = || 1;\n" +
+                "    std::thread::spawn(move || 0);\n" +
+                "    struct S;\n" +
+                "    impl<'a> From<&'a str> for S { fn from(_: &'a str) -> S { S } }\n" +
+                "    let h: Box<dyn for<'b> Fn(&'b str)> = Box::new(|_| ());\n" +
+                "    loop { break; }\n" +
+                "    0\n"));
     }
 }

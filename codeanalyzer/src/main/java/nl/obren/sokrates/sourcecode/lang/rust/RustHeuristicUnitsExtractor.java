@@ -6,6 +6,7 @@ package nl.obren.sokrates.sourcecode.lang.rust;
 
 import nl.obren.sokrates.sourcecode.units.CStyleHeuristicUnitsExtractor;
 import nl.obren.sokrates.sourcecode.units.UnitInfo;
+import org.apache.commons.lang3.StringUtils;
 
 import java.util.Arrays;
 import java.util.List;
@@ -17,17 +18,32 @@ public class RustHeuristicUnitsExtractor extends CStyleHeuristicUnitsExtractor {
     private static final Pattern FN_SIGNATURE = Pattern.compile(
             "^(pub(\\([^)]*\\))?\\s+)?(default\\s+)?(const\\s+)?(async\\s+)?(unsafe\\s+)?(extern\\s+(\"[^\"]*\"\\s+)?)?fn\\s.*");
     private static final Pattern FN_NAME = Pattern.compile("\\bfn\\s+([\\p{L}\\p{N}_]+)");
+    // "||" that starts a closure without parameters (after "(" the search body has no space before it)
+    private static final Pattern EMPTY_CLOSURE = Pattern.compile("([,=]|=>|\\bmove|\\breturn)\\s+\\|\\|\\s");
 
     public RustHeuristicUnitsExtractor() {
+        // match arms are counted as "=>", one per match is subtracted in getMcCabeIndex;
+        // && and || need spaces around them, so &&x (a reference) and |&&x| (a closure pattern) don't count
         super.setMcCabeIndexLiterals(Arrays.asList(
                 " if ",
-                " loop ",
                 " while ",
                 " for ",
-                "case ",
-                "&&",
-                "||",
-                " catch "));
+                "=>",
+                " && ",
+                " || "));
+    }
+
+    @Override
+    protected int getMcCabeIndex(String body) {
+        String bodyForSearch = getBodyForMcCabeSearch(body);
+        int mcCabeIndex = super.getMcCabeIndex(body);
+        // a match with n arms is n - 1 decisions
+        mcCabeIndex -= StringUtils.countMatches(bodyForSearch, " match ");
+        Matcher matcher = EMPTY_CLOSURE.matcher(bodyForSearch);
+        while (matcher.find()) {
+            mcCabeIndex--;
+        }
+        return Math.max(1, mcCabeIndex);
     }
 
     @Override
@@ -56,6 +72,9 @@ public class RustHeuristicUnitsExtractor extends CStyleHeuristicUnitsExtractor {
     @Override
     protected String extraCleanContent(String content) {
         String cleanedContent = content.replaceAll(RustCharLiteralParser.CHAR_LITERAL.pattern(), "\"\"");
+        // the "for" of a higher-ranked bound (for<'a> Fn) and of "impl Trait for Type" is not a loop
+        cleanedContent = cleanedContent.replaceAll("\\bfor\\s*<", "<");
+        cleanedContent = cleanedContent.replaceAll("(\\bimpl\\b[^{;]*?\\s)for\\s", "$1");
         cleanedContent = cleanedContent.replace("'", "");
         return super.extraCleanContent(cleanedContent);
     }
