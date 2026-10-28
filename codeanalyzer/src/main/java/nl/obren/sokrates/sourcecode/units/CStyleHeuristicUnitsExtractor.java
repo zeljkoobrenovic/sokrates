@@ -215,10 +215,15 @@ public class CStyleHeuristicUnitsExtractor {
         return 0;
     }
 
-    private int getMcCabeIndex(String body) {
+    protected String getBodyForMcCabeSearch(String body) {
         String bodyForSearch = " " + body.replace("\n", " ");
         bodyForSearch = bodyForSearch.replace("(", " (");
         bodyForSearch = bodyForSearch.replace("{", " {");
+        return bodyForSearch;
+    }
+
+    protected int getMcCabeIndex(String body) {
+        String bodyForSearch = getBodyForMcCabeSearch(body);
 
         int mcCabeIndex = 1;
         for (String mcCabeIndexLiteral : getMcCabeIndexLiterals()) {

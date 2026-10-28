@@ -5,6 +5,23 @@ everything listed under the most recent date.
 
 ## 2026-10-28
 
+### Rust: conditional complexity counts Rust's decisions
+
+The Rust units used C-style complexity keywords (issue #129). Calls such as `to_lowercase()` counted as a `case`, and
+`match` arms didn't count at all. Now:
+
+- A `match` with n arms adds n − 1. A guard (`Some(n) if n > 1 =>`) adds one of its own.
+- `case` and `catch` are gone, since Rust has neither. `loop` no longer counts: it has no condition, and its
+  `if … break` exits are counted where they are.
+- `&&` and `||` count only as binary operators. A reference (`&&str`), a closure pattern (`|&&v|`) and a closure
+  without parameters (`|| 0`, `move || 0`) don't count.
+- The `for` of `impl Trait for Type` and of a higher-ranked bound (`for<'a> Fn`) is not a loop.
+- `if`, `if let`, `else if`, `while`, `while let` and `for` count as before. The `?` operator doesn't count.
+
+What to check: the McCabe index of Rust units changes on the next analysis. It rises for functions built around a
+`match`, and falls where lookalikes or `loop` were counted. Conditional complexity, file complexity and the scores
+built on them shift accordingly.
+
 ### Rust: lifetimes no longer cut files short, block comments are comments, functions with modifiers are units
 
 Three fixes to the Rust analyzer (issues #127 and #128):
