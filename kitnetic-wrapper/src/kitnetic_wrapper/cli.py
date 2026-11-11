@@ -144,13 +144,36 @@ def run_sokrates(
         finished_at=finished,
     )
 
+# Files Sokrates' extractGitHistory writes into the scanned project folder. git-commits.txt holds
+# commit subject lines and git-commit-trailers.txt holds trailers such as co-author names, so none
+# of them should be left behind in the vendor's source tree.
+GIT_HISTORY_ARTEFACT_FILE_NAMES = ("git-history.txt", "git-commits.txt", "git-commit-trailers.txt")
+
+def disable_source_code_export(project: Project, dry_run: bool) -> None:
+    """Stop Sokrates copying source files and code snippets into its reports.
+
+    `updateConfig -setCacheFiles false` only covers saveSourceFiles, so both flags are set by
+    editing the config that `init` wrote. With both off, Sokrates embeds no code in
+    reports/src/viewer.html and leaves the "view code" links out of the report pages.
+    """
+    if dry_run:
+        return
+
+    config_file_path = project.folder_path / "_sokrates" / "config.json"
+    config = json.loads(config_file_path.read_text(encoding="utf-8"))
+
+    analysis = config.setdefault("analysis", {})
+    analysis["saveSourceFiles"] = False
+    analysis["saveCodeFragments"] = False
+
+    config_file_path.write_text(json.dumps(config, indent=2), encoding="utf-8")
+
 def cleanup_project_scan_artefacts(project: Project, dry_run: bool) -> None:
     if dry_run:
         return
 
-    git_history_file_path = project.folder_path / "git-history.txt"
-    if git_history_file_path.exists():
-        git_history_file_path.unlink()
+    for file_name in GIT_HISTORY_ARTEFACT_FILE_NAMES:
+        (project.folder_path / file_name).unlink(missing_ok=True)
 
 def scan_project(project: Project, dry_run: bool) -> ScanProjectResult:
     started = _get_now_as_iso()
@@ -166,29 +189,39 @@ def scan_project(project: Project, dry_run: bool) -> ScanProjectResult:
     if dry_run:
         return build_result(True)
 
-    console.print(f"[cyan]Stage 1 of 4:[/cyan] Extracting Git history")
-    result = run_sokrates(project.folder_path, ["extractGitHistory"], dry_run=dry_run)
-    if result.return_code != 0:
-        return build_result(False)
+    try:
+        console.print(f"[cyan]Stage 1 of 5:[/cyan] Extracting Git history")
+        result = run_sokrates(project.folder_path, ["extractGitHistory"], dry_run=dry_run)
+        if result.return_code != 0:
+            return build_result(False)
 
-    console.print(f"[cyan]Stage 2 of 4:[/cyan] Running Sokrates scan")
-    result = run_sokrates(
-        project.folder_path,
-        ["init", "-name", project.name, "-description", project.description],
-        dry_run=dry_run
-    )
-    if result.return_code != 0:
-        return build_result(False)
+        console.print(f"[cyan]Stage 2 of 5:[/cyan] Running Sokrates scan")
+        result = run_sokrates(
+            project.folder_path,
+            ["init", "-name", project.name, "-description", project.description],
+            dry_run=dry_run
+        )
+        if result.return_code != 0:
+            return build_result(False)
 
-    console.print(f"[cyan]Stage 3 of 4:[/cyan] Generating Sokrates scan report")
-    result = run_sokrates(project.folder_path, ["generateReports"], dry_run=dry_run)
-    if result.return_code != 0:
-        return build_result(False)
+        console.print(f"[cyan]Stage 3 of 5:[/cyan] Disabling source code export")
+        try:
+            disable_source_code_export(project, dry_run=dry_run)
+        except (OSError, ValueError) as e:
+            # Never generate reports if the source code export could not be switched off.
+            console.print(f"[red]Could not update the Sokrates configuration:[/red] {e}")
+            return build_result(False)
 
-    console.print(f"[cyan]Stage 4 of 4:[/cyan] Cleaning up Sokrates scan artefacts")
-    cleanup_project_scan_artefacts(project, dry_run=dry_run)
+        console.print(f"[cyan]Stage 4 of 5:[/cyan] Generating Sokrates scan report")
+        result = run_sokrates(project.folder_path, ["generateReports"], dry_run=dry_run)
+        if result.return_code != 0:
+            return build_result(False)
 
-    return build_result(True)
+        return build_result(True)
+    finally:
+        # Runs on failure too, so git history files are never left in the vendor's source tree.
+        console.print(f"[cyan]Stage 5 of 5:[/cyan] Cleaning up Sokrates scan artefacts")
+        cleanup_project_scan_artefacts(project, dry_run=dry_run)
 
 def scan_projects(projects: List[Project], dry_run: bool) -> List[ScanProjectResult]:
     console.print("\n[bold]Starting scans...[/bold]")

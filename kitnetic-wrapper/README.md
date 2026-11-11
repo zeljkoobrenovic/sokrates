@@ -2,7 +2,7 @@
 
 The Kitnetic wrapper is an interactive CLI tool that orchestrates running the **Sokrates** code scanner across one or more selected project folders.
 
-The wrapper streamlines project selection, execution, and report collection, while also removing the source code from the final reports, which are bundled as part of Sokrates' standard workflow.
+The wrapper streamlines project selection, execution, and report collection, while also keeping source code out of the final reports, which Sokrates includes by default (see [Keeping vendor source code out of reports](#keeping-vendor-source-code-out-of-reports)).
 
 Source code: https://github.com/kitnetic/sokrates (fork of the official Sokrates repository)
 
@@ -98,3 +98,21 @@ Recommended steps:
 * The wrapper **requires an interactive TTY**:
   * Always run Docker with the `-it` flags 
 * Scans are performed sequentially, one project at a time
+
+## Keeping vendor source code out of reports
+
+The wrapper keeps source code out of the final reports in two ways:
+
+1. **Sokrates is told not to export code.** After `init`, the wrapper sets `analysis.saveSourceFiles` and
+   `analysis.saveCodeFragments` to `false` in each project's `_sokrates/config.json`. Sokrates then embeds no
+   source files or code snippets in its reports and leaves out the "view code" links. If this step fails, no
+   report is generated for that project.
+2. **The reports are sanitised afterwards (as a safety net).** The `reports/src` folder is deleted and any
+   remaining links to it are removed from the HTML pages.
+
+Sokrates writes `git-history.txt`, `git-commits.txt` (commit subject lines) and `git-commit-trailers.txt`
+(e.g. co-author names) into each scanned project folder under `/input`. The wrapper deletes these after every
+scan, including failed ones. The `_sokrates` folder is moved to `/output`.
+
+Note that the reports still contain file paths, unit (function/method) names, contributor details and commit
+message subjects.
