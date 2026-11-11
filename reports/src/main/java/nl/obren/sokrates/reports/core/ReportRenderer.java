@@ -4,16 +4,12 @@
 
 package nl.obren.sokrates.reports.core;
 
-import nl.obren.sokrates.common.renderingutils.GraphvizUtil;
+import nl.obren.sokrates.reports.utils.HtmlEscapeUtils;
 import nl.obren.sokrates.sourcecode.Link;
-import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import java.io.File;
-import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 import java.util.List;
 
 public class ReportRenderer {
@@ -48,9 +44,6 @@ public class ReportRenderer {
         if (StringUtils.isNotBlank(richTextReport.getDisplayName())) {
             renderHeader(richTextReport, content);
         }
-        if (StringUtils.isNotBlank(richTextReport.getDescription())) {
-            content.append("<p style=\"color: #787878; font-size: 94%; margin-top: 9px; white-space: nowrap; overflow: hidden;\">" + richTextReport.getDescription() + "</p>\n");
-        }
         reportRenderingClient.append(content.toString());
         richTextReport.getRichTextFragments().forEach(fragment -> {
             renderFragment(reportRenderingClient, fragment);
@@ -58,24 +51,72 @@ public class ReportRenderer {
     }
 
     private void renderHeader(RichTextReport richTextReport, StringBuilder content) {
-        content.append(renderBreadcrumbsInDiv(richTextReport.getBreadcrumbs()));
-        content.append("<div style='font-size: 36px; margin-top: 15px; padding-bottom: 15px; white-space: nowrap; overflow: hidden;'>");
-
         String parentUrl = richTextReport.getParentUrl();
-        if (StringUtils.isNotBlank(parentUrl)) {
-            content.append("<a href='" + parentUrl + "' style=\"font-size: 100%;text-decoration:none\">\n");
+        String parentUrlHtml = "<a href='" + parentUrl + "' style=\"font-size: 100%;text-decoration:none\">";
+
+        content.append("<div class='sk-page-header'>");
+        content.append(renderBreadcrumbsInDiv(richTextReport.getBreadcrumbs()));
+        if (ReportNavigation.pageTitle(richTextReport) != null) {
+            content.append(richTextReport.getNavigation().contextLineHtml(ReportNavigation.pageTitle(richTextReport)));
         }
+        content.append("<table class='sk-report-header'>");
+        content.append("<tr>");
 
-        content.append(renderLogo(richTextReport));
-
-        content.append("<div style='margin-left: 4px; display: inline-block; vertical-align: middle; font-size: 120%'>" +
-                richTextReport.getDisplayName() + "</div></div>\n");
+        content.append("<td style='border: none; padding: 0; padding-top: 14px'>");
+        content.append("<div style='padding-top: 10px; padding-bottom: 18px; white-space: nowrap; overflow: hidden;'>");
 
         if (StringUtils.isNotBlank(parentUrl)) {
-            content.append("</a>\n");
+            content.append(parentUrlHtml);
         }
+        String pageTitle = ReportNavigation.pageTitle(richTextReport);
+        if (pageTitle != null) {
+            // The page's sidebar icon instead of the logo (the sidebar shows the repository).
+            content.append("<span class='sk-page-icon' data-sk-page-icon>"
+                    + richTextReport.getNavigation().iconOf(richTextReport.getNavigationActiveId(), 68) + "</span>");
+        } else {
+            content.append(renderLogo(richTextReport));
+        }
+        if (StringUtils.isNotBlank(parentUrl)) {
+            content.append("</a>");
+        }
+        content.append("</div>");
 
-        content.append("</div>\n");
+        content.append("</td>");
+
+        content.append("<td style='border: none; padding: 0; padding-left: 16px'>");
+        if (StringUtils.isNotBlank(parentUrl)) {
+            content.append(parentUrlHtml);
+        }
+        if (pageTitle != null) {
+            // Same header on every page with the sidebar: the page's sidebar label and a one-line subtitle
+            // (an index tab's own subtitle, else the report's description); on the index, ReportShell swaps
+            // both as tabs change. The sidebar shows the repository.
+            content.append("<div class='sk-report-title' data-sk-page-title title='" + HtmlEscapeUtils.escape(pageTitle) + "'>"
+                    + HtmlEscapeUtils.escape(pageTitle) + "</div>");
+            String tabSubtitle = richTextReport.getNavigation().subtitleOf(richTextReport.getNavigationActiveId());
+            String subtitleHtml = tabSubtitle != null ? HtmlEscapeUtils.escape(tabSubtitle)
+                    : StringUtils.defaultString(richTextReport.getDescription());
+            String subtitleLink = richTextReport.getNavigation().subtitleLinkOf(richTextReport.getNavigationActiveId());
+            if (subtitleLink != null) {
+                subtitleHtml += " · " + ReportNavigation.openInNewTabHtml(subtitleLink);
+            }
+            content.append("<div class='sk-report-description' data-sk-page-subtitle>" + subtitleHtml + "</div>");
+        } else {
+            content.append("<div class='sk-report-title'>" +
+                    richTextReport.getDisplayName() + "</div>");
+            if (StringUtils.isNotBlank(richTextReport.getDescription())) {
+                content.append("<div class='sk-report-description'>" + richTextReport.getDescription() + "</div>");
+            }
+        }
+        if (StringUtils.isNotBlank(parentUrl)) {
+            content.append("</a>");
+        }
+        content.append("</div>");
+        content.append("</td>");
+
+        content.append("</tr>");
+        content.append("</table>");
+        content.append("</div>");
     }
 
     private String renderLogo(RichTextReport richTextReport) {
@@ -105,13 +146,12 @@ public class ReportRenderer {
 
     private void renderFragment(ReportRenderingClient reportRenderingClient, RichTextFragment fragment) {
         if (fragment.getType() == RichTextFragment.Type.GRAPHVIZ) {
-            if (shouldExportVisualToFile(reportRenderingClient, fragment)) {
-                renderAndSaveVisuals(reportRenderingClient, fragment);
-            } else {
-                if (fragment.isShow()) {
-                    LOG.info("Rendering graphviz content: " + fragment.getId());
-                    reportRenderingClient.append(minimize(GraphvizUtil.getSvgFromDot(fragment.getFragment())));
-                }
+            // Fragment content is a Mermaid flowchart definition, rendered client-side by mermaid.js
+            // (loaded once via ReportConstants.REPORTS_HTML_HEADER). The definition is also kept in a
+            // hidden <script> so the "download .mmd" link can build the file in the browser from the
+            // already-embedded text — no .mmd files are written to disk.
+            if (fragment.isShow()) {
+                reportRenderingClient.append(mermaidBlock(fragment.getId(), fragment.getFragment()));
             }
         } else if (fragment.getType() == RichTextFragment.Type.SVG) {
             if (fragment.isShow()) {
@@ -124,30 +164,30 @@ public class ReportRenderer {
         }
     }
 
-    private void renderAndSaveVisuals(ReportRenderingClient reportRenderingClient, RichTextFragment fragment) {
-        try {
-            File folder = reportRenderingClient.getVisualsExportFolder();
-            String id = fragment.getId();
-
-            File dotFile = new File(folder, id + ".dot.txt");
-            FileUtils.write(dotFile, fragment.getFragment(), StandardCharsets.UTF_8);
-
-            LOG.info("Rendering graphviz file " + fragment.getId());
-            String svgContent = minimize(GraphvizUtil.getSvgFromDot(fragment.getFragment()));
-
-            if (fragment.isShow()) {
-                reportRenderingClient.append(svgContent + "\n");
-            }
-
-            File svgFile = new File(folder, id + ".svg");
-            FileUtils.write(svgFile, svgContent, StandardCharsets.UTF_8);
-
-        } catch (IOException e) {
-            e.printStackTrace();
+    // Wraps a Mermaid definition for client-side rendering. The definition is emitted verbatim
+    // (NOT through minimize(), which would collapse newlines/spaces and break flowchart syntax).
+    // A copy is also kept in a hidden <script> keyed by the graph id: mermaid.js replaces the <pre>
+    // content with rendered SVG, so the original source must live somewhere it won't touch for the
+    // client-side "download .mmd" link (see ReportConstants.downloadMermaid) to read it back.
+    // Both copies are HTML-escaped. This is defense in depth: GraphvizDependencyRenderer already
+    // writes every repository-controlled label with Mermaid entity codes, so in practice only the
+    // ">" of "-->" (and quotes) are rewritten here, and the browser hands mermaid.js the same text
+    // it did before (it reads the <pre> via innerHTML, which re-serializes text as entities anyway).
+    // What the escaping guarantees is that no future definition can put a live tag into the page.
+    // The <script> stash holds the same escaped text; downloadMermaid decodes it before download.
+    static String mermaidBlock(String id, String mermaidDefinition) {
+        String escaped = escapeMermaidText(mermaidDefinition);
+        StringBuilder sb = new StringBuilder();
+        if (StringUtils.isNotBlank(id)) {
+            sb.append("<script type=\"text/plain\" class=\"mermaid-source\" id=\"mermaid-source-")
+                    .append(id).append("\">\n")
+                    .append(escaped).append("\n</script>\n");
         }
+        sb.append("<pre class=\"mermaid\">\n").append(escaped).append("\n</pre>\n");
+        return sb.toString();
     }
 
-    private boolean shouldExportVisualToFile(ReportRenderingClient reportRenderingClient, RichTextFragment fragment) {
-        return reportRenderingClient.getVisualsExportFolder() != null && StringUtils.isNotBlank(fragment.getId());
+    public static String escapeMermaidText(String mermaidDefinition) {
+        return HtmlEscapeUtils.escape(mermaidDefinition);
     }
 }

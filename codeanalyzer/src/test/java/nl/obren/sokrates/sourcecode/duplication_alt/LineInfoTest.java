@@ -12,12 +12,10 @@ import static org.junit.Assert.*;
 public class LineInfoTest {
     @Test
     public void getId() throws Exception {
-        LineInfo.resetCounter();
-
-        assertEquals(new LineInfo().getId(), 0);
-        assertEquals(new LineInfo().getId(), 1);
-        assertEquals(new LineInfo().getId(), 2);
-        assertEquals(new LineInfo().getId(), 3);
+        assertEquals(new LineInfo(0).getId(), 0);
+        assertEquals(new LineInfo(1).getId(), 1);
+        assertEquals(new LineInfo(2).getId(), 2);
+        assertEquals(new LineInfo(3).getId(), 3);
     }
 
 }

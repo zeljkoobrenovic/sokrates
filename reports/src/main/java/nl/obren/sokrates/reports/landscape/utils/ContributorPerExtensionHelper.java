@@ -31,8 +31,15 @@ public class ContributorPerExtensionHelper {
                 repository.getRepositoryAnalysisResults().getAnalysisResults().getContributorsAnalysisResults().getCommitsPerExtensions().forEach(commitsPerExtension -> {
                     String extension = commitsPerExtension.getExtension();
                     String email = member.getContributor().getEmail();
+                    // Keep only the per-extension stats that belong to THIS contributor: transform the
+                    // stat's raw committer email the same way the aggregated id was built
+                    // (lower-case, then transformEmail) and compare to the member's id. The previous
+                    // predicate transformed `email` and compared it to itself, ignoring `stats`, so it
+                    // summed every committer's updates (or none).
                     commitsPerExtension.getContributorPerExtensionStats().stream()
-                            .filter(stats -> EmailTransformations.transformEmail(email, configuration.getTransformContributorEmails(), peopleConfig).equalsIgnoreCase(email))
+                            .filter(stats -> EmailTransformations.transformEmail(
+                                    stats.getContributor() != null ? stats.getContributor().toLowerCase() : "",
+                                    configuration.getTransformContributorEmails(), peopleConfig).equalsIgnoreCase(email))
                             .forEach(stats -> {
                                 if (updatesPerExtensionMap.containsKey(extension)) {
                                     ContributorPerExtensionStats existingStats = updatesPerExtensionMap.get(extension).getRight();
@@ -64,5 +71,24 @@ public class ContributorPerExtensionHelper {
         }
 
         return null;
+    }
+
+    // The contributor's main language (lowercased extension), or "" if none.
+    public String getBiggestExtensionLanguage(LandscapeConfiguration configuration, ContributorRepositories contributorRepositories, PeopleConfig peopleConfig) {
+        String biggest = getBiggestExtension(configuration, contributorRepositories, peopleConfig);
+        return biggest != null ? biggest.replace("*.", "").trim().toLowerCase() : "";
+    }
+
+    // Every language (lowercased extension) the contributor has committed to, ordered by recent
+    // activity desc — lets the report filter with includesLang:<lang> even when it is not the main one.
+    public List<String> getLanguages(LandscapeConfiguration configuration, ContributorRepositories contributorRepositories, PeopleConfig peopleConfig) {
+        List<String> langs = new ArrayList<>();
+        getContributorStatsPerExtension(configuration, contributorRepositories, peopleConfig).forEach(pair -> {
+            String lang = pair.getLeft().replace("*.", "").trim().toLowerCase();
+            if (!lang.isEmpty() && !langs.contains(lang)) {
+                langs.add(lang);
+            }
+        });
+        return langs;
     }
 }

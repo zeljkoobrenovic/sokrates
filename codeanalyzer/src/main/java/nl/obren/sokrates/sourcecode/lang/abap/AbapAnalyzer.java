@@ -6,17 +6,14 @@ package nl.obren.sokrates.sourcecode.lang.abap;
 
 import nl.obren.sokrates.common.utils.ProgressFeedback;
 import nl.obren.sokrates.sourcecode.SourceFile;
-import nl.obren.sokrates.sourcecode.aspects.MetaDependencyRule;
 import nl.obren.sokrates.sourcecode.cleaners.CleanedContent;
 import nl.obren.sokrates.sourcecode.cleaners.CommentsAndEmptyLinesCleaner;
 import nl.obren.sokrates.sourcecode.cleaners.SourceCodeCleanerUtils;
 import nl.obren.sokrates.sourcecode.dependencies.DependenciesAnalysis;
 import nl.obren.sokrates.sourcecode.lang.LanguageAnalyzer;
-import nl.obren.sokrates.sourcecode.operations.OperationStatement;
 import nl.obren.sokrates.sourcecode.units.UnitInfo;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -28,7 +25,6 @@ public class AbapAnalyzer extends LanguageAnalyzer {
     public CleanedContent cleanForLinesOfCodeCalculations(SourceFile sourceFile) {
         return getCleaner().clean(getLinesWithoutComments(sourceFile));
     }
-
 
     private String getLinesWithoutComments(SourceFile sourceFile) {
         List<String> lines = sourceFile.getLines();

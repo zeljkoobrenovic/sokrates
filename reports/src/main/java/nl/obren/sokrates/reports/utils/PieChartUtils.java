@@ -14,7 +14,7 @@ import java.util.stream.Collectors;
 
 public class PieChartUtils {
     public static String getRiskDistributionChart(RiskDistributionStats distribution, List<String> labels) {
-        return getRiskDistributionChart(distribution, labels, Palette.getRiskPalette());
+        return getRiskDistributionChart(distribution, labels, Palette.getRiskPaletteCss());
     }
 
     public static String getRiskDistributionChart(RiskDistributionStats distribution, List<String> labels, Palette palette) {

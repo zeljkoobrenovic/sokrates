@@ -13,8 +13,10 @@ import nl.obren.sokrates.sourcecode.core.CodeConfigurationUtils;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
@@ -67,6 +69,13 @@ public class LogicalDecomposition {
     // A maximal depth of files (lines of code from the beginning) used for dependency analyses
     private int maxSearchDepthLines = 200;
 
+    // Lazily built set of in-scope files (across all components) so isInScope is O(1) instead of
+    // scanning every component's file list on each call. Keyed by File - which has a proper
+    // equals/hashCode - matching SourceFile.equals (compares by file). Invalidated when components
+    // are replaced.
+    @JsonIgnore
+    private Set<File> inScopeFiles = null;
+
     public LogicalDecomposition() {
     }
 
@@ -112,10 +121,13 @@ public class LogicalDecomposition {
 
     public void setComponents(List<NamedSourceCodeAspect> components) {
         this.components = components;
+        this.inScopeFiles = null;
     }
 
     @JsonIgnore
     public void updateLogicalComponentsFiles(SourceCodeFiles sourceCodeFiles, CodeConfiguration codeConfiguration, File codeConfigurationFile) {
+        // Components are (re)populated below; drop any previously cached in-scope set.
+        this.inScopeFiles = null;
         List<SourceFile> allSourceFiles = codeConfiguration.getScope(scope).getSourceFiles();
         List<SourceFile> filteredSourceFiles = getSourceFiles(codeConfiguration);
         if (componentsFolderDepth > 0) {
@@ -149,14 +161,19 @@ public class LogicalDecomposition {
 
     @JsonIgnore
     public boolean isInScope(SourceFile sourceFile) {
-        final boolean[] inScope = {false};
-        components.forEach(component -> component.getSourceFiles().forEach(compSourceFile -> {
-            if (compSourceFile.equals(sourceFile)) {
-                inScope[0] = true;
-            }
-        }));
-
-        return inScope[0];
+        if (sourceFile == null || sourceFile.getFile() == null) {
+            return false;
+        }
+        if (inScopeFiles == null) {
+            Set<File> files = new HashSet<>();
+            components.forEach(component -> component.getSourceFiles().forEach(compSourceFile -> {
+                if (compSourceFile.getFile() != null) {
+                    files.add(compSourceFile.getFile());
+                }
+            }));
+            inScopeFiles = files;
+        }
+        return inScopeFiles.contains(sourceFile.getFile());
     }
 
     private List<SourceFile> getSourceFiles(CodeConfiguration codeConfiguration) {

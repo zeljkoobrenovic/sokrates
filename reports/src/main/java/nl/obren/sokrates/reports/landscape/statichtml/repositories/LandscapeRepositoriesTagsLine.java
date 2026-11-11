@@ -35,8 +35,8 @@ public class LandscapeRepositoriesTagsLine {
             if (count[0] == 0) {
                 return;
             }
-            report.startDiv("border: 1px solid " + tagGroup.getColor() + "; background-color: #fcfcfc; border-radius: 5px; display: inline-block; vertical-align: top; margin-right: 10px; margin-bottom: 5px;");
-            report.addContentInDiv(tagGroup.getName(), "width: 100%; margin: 4px; color: grey; font-size: 70%; white-space: nowrap; overflow: hidden;");
+            report.startDiv("border: 1px solid " + tagGroup.getColor() + "; background-color: var(--sk-surface-2, #fcfcfc); border-radius: 5px; display: inline-block; vertical-align: top; margin-right: 10px; margin-bottom: 5px;");
+            report.addContentInDivText(tagGroup.getName(), "width: 100%; margin: 4px; color: grey; font-size: 70%; white-space: nowrap; overflow: hidden;");
             tagGroup.getRepositoryTags().stream()
                     .filter(t -> (tagsMap.getTagStats(t.getKey()) != null))
                     .sorted((a, b) -> tagsMap.getTagStats(b.getKey()).getRepositoryAnalysisResults().size() - tagsMap.getTagStats(a.getKey()).getRepositoryAnalysisResults().size())
@@ -46,8 +46,6 @@ public class LandscapeRepositoriesTagsLine {
 
         report.startDiv("margin-bottom: 14px; margin-top: 18px; margin-left: 5px;");
         report.addNewTabLink("<b>see details</b>&nbsp;" + OPEN_IN_NEW_TAB_SVG_ICON, "repositories-tags.html");
-        report.addHtmlContent("&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;");
-        report.addNewTabLink("<b>see expanded view</b> (tag stats per sub-folder)&nbsp;" + OPEN_IN_NEW_TAB_SVG_ICON, "repositories-tags-matrix.html");
         report.endDiv();
 
     }
@@ -71,11 +69,11 @@ public class LandscapeRepositoriesTagsLine {
             if (StringUtils.isNoneBlank(tag.getImageLink())) {
                 htmlFragment = "<img title='" + tag.getTag() + "' style=\"" + imgStyle + "\" src=\"" + tag.getImageLink() + "\">";
             } else {
-                String textStyle = "padding: 1px; background-color: #fcfcfc; vertical-align: middle; border: 3px solid grey; border-radius: 50%; " +
+                String textStyle = "padding: 1px; background-color: var(--sk-surface-2, #fcfcfc); vertical-align: middle; border: 3px solid grey; border-radius: 50%; " +
                         "width: " + size + "px; height: " + size + "px;";
                 htmlFragment = "<div title='" + tag.getTag() + "' style=\"" + textStyle + "\"><div style='overflow: hidden; white-space: nowrap; margin-top: 16px; font-size: 90%;'>" + tagName + "</div></div>";
             }
-            htmlFragment += "<div style='vertical-align: middle; font-size: 120%; color: black; margin: 5px;'><b>" + FormattingUtils.getSmallTextForNumber(count) + "</b></div>";
+            htmlFragment += "<div style='vertical-align: middle; font-size: 120%; color: var(--sk-text, black); margin: 5px;'><b>" + FormattingUtils.getSmallTextForNumber(count) + "</b></div>";
             htmlFragment += "<div style='vertical-align: middle; font-size: 70%; color: grey; '>" + tagName + "</div>";
 
             report.addContentInDivWithTooltip(htmlFragment, tooltip, style);

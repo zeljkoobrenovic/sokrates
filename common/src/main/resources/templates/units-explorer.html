@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    ${sokrates-theme}
+    <title>Units Explorer</title>
+    <style>
+        body {
+            font-family: var(--sk-font);
+            margin: 4px 12px 12px;
+        }
+
+        a {
+            text-decoration: none;
+        }
+
+        ::placeholder {
+            color: var(--sk-text-faint);
+            opacity: 1;
+        }
+
+        td {
+            white-space: nowrap;
+            overflow: hidden;
+        }
+
+        /* Long file, folder and unit names are cut with an ellipsis (full name on hover), so the columns on the right stay visible. */
+        .sk-file-line {
+            max-width: 420px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        /* A file as on the Highlights tab: the name above, its folder (ending in "/") below, the full path on hover.
+           Long names are cut with an ellipsis, like the unit names. */
+        .sk-file-cell {
+            border-left: 1px solid var(--sk-border);
+            padding-left: 6px;
+            margin-bottom: 4px;
+        }
+
+        .sk-file-name {
+            display: block;
+            max-width: 420px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            font-weight: 600;
+            color: var(--sk-text);
+        }
+
+        a.sk-file-name {
+            color: var(--sk-link);
+        }
+
+        .sk-file-folder {
+            max-width: 420px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            font-size: 12px;
+            color: var(--sk-text-muted);
+        }
+
+        .sortable {
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .sortable:hover {
+            color: var(--sk-text);
+        }
+
+        .sort-active {
+            color: var(--sk-text);
+            font-weight: bold;
+        }
+
+        .sort-arrow {
+            font-size: 80%;
+        }
+
+        /* Loading indicator shown while the embedded data is inflated + the first render runs. */
+        #loading {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            color: var(--sk-text-muted);
+            font-size: 15px;
+            padding: 40px 4px;
+        }
+
+        #loading .spinner {
+            width: 22px;
+            height: 22px;
+            border: 3px solid var(--sk-border);
+            border-top-color: var(--sk-accent);
+            border-radius: 50%;
+            animation: sokrates-spin 0.8s linear infinite;
+        }
+
+        @keyframes sokrates-spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+    </style>
+    ${sokrates-inflate-lib}
+</head>
+<body>
+
+<div id="loading">
+    <div class="spinner"></div>
+    <span>Loading units data…</span>
+</div>
+
+<div id="report" style="display: none;">
+    <p style="margin-top: 0; color: var(--sk-text-muted)">* unit analyses are experimental (using less reliable heuristic methods)</p>
+    <div style="margin: 0; color: var(--sk-text-muted)">
+        <div>
+            <input id="filter" type="text" placeholder="search... (use ; for multiple terms)"
+                   style="font-size: 16px; height: 32px; width: 320px; margin-bottom: 10px"
+                   onkeyup="update()">
+            <div id="search-summary" style="display: inline-block"></div>
+        </div>
+    </div>
+
+    <div id="content"></div>
+</div>
+
+<script>
+    const importedUnits = ${data};
+
+    // Map of language/extension -> base64 image data URI, injected at report-generation time.
+    const langIcons = ${langIcons};
+
+    // Unit-size and conditional-complexity risk thresholds {low, medium, high, veryHigh}, injected
+    // at report-generation time, used to colour-code the LOC and complexity columns.
+    const sizeThresholds = ${sizeThresholds};
+    const complexityThresholds = ${complexityThresholds};
+
+    // Green (negligible) -> red (very high), matching the risk palette family.
+    const RISK_COLORS = ['var(--sk-risk-negligible, #1a9641)', 'var(--sk-risk-low, #a6d96a)', '#fdae61', '#f03b20', '#bd0026'];
+
+    // Returns a risk color for a value against {low, medium, high, veryHigh} thresholds.
+    function riskColor(value, t) {
+        if (!t) return RISK_COLORS[0];
+        if (value > t.veryHigh) return RISK_COLORS[4];
+        if (value > t.high) return RISK_COLORS[3];
+        if (value > t.medium) return RISK_COLORS[2];
+        if (value > t.low) return RISK_COLORS[1];
+        return RISK_COLORS[0];
+    }
+
+    // Renders a small round language badge (mirrors files-explorer.html / DataImageUtils).
+    function langIcon(lang) {
+        if (!lang) {
+            return '';
+        }
+        const key = lang.toLowerCase();
+        const size = 30;
+        if (langIcons[key]) {
+            return '<img title="' + escapeHtml(lang) + '" style="margin-right: 5px; vertical-align: middle; background-color: #f1f1f1; '
+                + 'border-radius: 50%; border: 1px solid var(--sk-border); width: ' + size + 'px; height: ' + size + 'px; object-fit: contain;" src="'
+                + langIcons[key] + '">';
+        }
+        const fontSize = lang.length <= 3 ? 9 : 8;
+        return '<div title="' + escapeHtml(lang) + '" style="margin-right: 5px; display: inline-block; vertical-align: middle; '
+            + 'background-color: #D6E4E1; border-radius: 50%; border: 1px solid var(--sk-border-strong); overflow: hidden; color: darkblue; '
+            + 'width: ' + size + 'px; height: ' + size + 'px; line-height: ' + size + 'px; '
+            + 'font-size: ' + fontSize + 'px; font-weight: bold; text-align: center;">' + escapeHtml(lang) + '</div>';
+    }
+
+    let units = importedUnits.slice();
+
+    // Sortable column definitions: each maps a key to a value accessor.
+    // 'dir' is the default direction applied the first time a column is selected.
+    const sortColumns = {
+        lang: {value: item => (item.mainLang || '').toLowerCase(), type: 'string', dir: 1},
+        file: {value: item => (item.file || '').toLowerCase(), type: 'string', dir: 1},
+        name: {value: item => (item.name || '').toLowerCase(), type: 'string', dir: 1},
+        loc: {value: item => item.linesOfCode || 0, type: 'number', dir: -1},
+        complexity: {value: item => item.mcCabeIndex || 0, type: 'number', dir: -1},
+        params: {value: item => item.numberOfParameters || 0, type: 'number', dir: -1}
+    };
+
+    let sortKey = 'loc';
+    let sortDir = -1;
+
+    function comparator(a, b) {
+        const column = sortColumns[sortKey];
+        const va = column.value(a);
+        const vb = column.value(b);
+        let cmp;
+        if (column.type === 'string') {
+            cmp = String(va).localeCompare(String(vb));
+        } else {
+            cmp = va < vb ? -1 : (va > vb ? 1 : 0);
+        }
+        return cmp * sortDir;
+    }
+
+    function sortHeader(key, label, extraStyle) {
+        const active = sortKey === key;
+        const arrow = active ? (sortDir === 1 ? ' ▲' : ' ▼') : '';
+        const cls = 'sortable' + (active ? ' sort-active' : '');
+        return '<td class="' + cls + '" style="' + (extraStyle || '') + '" onclick="update(\'' + key + '\')">'
+            + label + '<span class="sort-arrow">' + arrow + '</span></td>';
+    }
+
+    function escapeHtml(s) {
+        // Attribute-safe (both quotes), so the same helper serves element content and title="…"/href="…".
+        return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+    }
+
+    function update(clickedKey) {
+        if (clickedKey && sortColumns[clickedKey]) {
+            if (sortKey === clickedKey) {
+                sortDir = -sortDir;
+            } else {
+                sortKey = clickedKey;
+                sortDir = sortColumns[clickedKey].dir;
+            }
+        }
+        units = units.sort(comparator);
+        // A search can contain several terms separated by ";"; the result is the UNION of the
+        // individual term matches (search "a;b" returns matches of "a" plus matches of "b").
+        const filters = document.getElementById('filter').value.toLowerCase().trim()
+            .split(';').map(s => s.trim()).filter(s => s.length);
+
+        const filteredData = units.filter(item => {
+            if (!filters.length) {
+                return true;
+            }
+            const haystack = ((item.file || '') + ' ' + (item.name || '')).toLowerCase();
+            return filters.some(f => haystack.includes(f));
+        });
+
+        let maxLoc = 1;
+        filteredData.forEach(item => maxLoc = Math.max(maxLoc, item.linesOfCode || 0));
+
+        const totalLoc = units.reduce((a, b) => a + (b.linesOfCode || 0), 0);
+        const filteredCount = filteredData.length;
+        const filteredLoc = filteredData.reduce((a, b) => a + (b.linesOfCode || 0), 0);
+        document.getElementById('search-summary').innerHTML = ' = ' + filteredCount.toLocaleString('en-US')
+            + ' ' + (filteredCount === 1 ? 'unit' : 'units')
+            + ' (' + filteredLoc.toLocaleString('en-US') + ' LOC) of ' + units.length.toLocaleString('en-US')
+            + ' ' + (units.length === 1 ? 'unit' : 'units') + ' (' + totalLoc.toLocaleString('en-US') + ' LOC)';
+
+        let html = '<table style="width: 100%">';
+        html += '<tr style="color: var(--sk-text-muted); background-color: var(--sk-surface-2)">';
+        html += sortHeader('lang', 'lang', 'text-align: center');
+        html += sortHeader('file', 'file', 'text-align: left');
+        html += sortHeader('name', 'unit', 'text-align: left');
+        html += sortHeader('loc', '&nbsp;LOC', 'text-align: left');
+        html += sortHeader('complexity', 'McCabe<br>complexity', 'text-align: center');
+        html += sortHeader('params', '#&nbsp;params', 'text-align: center');
+        html += '</tr>';
+
+        let displayCounter = 0;
+        filteredData.forEach(item => {
+            if (displayCounter > 1000) {
+                return;
+            }
+            displayCounter++;
+            const loc = item.linesOfCode || 0;
+            const complexity = item.mcCabeIndex || 0;
+            const params = item.numberOfParameters || 0;
+
+            html += '<tr>';
+
+            html += '<td style="text-align: center; vertical-align: middle;">';
+            html += langIcon(item.mainLang);
+            html += '</td>';
+
+            // file: the name above its folder, as on the Highlights tab.
+            html += '<td>';
+            const path = item.file || '';
+            const slash = path.lastIndexOf('/');
+            const fileName = path.substring(slash + 1);
+            const folder = slash >= 0 ? path.substring(0, slash + 1) : '';
+            html += '<div class="sk-file-cell" title="' + escapeHtml(path) + '">';
+            html += '<span class="sk-file-name">' + escapeHtml(fileName) + '</span>';
+            html += '<div class="sk-file-folder">' + escapeHtml(folder) + '</div>';
+            html += '</div>';
+            html += '</td>';
+
+            // unit name (with start line as a hint). When a source-code fragment was saved for this
+            // unit, link the name to it (opens in a new tab).
+            html += '<td>';
+            html += '<div style="border-left: 1px solid var(--sk-border); padding-left: 6px">';
+            const unitTitle = escapeHtml(item.longName || item.name) + (item.startLine ? ' (line ' + item.startLine + ')' : '');
+            const displayName = item.name;
+            if (item.fragmentLink) {
+                html += '<div class="sk-file-line" title="' + unitTitle + ' — view code" style="font-weight: bold">'
+                    + '<a target="_blank" href="' + escapeHtml(item.fragmentLink) + '" style="color: var(--sk-accent)">'
+                    + escapeHtml(displayName) + ' <span style="font-size: 60%; color: var(--sk-text-muted)">&#x2197;</span></a></div>';
+            } else {
+                html += '<div class="sk-file-line" title="' + unitTitle + '" style="color: var(--sk-text); font-weight: bold">' + escapeHtml(displayName) + '</div>';
+            }
+            html += '</div>';
+            html += '</td>';
+
+            // LOC, coloured by unit-size risk band, with a proportional bar.
+            html += '<td style="text-align: left; padding-right: 5px; padding-left: 5px">';
+            html += '<div style="border-radius: 4px;">';
+            const w = maxLoc > 0 ? Math.round(50 * loc / maxLoc + 1) : 0;
+            html += '<div style="vertical-align: top; display: inline-block; height: 16px; background-color: ' + riskColor(loc, sizeThresholds) + '; width: ' + w + 'px"></div>';
+            html += '<div style="margin-left: 4px; vertical-align: top; display: inline-block; font-size: 80%">' + loc.toLocaleString('en-US') + '</div>';
+            html += '</div>';
+            html += '</td>';
+
+            // McCabe complexity, coloured by conditional-complexity risk band.
+            html += '<td style="text-align: center; padding-right: 5px; padding-left: 5px; font-size: 85%;">';
+            html += '<span style="display: inline-block; min-width: 26px; padding: 1px 4px; border-radius: 4px; color: white; background-color: '
+                + riskColor(complexity, complexityThresholds) + '">' + complexity.toLocaleString('en-US') + '</span>';
+            html += '</td>';
+
+            // number of parameters.
+            html += '<td style="text-align: center; padding-right: 5px; padding-left: 5px; font-size: 85%; color: var(--sk-text-muted);">'
+                + params.toLocaleString('en-US') + '</td>';
+
+            html += '</tr>';
+        });
+
+        html += '</table>';
+        if (filteredData.length > 1000) {
+            html += '<div style="color: var(--sk-text-muted); font-size: 80%; margin-top: 6px">Showing the first 1,000 of '
+                + filteredData.length.toLocaleString('en-US') + ' units (sorted); refine the search to narrow the list.</div>';
+        }
+
+        document.getElementById('content').innerHTML = html;
+    }
+
+    // Defer the (synchronous, potentially heavy) first render one frame so the loading
+    // spinner actually paints before the main thread is blocked, then swap it for the report.
+    requestAnimationFrame(function () {
+        requestAnimationFrame(function () {
+            update();
+            document.getElementById('loading').style.display = 'none';
+            document.getElementById('report').style.display = 'block';
+        });
+    });
+</script>
+</body>
+</html>

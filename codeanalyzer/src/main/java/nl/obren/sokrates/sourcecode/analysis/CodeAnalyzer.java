@@ -8,6 +8,7 @@ import nl.obren.sokrates.common.utils.ProcessingStopwatch;
 import nl.obren.sokrates.common.utils.ProgressFeedback;
 import nl.obren.sokrates.sourcecode.analysis.files.*;
 import nl.obren.sokrates.sourcecode.analysis.results.CodeAnalysisResults;
+import nl.obren.sokrates.sourcecode.analysis.scores.MaintainabilityScoresAnalyzer;
 import nl.obren.sokrates.sourcecode.core.CodeConfiguration;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -50,56 +51,39 @@ public class CodeAnalyzer {
         results.setAnalysisStartTimeMs(start);
         results.setCodeConfiguration(codeConfiguration);
 
+        // Apply an optional _sokrates/config-people.json (same model as landscapes) before any analyzer
+        // parses git history: it groups a person's emails under one identity and overrides their
+        // userName in the per-repository reports. Set here (not in ContributorsAnalyzer) because
+        // FileHistoryAnalyzer parses history first and the parsed history is cached for the whole run.
+        // Missing/unparseable file -> null -> ignored.
+        codeConfiguration.getFileHistoryAnalysis().setPeopleConfig(
+                ContributorsAnalyzer.loadPeopleConfig(codeConfigurationFile.getParentFile()));
+
         AnalysisUtils.detailedInfo(results.getTextSummary(), progressFeedback, "Start of analysis", start);
 
-        ProcessingStopwatch.start("analysis/basic");
-        new BasicsAnalyzer(results, codeConfigurationFile, progressFeedback).analyze();
-        ProcessingStopwatch.end("analysis/basic");
-
+        timed("analysis/basic", () -> new BasicsAnalyzer(results, codeConfigurationFile, progressFeedback).analyze());
         if (shouldAnalyzeLogicalDecomposition()) {
-            ProcessingStopwatch.start("analysis/logical decomposition");
-            new LogicalDecompositionAnalyzer(results).analyze(progressFeedback);
-            ProcessingStopwatch.end("analysis/logical decomposition");
+            timed("analysis/logical decomposition", () -> new LogicalDecompositionAnalyzer(results).analyze(progressFeedback));
         }
-
         if (shouldAnalyzeConcerns()) {
-            ProcessingStopwatch.start("analysis/features of interest");
-            new ConcernsAnalyzer(results, progressFeedback).analyze();
-            ProcessingStopwatch.end("analysis/features of interest");
+            timed("analysis/features of interest", () -> new ConcernsAnalyzer(results, progressFeedback).analyze());
         }
-
         if (shouldAnalyzeFileSize()) {
-            ProcessingStopwatch.start("analysis/file size");
-            new FileSizeAnalyzer(results).analyze();
-            ProcessingStopwatch.end("analysis/file size");
+            timed("analysis/file size", () -> new FileSizeAnalyzer(results).analyze());
         }
-
         if (shouldAnalyzeUnits()) {
-            ProcessingStopwatch.start("analysis/units");
-            new UnitsAnalyzer(results, progressFeedback).analyze();
-            ProcessingStopwatch.end("analysis/units");
+            timed("analysis/units", () -> new UnitsAnalyzer(results, progressFeedback).analyze());
         }
-
         if (shouldAnalyzeFileHistory()) {
-            ProcessingStopwatch.start("analysis/file history");
-            new FileHistoryAnalyzer(results, codeConfigurationFile.getParentFile()).analyze();
-            ProcessingStopwatch.end("analysis/file history");
-
-            ProcessingStopwatch.start("analysis/contributors");
-            new ContributorsAnalyzer(results, codeConfigurationFile.getParentFile()).analyze();
-            ProcessingStopwatch.end("analysis/contributors");
+            timed("analysis/file history", () -> new FileHistoryAnalyzer(results, codeConfigurationFile.getParentFile()).analyze());
+            timed("analysis/contributors", () -> new ContributorsAnalyzer(results, codeConfigurationFile.getParentFile()).analyze());
         }
-
         if (shouldAnalyzeDuplication()) {
-            ProcessingStopwatch.start("analysis/duplication");
-            new DuplicationAnalyzer(results).analyze(progressFeedback);
-            ProcessingStopwatch.end("analysis/duplication");
+            timed("analysis/duplication", () -> new DuplicationAnalyzer(results).analyze(progressFeedback));
         }
-
+        timed("analysis/maintainability scores", () -> new MaintainabilityScoresAnalyzer(results).analyze());
         if (shouldAnalyzeControls()) {
-            ProcessingStopwatch.start("analysis/controls");
-            new ControlsAnalyzer(results, progressFeedback).analyze();
-            ProcessingStopwatch.end("analysis/controls");
+            timed("analysis/controls", () -> new ControlsAnalyzer(results, progressFeedback).analyze());
         }
 
         addTotalAnalysisTimeMetric();
@@ -107,6 +91,13 @@ public class CodeAnalyzer {
         ProcessingStopwatch.end("analysis");
 
         return results;
+    }
+
+    /** Runs one analysis step between the matching ProcessingStopwatch start/end marks. */
+    private static void timed(String step, Runnable work) {
+        ProcessingStopwatch.start(step);
+        work.run();
+        ProcessingStopwatch.end(step);
     }
 
 

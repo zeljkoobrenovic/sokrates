@@ -5,15 +5,10 @@
 package nl.obren.sokrates.sourcecode.duplication.impl;
 
 public class LineInfo {
-    private static int idCounter = 0;
-    private int id;
+    private final int id;
 
-    public LineInfo() {
-        id = idCounter++;
-    }
-
-    public static void resetCounter() {
-        idCounter = 0;
+    public LineInfo(int id) {
+        this.id = id;
     }
 
     private int count = 1;

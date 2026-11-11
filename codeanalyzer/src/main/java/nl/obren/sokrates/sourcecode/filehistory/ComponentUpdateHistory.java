@@ -13,6 +13,10 @@ public class ComponentUpdateHistory {
     private NamedSourceCodeAspect component;
     private List<String> dates = new ArrayList<>();
     private Map<String, List<SourceFile>> dateSourceFileMap = new HashMap<>();
+    // Distinct, sorted dates kept in a TreeSet so addDate is O(log n) without a contains() scan and
+    // a full re-sort on every insert; the dates list mirrors it. Per-date source-file dedup sets.
+    private TreeSet<String> datesSet = new TreeSet<>();
+    private Map<String, Set<SourceFile>> dateSourceFileSet = new HashMap<>();
 
     public ComponentUpdateHistory(NamedSourceCodeAspect component) {
         this.component = component;
@@ -32,12 +36,13 @@ public class ComponentUpdateHistory {
 
     public void setDates(List<String> dates) {
         this.dates = dates;
+        this.datesSet = new TreeSet<>(dates);
     }
 
     public void addDate(String date) {
-        if (!dates.contains(date)) {
-            dates.add(date);
-            Collections.sort(dates);
+        if (datesSet.add(date)) {
+            dates.clear();
+            dates.addAll(datesSet);
         }
     }
 
@@ -56,13 +61,10 @@ public class ComponentUpdateHistory {
 
     private void addSourceFileDate(String date, SourceFile sourceFile) {
         addDate(date);
-        List<SourceFile> sourceFilePaths = dateSourceFileMap.get(date);
-        if (sourceFilePaths == null) {
-            sourceFilePaths = new ArrayList<>();
-            dateSourceFileMap.put(date, sourceFilePaths);
-        }
+        List<SourceFile> sourceFilePaths = dateSourceFileMap.computeIfAbsent(date, k -> new ArrayList<>());
+        Set<SourceFile> seen = dateSourceFileSet.computeIfAbsent(date, k -> new HashSet<>());
 
-        if (!sourceFilePaths.contains(sourceFile)) {
+        if (seen.add(sourceFile)) {
             sourceFilePaths.add(sourceFile);
         }
     }

@@ -21,6 +21,17 @@ public class Palette {
         return new Palette(Arrays.asList("#d7191c", "#fdae61", "#ffffbf", "#a6d96a", "#1a9641"));
     }
 
+    /**
+     * The risk palette for HTML/CSS contexts (inline styles, SVG style="fill:"): the same colors as
+     * {@link #getRiskPalette()}, as theme variables (ReportTheme) with the literal as fallback, so the
+     * viewer's colour-blind safe palette can replace them. Not for JSON data or SVG attributes.
+     */
+    public static Palette getRiskPaletteCss() {
+        return new Palette(Arrays.asList(
+                "var(--sk-risk-very-high, #d7191c)", "var(--sk-risk-high, #fdae61)", "var(--sk-risk-medium, #ffffbf)",
+                "var(--sk-risk-low, #a6d96a)", "var(--sk-risk-negligible, #1a9641)"));
+    }
+
     public static Palette getHeatPalette() {
         //return new Palette(Arrays.asList("#bd0026", "#f03b20", "#fd8d3c", "#fed98e", "#ffffd4"));
         return new Palette(Arrays.asList("#b21227", "#f7844e", "#e6f5df", "#b0d8e9", "#6192c3"));
@@ -38,6 +49,14 @@ public class Palette {
 
     public static Palette getDuplicationPalette() {
         return new Palette(Arrays.asList("#9DC034", "#F2021B"));
+    }
+
+    // Heat ramp (RdYlGn family, like the risk palette) for the 11 repository-size categories
+    // (<1K .. >1M): green = small, through yellow/orange, to red = large.
+    public static Palette getSizePalette() {
+        return new Palette(Arrays.asList(
+                "#1a9641", "#52b151", "#8acc62", "#b8e17b", "#dcf09e", "#ffffbf",
+                "#fee79a", "#fdc070", "#f59053", "#e34d33", "#d7191c"));
     }
 
     public static Palette getDefaultPalette() {

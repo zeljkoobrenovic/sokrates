@@ -5,7 +5,6 @@
 package nl.obren.sokrates.sourcecode.filehistory;
 
 import nl.obren.sokrates.sourcecode.analysis.FileHistoryAnalysisConfig;
-import nl.obren.sokrates.sourcecode.githistory.AuthorCommit;
 import nl.obren.sokrates.sourcecode.githistory.FileUpdate;
 import nl.obren.sokrates.sourcecode.githistory.GitHistoryUtils;
 
@@ -42,9 +41,7 @@ public class GitHistoryUtil {
         commitInfo.setEmail(authorEmail);
         fileInfo.getCommits().add(commitInfo);
 
-        String lastModifiedDate = fileUpdate.getDate();
-        if (!fileInfo.getDates().contains(lastModifiedDate)) {
-            fileInfo.getDates().add(lastModifiedDate);
-        }
+        fileInfo.addDateIfAbsent(fileUpdate.getDate());
+        fileInfo.addChurn(fileUpdate.getDate(), fileUpdate.getLinesAdded(), fileUpdate.getLinesDeleted());
     }
 }

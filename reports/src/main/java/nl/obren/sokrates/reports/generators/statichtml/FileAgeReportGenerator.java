@@ -33,8 +33,6 @@ public class FileAgeReportGenerator {
 
     private CodeAnalysisResults codeAnalysisResults;
     private List<String> ageLabels;
-    private int daysBetween;
-    private int estimatedWorkingDays;
 
     public FileAgeReportGenerator(CodeAnalysisResults codeAnalysisResults) {
         this.codeAnalysisResults = codeAnalysisResults;
@@ -55,6 +53,8 @@ public class FileAgeReportGenerator {
         addMostPreviouslyChangedFilesList(report);
         addYoungestFilesList(report);
         addMostRecentlyChangedFilesList(report);
+
+        addSummary(report);
     }
 
     private void addSummary(RichTextReport report) {
@@ -70,10 +70,10 @@ public class FileAgeReportGenerator {
             Date firstDate = FileHistoryUtils.getDateFromString(firstDateString);
             Date latestDate = FileHistoryUtils.getDateFromString(latestDateString);
 
-            this.daysBetween = FileHistoryUtils.daysBetween(firstDate, latestDate);
+            int daysBetween = FileHistoryUtils.daysBetween(firstDate, latestDate);
 
             int weeks = daysBetween / 7;
-            estimatedWorkingDays = weeks * 5;
+            int estimatedWorkingDays = weeks * 5;
 
             report.startSection("Summary", "");
 
@@ -89,12 +89,12 @@ public class FileAgeReportGenerator {
             if (ignoredFiles > 0) {
                 report.addListItem("Files without commit history (ignored): <b>" + FormattingUtils.formatCount(ignoredFiles) + " (" + FormattingUtils.formatCount(codeAnalysisResults.getFilesHistoryAnalysisResults().getFilesWithoutCommitHistoryLinesOfCode()) + " lines of code)</b>");
                 report.startUnorderedList();
-                report.addListItem("<a href='../data/text/mainFilesWithoutHistory.txt' target='_blank'>Files without history</a>");
+                report.addListItem("<a href='#' onclick=\"return downloadDataFile('text/mainFilesWithoutHistory.txt')\" target='_blank'>Files without history</a>");
                 report.endUnorderedList();
             }
             report.addListItem("Data:");
             report.startUnorderedList();
-            report.addListItem("<a href='../data/text/mainFilesWithHistory.txt' target='_blank'>Organized per file</a>");
+            report.addListItem("<a href='#' onclick=\"return downloadDataFile('text/mainFilesWithHistory.txt')\" target='_blank'>Organized per file</a>");
             report.endUnorderedList();
             report.endUnorderedList();
             report.endSection();
@@ -116,8 +116,6 @@ public class FileAgeReportGenerator {
     }
 
     private void addOverallSections(RichTextReport report) {
-        addSummary(report);
-
         report.startSection("File Change History Overall", "");
         addAgeGraphOverall(report, codeAnalysisResults.getFilesHistoryAnalysisResults().getOverallFileFirstModifiedDistribution(),
                 FILE_AGE_DISTRIBUTION + " Overall", FILE_AGE_DESCRIPTION, Palette.getAgePalette());
@@ -128,8 +126,8 @@ public class FileAgeReportGenerator {
     }
 
     private void describe(RichTextReport report) {
-        report.addParagraph("File age measurements show the distribution of file ages (days since the first commit)" +
-                " and the file freshness (days since the latest commit).", "margin-top: 12px; color: grey");
+        report.setDescription("File age measurements show the distribution of file ages (days since the first commit)" +
+                " and the file freshness (days since the latest commit).");
     }
 
     private void addAgeGraphOverall(RichTextReport report, SourceFileAgeDistribution distribution, String title, String subtitle, Palette palette) {
@@ -165,9 +163,9 @@ public class FileAgeReportGenerator {
         report.addHtmlContent(PieChartUtils.getRiskDistributionChart(distribution, ageLabels, palette));
         report.addLineBreak();
         report.addHtmlContent("explore: ");
-        report.addHtmlContent("<a target='_blank' href='visuals/zoomable_circles_main_age_coloring.html'>grouped by folders</a>");
+        report.addHtmlContent("<a target='_blank' href='visuals/zoomable_circles.html#main_age_coloring'>grouped by folders</a>");
         report.addHtmlContent(" | ");
-        report.addHtmlContent("<a target='_blank' href='visuals/zoomable_circles_main_age_coloring_categories.html'>grouped by age</a>");
+        report.addHtmlContent("<a target='_blank' href='visuals/zoomable_circles.html#main_age_coloring_categories'>grouped by age</a>");
         report.endSection();
     }
 
@@ -199,9 +197,9 @@ public class FileAgeReportGenerator {
         report.addHtmlContent(PieChartUtils.getRiskDistributionChart(distribution, ageLabels, palette));
         report.addLineBreak();
         report.addHtmlContent("explore: ");
-        report.addHtmlContent("<a target='_blank' href='visuals/zoomable_circles_main_freshness_coloring.html'>grouped by folders</a>");
+        report.addHtmlContent("<a target='_blank' href='visuals/zoomable_circles.html#main_freshness_coloring'>grouped by folders</a>");
         report.addHtmlContent(" | ");
-        report.addHtmlContent("<a target='_blank' href='visuals/zoomable_circles_main_freshness_coloring_categories.html'>grouped by freshness</a>");
+        report.addHtmlContent("<a target='_blank' href='visuals/zoomable_circles.html#main_freshness_coloring_categories'>grouped by freshness</a>");
         report.endSection();
     }
 
@@ -222,10 +220,7 @@ public class FileAgeReportGenerator {
     }
 
     private void addChangesPerLogicalDecomposition(RichTextReport report) {
-        int logicalDecompositionCounter[] = {0};
         codeAnalysisResults.getCodeConfiguration().getLogicalDecompositions().forEach(logicalDecomposition -> {
-            logicalDecompositionCounter[0]++;
-
             String name = logicalDecomposition.getName();
             codeAnalysisResults.getFilesHistoryAnalysisResults().getFirstModifiedDistributionPerLogicalDecomposition().stream()
                     .filter(d -> d.getName().equalsIgnoreCase(name)).forEach(distribution -> {

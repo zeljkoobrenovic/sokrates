@@ -65,8 +65,9 @@ public class VisualBasicHeuristicUnitsExtractor {
         unit.setSourceFile(sourceFile);
         unit.setShortName(line.trim());
         unit.setLinesOfCode(loc);
-        unit.setStartLine(startLine);
-        unit.setEndLine(endLine);
+        // Both arrive as 0-based indexes into the line list; unit line numbers are 1-based.
+        unit.setStartLine(startLine + 1);
+        unit.setEndLine(endLine + 1);
         unit.setBody(body);
         unit.setCleanedBody(cleanedBody);
 

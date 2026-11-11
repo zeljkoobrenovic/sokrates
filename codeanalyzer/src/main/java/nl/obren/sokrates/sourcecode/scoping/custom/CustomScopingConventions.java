@@ -7,7 +7,6 @@ package nl.obren.sokrates.sourcecode.scoping.custom;
 import nl.obren.sokrates.sourcecode.analysis.FileHistoryAnalysisConfig;
 import nl.obren.sokrates.sourcecode.aspects.Concern;
 import nl.obren.sokrates.sourcecode.core.AnalysisConfig;
-import nl.obren.sokrates.sourcecode.core.TrendAnalysisConfig;
 import nl.obren.sokrates.sourcecode.core.TagRule;
 import nl.obren.sokrates.sourcecode.metrics.MetricsWithGoal;
 import nl.obren.sokrates.sourcecode.scoping.Convention;
@@ -63,9 +62,6 @@ public class CustomScopingConventions {
 
     // Custom goals and controls
     List<MetricsWithGoal> goalsAndControls = new ArrayList<>();
-
-    // Default settings of trend history analysis parameters
-    private TrendAnalysisConfig trendAnalysis = new TrendAnalysisConfig();
 
     // Default settings of file history analysis parameters
     private FileHistoryAnalysisConfig fileHistoryAnalysis = new FileHistoryAnalysisConfig();
@@ -226,13 +222,5 @@ public class CustomScopingConventions {
 
     public void setFileHistoryAnalysis(FileHistoryAnalysisConfig fileHistoryAnalysis) {
         this.fileHistoryAnalysis = fileHistoryAnalysis;
-    }
-
-    public TrendAnalysisConfig getTrendAnalysis() {
-        return trendAnalysis;
-    }
-
-    public void setTrendAnalysis(TrendAnalysisConfig trendAnalysis) {
-        this.trendAnalysis = trendAnalysis;
     }
 }

@@ -10,6 +10,11 @@ import nl.obren.sokrates.sourcecode.landscape.analysis.LandscapeAnalysisResults;
 public class SubLandscapeLink {
     private String name = "";
     private String indexFilePath = "";
+    // True for virtual landscapes: their files live inside the landscape's own folder
+    // (landscapes/<name>/_sokrates_landscape/...), so paths resolve relative to the landscape
+    // folder without the repositoryReportsUrlPrefix, and `label` is used for display.
+    private boolean virtual = false;
+    private String label = "";
     @JsonIgnore
     private LandscapeAnalysisResults landscapeAnalysisResults;
 
@@ -19,6 +24,22 @@ public class SubLandscapeLink {
     public SubLandscapeLink(String name, String indexFilePath) {
         this.name = name;
         this.indexFilePath = indexFilePath;
+    }
+
+    public boolean isVirtual() {
+        return virtual;
+    }
+
+    public void setVirtual(boolean virtual) {
+        this.virtual = virtual;
+    }
+
+    public String getLabel() {
+        return label;
+    }
+
+    public void setLabel(String label) {
+        this.label = label;
     }
 
     public String getName() {

@@ -6,7 +6,6 @@ package nl.obren.sokrates.reports.utils;
 
 import nl.obren.sokrates.sourcecode.ExtensionGroupExtractor;
 import nl.obren.sokrates.sourcecode.units.UnitInfo;
-import org.apache.commons.io.FilenameUtils;
 
 import java.util.List;
 
@@ -16,26 +15,30 @@ public class UtilsReportUtils {
         StringBuilder table = new StringBuilder();
 
         table.append("<div style='width: 100%; overflow-x: scroll'>\n");
-        table.append("<table style='width: 80%'>\n");
+        table.append("<table class='sk-data-table' style='width: 80%'>\n");
         table.append("<th>Unit</th><th># lines</th><th>McCabe index</th><th># params</th>\n");
         int index[] = {0};
         units.forEach(unit -> {
             table.append("<tr>\n");
             index[0]++;
             String divId = "unitCode_" + index[0];
+            // Unit names come from source lines (generics like foo<T> are common) and paths are
+            // repository-controlled: both are escaped as element content; the viewer link's path is
+            // percent-encoded for the URL fragment (see HtmlEscapeUtils).
+            String relativePath = unit.getSourceFile().getRelativePath();
             String fileLink = cacheFiles
-                    ? "<a style='color: grey' target='_blank' href='../src/main/"
-                    + unit.getSourceFile().getRelativePath() + ".html'>"
-                    + unit.getSourceFile().getRelativePath()
+                    ? "<a style='color: grey' target='_blank' href='"
+                    + HtmlEscapeUtils.viewerFileHref("main", relativePath) + "'>"
+                    + HtmlEscapeUtils.escape(relativePath)
                     + "</a>"
-                    : unit.getSourceFile().getRelativePath();
-            String unitNameFragment = saveCodeFragments ? ("<a target='_blank'" +
-                    "href='../src/fragments/" + fragmentType + "/" + fragmentType + "_"
-                    + index[0] + "."
-                    + unit.getSourceFile().getExtension()
-                    + ".html'>"
-                    + unit.getShortName() + "</a>")
-                    : (unit.getShortName());
+                    : HtmlEscapeUtils.escape(relativePath);
+            String unitName = HtmlEscapeUtils.escape(unit.getShortName());
+            String unitNameFragment = saveCodeFragments ? ("<a target='_blank' " +
+                    "href='../src/viewer.html#bundle=fragments/" + fragmentType + ".json&i="
+                    + index[0]
+                    + "'>"
+                    + unitName + "</a>")
+                    : unitName;
             table.append("<td style='white-space: nowrap; overflow: hidden'>" +
                     "<div><div style='display: inline-block; vertical-align: top; margin-top: 3px; margin-right: 4px;'>" +
                     DataImageUtils.getLangDataImageDiv30(ExtensionGroupExtractor.getExtension(unit.getSourceFile().getFile().getName())) +

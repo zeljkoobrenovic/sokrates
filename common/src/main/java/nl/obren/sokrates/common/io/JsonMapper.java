@@ -36,7 +36,10 @@ public class JsonMapper {
         T data = null;
 
         try {
-            data = new ObjectMapper().readValue(json, type);
+            // Use the same tolerant configuration as the instance getObject(...): unknown/legacy
+            // properties must not abort deserialization (older config files carry renamed or
+            // removed fields), otherwise this returns null and the whole config is silently ignored.
+            data = configuredMapper().readValue(json, type);
         } catch (Exception e) {
             LOG.error(e);
         }
@@ -44,13 +47,15 @@ public class JsonMapper {
     }
 
     private ObjectMapper getObjectMapper() {
-        ObjectMapper mapper = new ObjectMapper()
+        return configuredMapper();
+    }
+
+    private static ObjectMapper configuredMapper() {
+        return new ObjectMapper()
                 .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
                 .configure(DeserializationFeature.FAIL_ON_INVALID_SUBTYPE, false)
                 .configure(DeserializationFeature.FAIL_ON_UNRESOLVED_OBJECT_IDS, false)
                 .configure(DeserializationFeature.FAIL_ON_MISSING_EXTERNAL_TYPE_ID_PROPERTY, false);
-
-        return mapper;
     }
 
     protected String getMessage(String message, JsonLocation jsonLocation) {

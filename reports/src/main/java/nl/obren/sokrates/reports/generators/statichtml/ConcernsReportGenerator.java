@@ -8,6 +8,7 @@ import nl.obren.sokrates.common.utils.FormattingUtils;
 import nl.obren.sokrates.reports.charts.SimpleOneBarChart;
 import nl.obren.sokrates.reports.core.RichTextReport;
 import nl.obren.sokrates.reports.dataexporters.DataExportUtils;
+import nl.obren.sokrates.reports.utils.HtmlEscapeUtils;
 import nl.obren.sokrates.reports.utils.ScopesRenderer;
 import nl.obren.sokrates.sourcecode.analysis.results.AspectAnalysisResults;
 import nl.obren.sokrates.sourcecode.analysis.results.CodeAnalysisResults;
@@ -39,11 +40,12 @@ public class ConcernsReportGenerator {
 
     public void addConcernsToReport(RichTextReport report) {
         this.report = report;
-        addIntro(report);
+        report.setDescription("Aspects in the source code identified through RegEx patterns.");
 
         addSummary(report);
 
         addConcernsGroup(report);
+        addAboutSection(report);
     }
 
     private void addSummary(RichTextReport report) {
@@ -62,7 +64,8 @@ public class ConcernsReportGenerator {
                         String svg = getOverviewCodePercentageSvg(concern, relativeConcernSizeInPerc,
                                 concern.getFilesCount(), concernLoc, 400, 20, fileListPath, isDerivedConcern(concern.getName()));
                         report.startDiv("");
-                        report.addContentInDiv(concern.getName());
+                        // Meta-concern names are extracted from source lines, so they are repository-controlled.
+                        report.addContentInDivText(concern.getName());
                         report.addHtmlContent(svg);
                         report.endDiv();
                     }
@@ -90,9 +93,8 @@ public class ConcernsReportGenerator {
         });
     }
 
-    private void addIntro(RichTextReport report) {
-        report.addParagraph("Aspects in the source code identified through RegEx patterns.", "margin-top: 12px; color: grey");
-        report.startSection("Intro", "");
+    private void addAboutSection(RichTextReport report) {
+        report.startSection("About This Analysis", "");
         report.startUnorderedList();
         report.addListItem("Features of interest are any aspects of a software system that can be identified through patterns in code.");
         report.addListItem("Features of interest provide you with a way to focus your attention on relevant parts of the codebase.");
@@ -115,7 +117,7 @@ public class ConcernsReportGenerator {
                 + count + "</b> concern" + (count > 1 ? "s" : "") + ".");
 
         report.startUnorderedList();
-        concernsAnalysisResults.getConcerns().forEach(c -> report.addListItem(c.getName()));
+        concernsAnalysisResults.getConcerns().forEach(c -> report.addListItemText(c.getName()));
         report.endUnorderedList();
 
         report.endUnorderedList();
@@ -134,30 +136,8 @@ public class ConcernsReportGenerator {
             return;
         }
         concernCounter++;
-        List<NumericMetric> fileCountPerExtension = aspectAnalysisResults.getFileCountPerExtension();
-        List<NumericMetric> linesOfCodePerExtension = aspectAnalysisResults.getLinesOfCodePerExtension();
-
-        ScopesRenderer renderer = new ScopesRenderer();
-        renderer.setLinesOfCodeInMain(codeAnalysisResults.getMainAspectAnalysisResults().getLinesOfCode());
-
-        String title = "<span style='color: grey; font-size: 90%'>" + key + "</span><br>";
-        title += groupCounter + "." + concernCounter + " " + name.replace(" - ", " Multiple Classifications");
-        renderer.setTitle(title);
-        renderer.setDescription("");
-        if (name.equalsIgnoreCase("Unclassified")) {
-            renderer.setDescription("This concern include all files that are not included in any of the previously described concerns in this group.");
-        }
-        if (name.equalsIgnoreCase("Multiple Classifications")) {
-            renderer.setDescription("This concern include all files that are included in two or more concerns in this group.");
-        }
-
-        renderer.setFileCountPerComponent(fileCountPerExtension);
-        renderer.setAspect(aspectAnalysisResults.getAspect());
-        renderer.setLinesOfCode(linesOfCodePerExtension);
-        renderer.setMaxFileCount(codeAnalysisResults.getMainAspectAnalysisResults().getFilesCount());
+        ScopesRenderer renderer = scopesRenderer(key, aspectAnalysisResults, name);
         int mainLoc = codeAnalysisResults.getMainAspectAnalysisResults().getLinesOfCode();
-        renderer.setMaxLinesOfCode(mainLoc);
-        renderer.setTotalNumberOfRegexMatches(aspectAnalysisResults.getNumberOfRegexLineMatches());
 
         double relativeSizeInPerc = 100.0 * aspectAnalysisResults.getLinesOfCode() / mainLoc;
         int numberOfFiles = aspectAnalysisResults.getFilesCount();
@@ -178,14 +158,43 @@ public class ConcernsReportGenerator {
             renderer.renderDetails(report, false);
         }
 
-        report.startShowMoreBlock("details...");
+        report.startDetailsBlock("details...");
         codeAnalysisResults.getLogicalDecompositionsAnalysisResults()
                 .forEach(logicalDecompositionAnalysisResults -> {
                     renderConcernPerComponent(aspectAnalysisResults, mainLoc, logicalDecompositionAnalysisResults);
                 });
-        report.endShowMoreBlock();
+        report.endDetailsBlock();
 
         report.endSection();
+    }
+
+    /** The renderer of one concern's extension breakdown: numbered title, main-code maxima, regex match count. */
+    private ScopesRenderer scopesRenderer(String key, AspectAnalysisResults aspectAnalysisResults, String name) {
+        List<NumericMetric> fileCountPerExtension = aspectAnalysisResults.getFileCountPerExtension();
+        List<NumericMetric> linesOfCodePerExtension = aspectAnalysisResults.getLinesOfCodePerExtension();
+
+        ScopesRenderer renderer = new ScopesRenderer();
+        renderer.setLinesOfCodeInMain(codeAnalysisResults.getMainAspectAnalysisResults().getLinesOfCode());
+
+        String title = "<span style='color: grey; font-size: 90%'>" + key + "</span><br>";
+        // The name is repository-controlled for meta-concerns; the title also feeds the "no files" message.
+        title += groupCounter + "." + concernCounter + " " + HtmlEscapeUtils.escape(name.replace(" - ", " Multiple Classifications"));
+        renderer.setTitle(title);
+        renderer.setDescription("");
+        if (name.equalsIgnoreCase("Unclassified")) {
+            renderer.setDescription("This concern include all files that are not included in any of the previously described concerns in this group.");
+        }
+        if (name.equalsIgnoreCase("Multiple Classifications")) {
+            renderer.setDescription("This concern include all files that are included in two or more concerns in this group.");
+        }
+
+        renderer.setFileCountPerComponent(fileCountPerExtension);
+        renderer.setAspect(aspectAnalysisResults.getAspect());
+        renderer.setLinesOfCode(linesOfCodePerExtension);
+        renderer.setMaxFileCount(codeAnalysisResults.getMainAspectAnalysisResults().getFilesCount());
+        renderer.setMaxLinesOfCode(codeAnalysisResults.getMainAspectAnalysisResults().getLinesOfCode());
+        renderer.setTotalNumberOfRegexMatches(aspectAnalysisResults.getNumberOfRegexLineMatches());
+        return renderer;
     }
 
     private void renderConcernPerComponent(AspectAnalysisResults aspectAnalysisResults, int mainLoc, LogicalDecompositionAnalysisResults logicalDecompositionAnalysisResults) {
@@ -236,13 +245,13 @@ public class ConcernsReportGenerator {
     private String getOverviewCodePercentageSvg(AspectAnalysisResults concern, double percentage, int numberOfFiles, int linesOfCode, int maxSize, int barHeight, String fileListPath, boolean derivedConcern) {
         String filesFragment = numberOfFiles + (numberOfFiles == 1 ? " file " : " files");
         if (StringUtils.isNotBlank(fileListPath)) {
-            filesFragment = "<u><a href='../data/text/aspect_" + fileListPath + ".txt'>" + filesFragment + "</a></u>";
+            filesFragment = "<u><a href='#' onclick=\"return downloadDataFile('text/aspect_" + fileListPath + ".txt')\">" + filesFragment + "</a></u>";
             if (!derivedConcern) {
                 if (concern.getFoundFiles().size() > 0) {
-                    filesFragment += " | <u><a href='../data/text/aspect_" + fileListPath + "_found_text_per_file.txt'>found text per file</a></u>";
+                    filesFragment += " | <u><a href='#' onclick=\"return downloadDataFile('text/aspect_" + fileListPath + "_found_text_per_file.txt')\">found text per file</a></u>";
                 }
                 if (concern.getFoundTextList().size() > 0) {
-                    filesFragment += " | <u><a href='../data/text/aspect_" + fileListPath + "_found_text_per_file.txt'>found text per file</a></u>";
+                    filesFragment += " | <u><a href='#' onclick=\"return downloadDataFile('text/aspect_" + fileListPath + "_found_text.txt')\">found text</a></u>";
                 }
             }
         }

@@ -5,7 +5,6 @@
 package nl.obren.sokrates.sourcecode.duplication_alt;
 
 import nl.obren.sokrates.sourcecode.duplication.impl.LineIndexesExtractor;
-import nl.obren.sokrates.sourcecode.duplication.impl.LineInfo;
 import org.junit.Test;
 
 import java.util.Arrays;
@@ -16,7 +15,6 @@ import static org.junit.Assert.assertEquals;
 public class LineIndexesExtractorTest {
     @Test
     public void getLineIDs() throws Exception {
-        LineInfo.resetCounter();
         LineIndexesExtractor extractor = new LineIndexesExtractor();
 
         List<Integer> lineIDs = extractor.getLineIDs(Arrays.asList("A", "B", "C"));
@@ -47,7 +45,6 @@ public class LineIndexesExtractorTest {
 
     @Test
     public void clearUniqueLines() throws Exception {
-        LineInfo.resetCounter();
         LineIndexesExtractor extractor = new LineIndexesExtractor();
 
         List<Integer> lineIDs = extractor.getLineIDs(Arrays.asList("A", "B", "C", "D", "A", "D"));

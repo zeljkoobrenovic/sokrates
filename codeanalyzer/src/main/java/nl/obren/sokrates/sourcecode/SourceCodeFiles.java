@@ -10,11 +10,20 @@ import nl.obren.sokrates.sourcecode.aspects.NamedSourceCodeAspect;
 import nl.obren.sokrates.sourcecode.core.AnalysisConfig;
 import nl.obren.sokrates.sourcecode.core.CodeConfigurationUtils;
 import org.apache.commons.io.FilenameUtils;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
 import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.InvalidPathException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.*;
 
 public class SourceCodeFiles {
+    private static final Log LOG = LogFactory.getLog(SourceCodeFiles.class);
+
     private List<SourceFile> allFiles = new ArrayList<>();
     private List<SourceFile> filesInBroadScope = new ArrayList<>();
     private File root;
@@ -23,6 +32,13 @@ public class SourceCodeFiles {
     private Map<String, IgnoredFilesGroup> ignoredFilesGroups = new HashMap<>();
     @JsonIgnore
     private List<SourceFile> filesExcludedByExtension = new ArrayList<>();
+    @JsonIgnore
+    private List<SymbolicLink> skippedSymbolicLinks = new ArrayList<>();
+    // Resolved once per run rather than per link: a tree can hold tens of thousands of links, and
+    // canonicalising the root is a syscall each time. Null when the root cannot be canonicalised,
+    // which makes every link classify as outside.
+    @JsonIgnore
+    private Path canonicalRoot;
 
     public SourceCodeFiles() {
     }
@@ -46,9 +62,15 @@ public class SourceCodeFiles {
     private void loadAllFiles(File root, ProgressFeedback progressFeedback) {
         this.progressFeedback = progressFeedback;
         allFiles.clear();
+        skippedSymbolicLinks.clear();
+        canonicalRoot = canonicalPathOf(root);
         progressFeedback.start();
-        addFile(root);
+        addFile(root, true);
         progressFeedback.end();
+        if (skippedSymbolicLinks.size() > 0) {
+            LOG.info("Did not follow " + skippedSymbolicLinks.size() + " symbolic link(s) under "
+                    + root.getAbsolutePath() + "; found " + allFiles.size() + " file(s).");
+        }
     }
 
     public List<SourceFile> getSourceFiles(NamedSourceCodeAspect aspect) {
@@ -68,24 +90,7 @@ public class SourceCodeFiles {
             if (progressFeedback.canceled()) {
                 return;
             }
-            boolean included[] = {false};
-            boolean excluded[] = {false};
-            if (aspect.getFiles().contains(sourceFile.getRelativePath())) {
-                included[0] = true;
-            }
-            aspect.getSourceFileFilters().forEach(filter -> {
-                if (progressFeedback.canceled()) {
-                    return;
-                }
-                if (filter.matches(sourceFile)) {
-                    if (!filter.getException()) {
-                        included[0] = true;
-                    } else {
-                        excluded[0] = true;
-                    }
-                }
-            });
-            if (included[0] && !excluded[0]) {
+            if (aspectIncludes(aspect, sourceFile)) {
                 if (!sourceFiles.contains(sourceFile)) {
                     sourceFiles.add(sourceFile);
                 }
@@ -98,6 +103,28 @@ public class SourceCodeFiles {
         progressFeedback.end();
 
         return sourceFiles;
+    }
+
+    /** Listed by path or matched by an including filter, and matched by no excepting filter. */
+    private boolean aspectIncludes(NamedSourceCodeAspect aspect, SourceFile sourceFile) {
+        boolean included[] = {false};
+        boolean excluded[] = {false};
+        if (aspect.getFiles().contains(sourceFile.getRelativePath())) {
+            included[0] = true;
+        }
+        aspect.getSourceFileFilters().forEach(filter -> {
+            if (progressFeedback.canceled()) {
+                return;
+            }
+            if (filter.matches(sourceFile)) {
+                if (!filter.getException()) {
+                    included[0] = true;
+                } else {
+                    excluded[0] = true;
+                }
+            }
+        });
+        return included[0] && !excluded[0];
     }
 
     public void createBroadScope(List<String> extensions, List<SourceFileFilter> exclusions, AnalysisConfig analysisConfig) {
@@ -139,49 +166,33 @@ public class SourceCodeFiles {
 
     boolean shouldExcludeFile(SourceFile sourceFile, List<SourceFileFilter> exclusions, AnalysisConfig analysisConfig) {
         if (sourceFile.getFile().length() > analysisConfig.getMaxFileSizeBytes()) {
-            String key = "Too long file (" + analysisConfig.getMaxFileSizeBytes() + "+ bytes)";
-            IgnoredFilesGroup ignoredFilesGroup = ignoredFilesGroups.get(key);
-            if (ignoredFilesGroup == null) {
-                ignoredFilesGroup = new IgnoredFilesGroup(new SourceFileFilter());
-                ignoredFilesGroups.put(key, ignoredFilesGroup);
-            }
-            ignoredFilesGroup.getSourceFiles().add(sourceFile);
+            ignore(sourceFile, "Too long file (" + analysisConfig.getMaxFileSizeBytes() + "+ bytes)", new SourceFileFilter());
             return true;
         } else if (hasTooManyLines(sourceFile, analysisConfig.getMaxLines())) {
-            String key = "Too many lines (" + analysisConfig.getMaxLines() + ")";
-            IgnoredFilesGroup ignoredFilesGroup = ignoredFilesGroups.get(key);
-            if (ignoredFilesGroup == null) {
-                ignoredFilesGroup = new IgnoredFilesGroup(new SourceFileFilter());
-                ignoredFilesGroups.put(key, ignoredFilesGroup);
-            }
-            ignoredFilesGroup.getSourceFiles().add(sourceFile);
+            ignore(sourceFile, "Too many lines (" + analysisConfig.getMaxLines() + ")", new SourceFileFilter());
             return true;
         } else if (hasTooLongLines(sourceFile, analysisConfig.getMaxLineLength())) {
-            String key = "Too long lines (" + analysisConfig.getMaxLineLength() + "+ characters)";
-            IgnoredFilesGroup ignoredFilesGroup = ignoredFilesGroups.get(key);
-            if (ignoredFilesGroup == null) {
-                ignoredFilesGroup = new IgnoredFilesGroup(new SourceFileFilter());
-                ignoredFilesGroups.put(key, ignoredFilesGroup);
-            }
-            ignoredFilesGroup.getSourceFiles().add(sourceFile);
+            ignore(sourceFile, "Too long lines (" + analysisConfig.getMaxLineLength() + "+ characters)", new SourceFileFilter());
             return true;
         } else {
-            boolean exclude = false;
             for (SourceFileFilter filter : exclusions) {
                 if (filter.matches(sourceFile)) {
-                    exclude = true;
-                    String key = filter.toString();
-                    IgnoredFilesGroup ignoredFilesGroup = ignoredFilesGroups.get(key);
-                    if (ignoredFilesGroup == null) {
-                        ignoredFilesGroup = new IgnoredFilesGroup(filter);
-                        ignoredFilesGroups.put(key, ignoredFilesGroup);
-                    }
-                    ignoredFilesGroup.getSourceFiles().add(sourceFile);
-                    break;
+                    ignore(sourceFile, filter.toString(), filter);
+                    return true;
                 }
             }
-            return exclude;
+            return false;
         }
+    }
+
+    /** Files the source file under the ignored-files group of the given key (created with the filter on first use). */
+    private void ignore(SourceFile sourceFile, String key, SourceFileFilter filter) {
+        IgnoredFilesGroup ignoredFilesGroup = ignoredFilesGroups.get(key);
+        if (ignoredFilesGroup == null) {
+            ignoredFilesGroup = new IgnoredFilesGroup(filter);
+            ignoredFilesGroups.put(key, ignoredFilesGroup);
+        }
+        ignoredFilesGroup.getSourceFiles().add(sourceFile);
     }
 
     private boolean hasTooManyLines(SourceFile sourceFile, int maxLines) {
@@ -218,11 +229,20 @@ public class SourceCodeFiles {
         this.filesInBroadScope = filesInBroadScope;
     }
 
-    private void addFile(File file) {
+    private void addFile(File file, boolean isAnalysisRoot) {
+        if (!isAnalysisRoot && isSymbolicLink(file)) {
+            // A symlinked .git or _sokrates is not evidence of missing code: the walk skips those
+            // folders whether they are links or not, so naming them would send the reader looking
+            // for source that was never in scope.
+            if (isNotVCSFolder(file)) {
+                skippedSymbolicLinks.add(describeSymbolicLink(file));
+            }
+            return;
+        }
         if (file.isDirectory()) {
             if (isNotVCSFolder(file)) {
                 for (File child : file.listFiles()) {
-                    addFile(child);
+                    addFile(child, false);
                 }
             }
         } else {
@@ -241,6 +261,113 @@ public class SourceCodeFiles {
         });
 
         return map;
+    }
+
+    /**
+     * Not every path {@link File} accepts can be turned into a {@link java.nio.file.Path}:
+     * {@code SourceFile.relativize} catches {@link InvalidPathException} on files this walk had
+     * already collected. Such a path cannot be tested for a link, so it is walked as before rather
+     * than dropped.
+     */
+    static boolean isSymbolicLink(File file) {
+        try {
+            return Files.isSymbolicLink(file.toPath());
+        } catch (InvalidPathException e) {
+            return false;
+        }
+    }
+
+    /**
+     * Describes a link the walk is about to skip. Nothing here may throw: this runs inside the walk,
+     * so an escaping exception would abort the whole analysis - strictly worse than the plain
+     * counter it replaced, which could not fail. A link whose details cannot be worked out is still
+     * worth naming, so the fallback keeps the path and gives up only on the rest.
+     */
+    private SymbolicLink describeSymbolicLink(File file) {
+        try {
+            String target = linkTarget(file);
+            return new SymbolicLink(relativePath(file), target, pointsInsideRoot(file, target));
+        } catch (RuntimeException e) {
+            return new SymbolicLink(file.getPath(), "", false);
+        }
+    }
+
+    private String relativePath(File file) {
+        try {
+            return Paths.get(root.getPath()).relativize(Paths.get(file.getPath())).toString();
+        } catch (IllegalArgumentException e) {
+            // Covers InvalidPathException, and relativize's own refusal when the two paths cannot
+            // be expressed relative to one another.
+            return file.getPath();
+        }
+    }
+
+    /**
+     * The target as written on disk, so a relative link stays relative. Resolving it here would
+     * hide the form the reader recognises from their own repository.
+     */
+    private String linkTarget(File file) {
+        try {
+            return Files.readSymbolicLink(file.toPath()).toString();
+        } catch (IOException | InvalidPathException e) {
+            return "";
+        }
+    }
+
+    /**
+     * Answers where the link <em>points</em>, which is not the same as whether anything is measured
+     * there: a link pointing inside the root at a target that does not exist still counts as
+     * pointing inside. The report says so in those words rather than promising the code was
+     * measured under its real path.
+     *
+     * <p>Canonicalises the link's <em>target</em>, not the link itself. Canonicalising the link
+     * resolves it only while the target exists; for a dangling link it yields the link's own path,
+     * so every broken link anywhere would look like it pointed inside.
+     *
+     * <p>{@code getCanonicalFile} rather than {@code Path.toRealPath}: it resolves the part of the
+     * path that exists and leaves the rest, so a target that was never created still classifies
+     * instead of throwing. A relative target is resolved against the link's own directory - not
+     * against the root, which would misplace any link below the top level.
+     *
+     * <p>A link whose target cannot be read at all is reported as outside: with no target there is
+     * nothing to place inside the tree. The test is emptiness, not blankness - " " is a legal file
+     * name, and a link pointing at it was read perfectly well.
+     */
+    // Package-private: the blank-target branch cannot be reached from a real file system (it needs
+    // readSymbolicLink to fail), and a branch the test environment cannot reach is an untested one.
+    boolean pointsInsideRoot(File file, String target) {
+        if (target.isEmpty() || canonicalRoot == null) {
+            return false;
+        }
+        File targetFile = new File(target);
+        if (!targetFile.isAbsolute()) {
+            targetFile = new File(file.getParentFile(), target);
+        }
+        Path canonicalTarget = canonicalPathOf(targetFile);
+        // startsWith on Path compares whole name elements, so a sibling "repo-backup" is not
+        // mistaken for something inside "repo".
+        return canonicalTarget != null && canonicalTarget.startsWith(canonicalRoot);
+    }
+
+    private Path canonicalPathOf(File file) {
+        try {
+            return file.getCanonicalFile().toPath();
+        } catch (IOException | RuntimeException e) {
+            return null;
+        }
+    }
+
+    int getSkippedSymbolicLinksCount() {
+        return skippedSymbolicLinks.size();
+    }
+
+    /**
+     * A copy: {@code load} clears the internal list, so handing out the live one would let a
+     * reload silently empty a results object that already holds it.
+     */
+    @JsonIgnore
+    public List<SymbolicLink> getSkippedSymbolicLinks() {
+        return new ArrayList<>(skippedSymbolicLinks);
     }
 
     boolean isNotVCSFolder(File folder) {

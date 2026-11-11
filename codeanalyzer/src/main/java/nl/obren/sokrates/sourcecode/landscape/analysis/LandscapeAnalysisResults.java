@@ -5,17 +5,16 @@
 package nl.obren.sokrates.sourcecode.landscape.analysis;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonUnwrapped;
 import nl.obren.sokrates.common.utils.RegexUtils;
 import nl.obren.sokrates.sourcecode.analysis.results.CodeAnalysisResults;
-import nl.obren.sokrates.sourcecode.analysis.results.ContributorsAnalysisResults;
 import nl.obren.sokrates.sourcecode.analysis.results.FilesHistoryAnalysisResults;
 import nl.obren.sokrates.sourcecode.analysis.results.HistoryPerExtension;
+import nl.obren.sokrates.sourcecode.aspects.SourceCodeAspectUtils;
 import nl.obren.sokrates.sourcecode.contributors.ContributionTimeSlot;
 import nl.obren.sokrates.sourcecode.contributors.Contributor;
 import nl.obren.sokrates.sourcecode.dependencies.ComponentDependency;
-import nl.obren.sokrates.sourcecode.filehistory.DateUtils;
 import nl.obren.sokrates.sourcecode.githistory.CommitsPerExtension;
-import nl.obren.sokrates.sourcecode.githistory.GitHistoryUtils;
 import nl.obren.sokrates.sourcecode.landscape.LandscapeConfiguration;
 import nl.obren.sokrates.sourcecode.landscape.PeopleConfig;
 import nl.obren.sokrates.sourcecode.landscape.TeamsConfig;
@@ -54,36 +53,6 @@ public class LandscapeAnalysisResults {
     private List<ComponentDependency> subLandscapeIndirectDependenciesViaRepositoriesWithSameName = new ArrayList<>();
 
     @JsonIgnore
-    private List<ComponentDependency> peopleDependencies30Days = new ArrayList<>();
-
-    @JsonIgnore
-    private List<ComponentDependency> peopleRepositoryDependencies30Days = new ArrayList<>();
-
-    @JsonIgnore
-    private List<ComponentDependency> peopleDependencies90Days = new ArrayList<>();
-
-    @JsonIgnore
-    private List<ComponentDependency> peopleDependencies180Days = new ArrayList<>();
-
-    @JsonIgnore
-    private List<ContributorConnections> connectionsViaRepositories30Days = new ArrayList<>();
-
-    @JsonIgnore
-    private List<Double> connectionsViaRepositories30DaysCountHistory = new ArrayList<>();
-
-    @JsonIgnore
-    private List<Double> peopleDependenciesCount30DaysHistory = new ArrayList<>();
-
-    @JsonIgnore
-    private List<Double> activeContributors30DaysHistory = new ArrayList<>();
-
-    @JsonIgnore
-    private List<ContributorConnections> connectionsViaRepositories90Days = new ArrayList<>();
-
-    @JsonIgnore
-    private List<ContributorConnections> connectionsViaRepositories180Days = new ArrayList<>();
-
-    @JsonIgnore
     private LandscapeConfiguration configuration = new LandscapeConfiguration();
 
     @JsonIgnore
@@ -92,45 +61,11 @@ public class LandscapeAnalysisResults {
     @JsonIgnore
     private final Map<String, List<Contributor>> contributorsPerYearMap = null;
 
-    private double c2cConnectionsCount30Days;
-    private double c2pConnectionsCount30Days;
-
-    private double cIndex30Days;
-    private double cIndex90Days;
-    private double cIndex180Days;
-
-    private double cMean30Days;
-    private double cMean90Days;
-    private double cMean180Days;
-
-    private double cMedian30Days;
-    private double cMedian90Days;
-    private double cMedian180Days;
-
-    private double pIndex30Days;
-    private double pIndex90Days;
-    private double pIndex180Days;
-
-    private double pMean30Days;
-    private double pMean90Days;
-    private double pMean180Days;
-
-    private double pMedian30Days;
-    private double pMedian90Days;
-    private double pMedian180Days;
-
+    private final PeopleConnectionsMetrics peopleConnections = new PeopleConnectionsMetrics();
     private String firstCommitDate = "";
 
     private String latestCommitDate = "";
 
-    private List<Double> cIndex30DaysHistory = new ArrayList<>();
-    private List<Double> pIndex30DaysHistory = new ArrayList<>();
-
-    private List<Double> cMean30DaysHistory = new ArrayList<>();
-    private List<Double> pMean30DaysHistory = new ArrayList<>();
-
-    private List<Double> cMedian30DaysHistory = new ArrayList<>();
-    private List<Double> pMedian30DaysHistory = new ArrayList<>();
     @JsonIgnore
     private List<RepositoryAnalysisResults> repositoryAnalysisResults = new ArrayList<>();
     @JsonIgnore
@@ -515,7 +450,8 @@ public class LandscapeAnalysisResults {
                 repositoryLinesOfCodePerExtension = repositoryAnalysisResults.getAnalysisResults().getMainAspectAnalysisResults().getLinesOfCodePerExtension();
             }
             repositoryLinesOfCodePerExtension.forEach(metric -> {
-                String id = metric.getName().toLowerCase();
+                // older reports name these "  *.java"; current ones "java" — merge both under the bare extension
+                String id = SourceCodeAspectUtils.extensionName(metric.getName());
                 Optional<NumericMetric> existingMetric = linesOfCodePerExtension.stream().filter(c -> c.getName().equalsIgnoreCase(id)).findAny();
                 if (existingMetric.isPresent()) {
                     NumericMetric metricObject = existingMetric.get();
@@ -539,10 +475,11 @@ public class LandscapeAnalysisResults {
 
         metricLists.forEach(list -> {
             list.forEach(metric -> {
-                if (mergedMap.containsKey(metric.getName())) {
-                    mergedMap.get(metric.getName()).setValue(mergedMap.get(metric.getName()).getValue().doubleValue() + metric.getValue().doubleValue());
+                String name = SourceCodeAspectUtils.extensionName(metric.getName());
+                if (mergedMap.containsKey(name)) {
+                    mergedMap.get(name).setValue(mergedMap.get(name).getValue().doubleValue() + metric.getValue().doubleValue());
                 } else {
-                    NumericMetric newMetric = new NumericMetric(metric.getName(), metric.getValue());
+                    NumericMetric newMetric = new NumericMetric(name, metric.getValue());
                     merged.add(newMetric);
                     mergedMap.put(newMetric.getName(), newMetric);
                 }
@@ -604,7 +541,8 @@ public class LandscapeAnalysisResults {
     }
 
     private boolean isBot(String email) {
-        return RegexUtils.matchesAnyPattern(email, configuration.getBots());
+        // Case-insensitive bot identity matching.
+        return RegexUtils.matchesAnyPatternIgnoreCase(email, configuration.getBots());
     }
 
     @JsonIgnore
@@ -634,62 +572,20 @@ public class LandscapeAnalysisResults {
             List<CommitsPerExtension> repositoryData = repositoryAnalysisResults.getAnalysisResults().getContributorsAnalysisResults().getCommitsPerExtensions();
 
             repositoryData.forEach(repositoryExtData -> {
-                String extension = repositoryExtData.getExtension();
-                if (commitsPerExtensions.containsKey(extension)) {
-                    CommitsPerExtension commitsPerExtension = commitsPerExtensions.get(extension);
-                    commitsPerExtension.setCommitsCount(commitsPerExtension.getCommitsCount() + repositoryExtData.getCommitsCount());
-
-                    commitsPerExtension.setCommitsCount30Days(commitsPerExtension.getCommitsCount30Days() + repositoryExtData.getCommitsCount30Days());
-                    commitsPerExtension.setCommitsCount90Days(commitsPerExtension.getCommitsCount90Days() + repositoryExtData.getCommitsCount90Days());
-
-                    commitsPerExtension.setFilesCount(commitsPerExtension.getFilesCount() + repositoryExtData.getFilesCount());
-                    commitsPerExtension.setFilesCount30Days(commitsPerExtension.getFilesCount30Days() + repositoryExtData.getFilesCount30Days());
-                    commitsPerExtension.setFilesCount90Days(commitsPerExtension.getFilesCount90Days() + repositoryExtData.getFilesCount90Days());
-
-                    repositoryExtData.getCommitters().forEach(email -> {
-                        String contributorId = EmailTransformations.transformEmail(email, configuration.getTransformContributorEmails(), peopleConfig);
-                        if (!commitsPerExtension.getCommitters().contains(contributorId)) {
-                            commitsPerExtension.getCommitters().add(contributorId);
-                        }
-                    });
-                    repositoryExtData.getCommitters30Days().forEach(email -> {
-                        String contributorId = EmailTransformations.transformEmail(email, configuration.getTransformContributorEmails(), peopleConfig);
-                        if (!commitsPerExtension.getCommitters30Days().contains(contributorId)) {
-                            commitsPerExtension.getCommitters30Days().add(contributorId);
-                        }
-                    });
-                    repositoryExtData.getCommitters90Days().forEach(email -> {
-                        String contributorId = EmailTransformations.transformEmail(email, configuration.getTransformContributorEmails(), peopleConfig);
-                        if (!commitsPerExtension.getCommitters90Days().contains(contributorId)) {
-                            commitsPerExtension.getCommitters90Days().add(contributorId);
-                        }
-                    });
+                CommitsPerExtension commitsPerExtension = commitsPerExtensions.get(repositoryExtData.getExtension());
+                if (commitsPerExtension != null) {
+                    addCommitsPerExtension(commitsPerExtension, repositoryExtData,
+                            email -> EmailTransformations.transformEmail(email, configuration.getTransformContributorEmails(), peopleConfig));
                 }
             });
         });
-
 
         configuration.getMergeExtensions().forEach(merge -> {
             CommitsPerExtension primary = commitsPerExtensions.get(merge.getPrimary());
             CommitsPerExtension secondary = commitsPerExtensions.get(merge.getSecondary());
 
             if (primary != null && secondary != null) {
-                primary.setCommitsCount(primary.getCommitsCount() + secondary.getCommitsCount());
-                primary.setCommitsCount30Days(primary.getCommitsCount30Days() + secondary.getCommitsCount30Days());
-                primary.setCommitsCount90Days(primary.getCommitsCount90Days() + secondary.getCommitsCount90Days());
-                primary.setFilesCount(primary.getFilesCount() + secondary.getFilesCount());
-                primary.setFilesCount30Days(primary.getFilesCount30Days() + secondary.getFilesCount30Days());
-                primary.setFilesCount90Days(primary.getFilesCount90Days() + secondary.getFilesCount90Days());
-                secondary.getCommitters().stream()
-                        .filter(c -> !primary.getCommitters().contains(c))
-                        .forEach(commiter -> primary.getCommitters().add(commiter));
-                secondary.getCommitters30Days().stream()
-                        .filter(c -> !primary.getCommitters30Days().contains(c))
-                        .forEach(commiter -> primary.getCommitters30Days().add(commiter));
-                secondary.getCommitters90Days().stream()
-                        .filter(c -> !primary.getCommitters90Days().contains(c))
-                        .forEach(commiter -> primary.getCommitters90Days().add(commiter));
-
+                addCommitsPerExtension(primary, secondary, email -> email);
                 commitsPerExtensions.remove(merge.getSecondary());
             }
         });
@@ -700,319 +596,92 @@ public class LandscapeAnalysisResults {
         return list;
     }
 
-    @JsonIgnore
-    private List<ContributorRepositories> getAllTeams() {
-        final List<ContributorRepositories> contributors = new ArrayList<>(getAllContributors());
-        if (teamsConfig.getTeams() == null || teamsConfig.getTeams().size() == 0) {
-            return contributors;
-        }
+    /** Adds the source's commit and file counts to the target and its committers (mapped through {@code contributorId}) when not yet present. */
+    private static void addCommitsPerExtension(CommitsPerExtension target, CommitsPerExtension source, java.util.function.Function<String, String> contributorId) {
+        target.setCommitsCount(target.getCommitsCount() + source.getCommitsCount());
+        target.setCommitsCount30Days(target.getCommitsCount30Days() + source.getCommitsCount30Days());
+        target.setCommitsCount90Days(target.getCommitsCount90Days() + source.getCommitsCount90Days());
+        target.setFilesCount(target.getFilesCount() + source.getFilesCount());
+        target.setFilesCount30Days(target.getFilesCount30Days() + source.getFilesCount30Days());
+        target.setFilesCount90Days(target.getFilesCount90Days() + source.getFilesCount90Days());
+        addCommitters(target.getCommitters(), source.getCommitters(), contributorId);
+        addCommitters(target.getCommitters30Days(), source.getCommitters30Days(), contributorId);
+        addCommitters(target.getCommitters90Days(), source.getCommitters90Days(), contributorId);
+    }
 
-        final List<ContributorRepositories> teams = new ArrayList<>();
-        final Map<String, ContributorRepositories> map = new HashMap<>();
-
-        ContributorRepositories remainder = new ContributorRepositories(new Contributor("Undefined Team"));
-
-        while (contributors.size() > 0) {
-            ContributorRepositories contributor = contributors.remove(0);
-            String email = contributor.getContributor().getEmail();
-
-            if (isBot(email)) continue;
-
-            final boolean[] added = {false};
-
-            teamsConfig.getTeams().forEach(teamConfig -> {
-                if (added[0]) return;
-
-                String name = teamConfig.getName();
-                if (RegexUtils.matchesAnyPattern(email, teamConfig.getEmailPatterns())) {
-                    ContributorRepositories teamTemp = map.get(name);
-
-                    if (teamTemp == null) {
-                        teamTemp = new ContributorRepositories(new Contributor(name));
-                        map.put(name, teamTemp);
-                        teams.add(teamTemp);
-                    }
-
-                    final ContributorRepositories team = teamTemp;
-                    team.getMembers().add(contributor);
-
-                    contributor.getRepositories().forEach(repo -> {
-                        addRepoToTeam(repo, team);
-                    });
-
-                    added[0] = true;
-                }
-            });
-
-            if (!added[0] && !remainder.getMembers().contains(email)) {
-                remainder.getMembers().add(contributor);
-                contributor.getRepositories().forEach(repo -> {
-                    addRepoToTeam(repo, remainder);
-                });
+    private static void addCommitters(List<String> target, List<String> emails, java.util.function.Function<String, String> contributorId) {
+        emails.forEach(email -> {
+            String id = contributorId.apply(email);
+            if (!target.contains(id)) {
+                target.add(id);
             }
-        }
-
-        if (remainder.getMembers().size() > 0 && remainder.getRepositories().size() > 0) {
-            teams.add(remainder);
-        }
-
-        return teams;
-    }
-
-    private void addRepoToTeam(ContributorRepositoryInfo repo, ContributorRepositories team) {
-        Contributor teamData = team.getContributor();
-        teamData.setCommitsCount(teamData.getCommitsCount() + repo.getCommitsCount());
-        teamData.setCommitsCount30Days(teamData.getCommitsCount30Days() + repo.getCommits30Days());
-        teamData.setCommitsCount90Days(teamData.getCommitsCount90Days() + repo.getCommits90Days());
-        teamData.setCommitsCount180Days(teamData.getCommitsCount180Days() + repo.getCommits180Days());
-        teamData.setCommitsCount365Days(teamData.getCommitsCount365Days() + repo.getCommits365Days());
-        if (StringUtils.isBlank(teamData.getFirstCommitDate()) || repo.getFirstCommitDate().compareTo(teamData.getFirstCommitDate()) < 0) {
-            teamData.setFirstCommitDate(repo.getFirstCommitDate());
-        }
-        if (StringUtils.isBlank(teamData.getLatestCommitDate()) || repo.getLatestCommitDate().compareTo(teamData.getLatestCommitDate()) > 0) {
-            teamData.setLatestCommitDate(repo.getLatestCommitDate());
-        }
-        team.addRepository(repo.getRepositoryAnalysisResults(), repo.getFirstCommitDate(), repo.getLatestCommitDate(),
-                repo.getCommitsCount(), repo.getCommits30Days(), repo.getCommits90Days(),
-                repo.getCommits180Days(), repo.getCommits365Days(), repo.getCommitDates());
-    }
-
-    @JsonIgnore
-    private List<ContributorRepositories> getAllContributors() {
-        List<ContributorRepositories> list = new ArrayList<>();
-        Map<String, ContributorRepositories> map = new HashMap<>();
-
-        getFilteredRepositoryAnalysisResults().forEach(repositoryAnalysisResults -> {
-            ContributorsAnalysisResults contributorsAnalysisResults = repositoryAnalysisResults.getAnalysisResults().getContributorsAnalysisResults();
-            contributorsAnalysisResults.getContributors().forEach(contributor -> {
-                String contributorId = contributor.getEmail().toLowerCase();
-                if (GitHistoryUtils.shouldIgnore(contributorId, configuration.getIgnoreContributors())) {
-                    return;
-                }
-                contributorId = EmailTransformations.transformEmail(contributorId, configuration.getTransformContributorEmails(), peopleConfig);
-                if (GitHistoryUtils.shouldIgnore(contributorId, configuration.getIgnoreContributors())) {
-                    return;
-                }
-
-                if (StringUtils.isBlank(contributorId)) {
-                    return;
-                }
-
-                int repositoryCommits = contributor.getCommitsCount();
-                List<String> commitDates = contributor.getCommitDates();
-                int repositoryCommits30Days = contributor.getCommitsCount30Days();
-                int repositoryCommits90Days = contributor.getCommitsCount90Days();
-                int repositoryCommits180Days = contributor.getCommitsCount180Days();
-                int repositoryCommits365Days = contributor.getCommitsCount365Days();
-
-                String latestCommitDate = contributor.getLatestCommitDate();
-                String firstCommitDate = contributor.getFirstCommitDate();
-
-                if (map.containsKey(contributorId)) {
-                    ContributorRepositories existingContributor = map.get(contributorId);
-                    Contributor contributorInfo = existingContributor.getContributor();
-
-                    contributorInfo.setCommitsCount(contributorInfo.getCommitsCount() + repositoryCommits);
-                    contributorInfo.setCommitsCount30Days(contributorInfo.getCommitsCount30Days() + repositoryCommits30Days);
-                    contributorInfo.setCommitsCount90Days(contributorInfo.getCommitsCount90Days() + repositoryCommits90Days);
-                    contributorInfo.setCommitsCount180Days(contributorInfo.getCommitsCount180Days() + repositoryCommits180Days);
-                    contributorInfo.setCommitsCount365Days(contributorInfo.getCommitsCount365Days() + repositoryCommits365Days);
-
-                    contributor.getActiveYears().forEach(activeYear -> {
-                        if (!contributorInfo.getActiveYears().contains(activeYear)) {
-                            contributorInfo.getActiveYears().add(activeYear);
-                        }
-                    });
-                    contributor.getCommitDates().forEach(commitDate -> {
-                        if (!contributorInfo.getCommitDates().contains(commitDate)) {
-                            contributorInfo.getCommitDates().add(commitDate);
-                        }
-                    });
-
-                    existingContributor.addRepository(repositoryAnalysisResults, firstCommitDate, latestCommitDate,
-                            repositoryCommits, repositoryCommits30Days, repositoryCommits90Days,
-                            repositoryCommits180Days, repositoryCommits365Days,
-                            new ArrayList<>(commitDates));
-
-                    if (firstCommitDate.compareTo(contributorInfo.getFirstCommitDate()) < 0) {
-                        contributorInfo.setFirstCommitDate(firstCommitDate);
-                    }
-                    if (latestCommitDate.compareTo(contributorInfo.getLatestCommitDate()) > 0) {
-                        contributorInfo.setLatestCommitDate(latestCommitDate);
-                    }
-                } else {
-                    Contributor newContributor = new Contributor();
-
-                    newContributor.setEmail(contributorId);
-                    newContributor.setUserName(contributor.getUserName());
-                    newContributor.setCommitsCount(repositoryCommits);
-                    newContributor.setCommitsCount30Days(repositoryCommits30Days);
-                    newContributor.setCommitsCount90Days(repositoryCommits90Days);
-                    newContributor.setCommitsCount180Days(repositoryCommits180Days);
-                    newContributor.setCommitsCount365Days(repositoryCommits365Days);
-                    newContributor.setFirstCommitDate(firstCommitDate);
-                    newContributor.setLatestCommitDate(latestCommitDate);
-                    newContributor.setActiveYears(new ArrayList<>(contributor.getActiveYears()));
-                    newContributor.setCommitDates(new ArrayList<>(contributor.getCommitDates()));
-
-                    ContributorRepositories newContributorWithRepositories = new ContributorRepositories(newContributor);
-
-                    newContributorWithRepositories.addRepository(repositoryAnalysisResults, newContributor.getFirstCommitDate(),
-                            newContributor.getLatestCommitDate(),
-                            repositoryCommits, repositoryCommits30Days, repositoryCommits90Days,
-                            repositoryCommits180Days, repositoryCommits365Days,
-                            new ArrayList<>(commitDates));
-
-                    map.put(contributorId, newContributorWithRepositories);
-                    list.add(newContributorWithRepositories);
-                }
-            });
         });
+    }
 
-        Collections.sort(list, (a, b) -> b.getContributor().getCommitsCount() - a.getContributor().getCommitsCount());
+    private LandscapeContributorsAggregator contributorsAggregator() {
+        return new LandscapeContributorsAggregator(configuration, peopleConfig, teamsConfig, this::isBot);
+    }
 
-        return list;
+    private List<ContributorRepositories> getAllContributors() {
+        return contributorsAggregator().contributors(getFilteredRepositoryAnalysisResults());
+    }
+
+    private List<ContributorRepositories> getAllTeams() {
+        return contributorsAggregator().teams(getAllContributors());
+    }
+
+    private LandscapeContributionTimeSlots timeSlots() {
+        return new LandscapeContributionTimeSlots(this::getFilteredRepositoryAnalysisResults, this::getAllContributors);
     }
 
     @JsonIgnore
     public List<ContributionTimeSlot> getContributorsPerYear() {
-        List<ContributionTimeSlot> list = new ArrayList<>();
-        Map<String, ContributionTimeSlot> map = new HashMap<>();
-
-        getFilteredRepositoryAnalysisResults().forEach(repositoryAnalysisResults -> {
-            ContributorsAnalysisResults contributorsAnalysisResults = repositoryAnalysisResults.getAnalysisResults().getContributorsAnalysisResults();
-            updateContributors(list, map, contributorsAnalysisResults.getContributorsPerYear());
-        });
-
-        Collections.sort(list, Comparator.comparing(ContributionTimeSlot::getTimeSlot).reversed());
-
-        return list;
+        return timeSlots().getContributorsPerYear();
     }
 
     @JsonIgnore
     public List<ContributionTimeSlot> getContributorsPerWeek() {
-        List<ContributionTimeSlot> list = new ArrayList<>();
-        Map<String, ContributionTimeSlot> map = new HashMap<>();
-
-        getFilteredRepositoryAnalysisResults().forEach(repositoryAnalysisResults -> {
-            ContributorsAnalysisResults contributorsAnalysisResults = repositoryAnalysisResults.getAnalysisResults().getContributorsAnalysisResults();
-            List<ContributionTimeSlot> contributorsPerWeek = contributorsAnalysisResults.getContributorsPerWeek();
-            updateContributors(list, map, contributorsPerWeek);
-        });
-
-        Collections.sort(list, Comparator.comparing(ContributionTimeSlot::getTimeSlot));
-
-        return list;
+        return timeSlots().getContributorsPerWeek();
     }
 
     @JsonIgnore
     public List<ContributionTimeSlot> getContributorsPerDay() {
-        List<ContributionTimeSlot> list = new ArrayList<>();
-        Map<String, ContributionTimeSlot> map = new HashMap<>();
-
-        getFilteredRepositoryAnalysisResults().forEach(repositoryAnalysisResults -> {
-            ContributorsAnalysisResults contributorsAnalysisResults = repositoryAnalysisResults.getAnalysisResults().getContributorsAnalysisResults();
-            List<ContributionTimeSlot> contributorsPerDay = contributorsAnalysisResults.getContributorsPerDay();
-            updateContributors(list, map, contributorsPerDay);
-        });
-
-        Collections.sort(list, Comparator.comparing(ContributionTimeSlot::getTimeSlot));
-
-        return list;
+        return timeSlots().getContributorsPerDay();
     }
 
     @JsonIgnore
     public List<ContributionTimeSlot> getContributorsPerMonth() {
-        List<ContributionTimeSlot> list = new ArrayList<>();
-        Map<String, ContributionTimeSlot> map = new HashMap<>();
+        return timeSlots().getContributorsPerMonth();
+    }
 
-        getFilteredRepositoryAnalysisResults().forEach(repositoryAnalysisResults -> {
-            ContributorsAnalysisResults contributorsAnalysisResults = repositoryAnalysisResults.getAnalysisResults().getContributorsAnalysisResults();
-            List<ContributionTimeSlot> contributorsPerMonth = contributorsAnalysisResults.getContributorsPerMonth();
-            updateContributors(list, map, contributorsPerMonth);
-        });
+    @JsonIgnore
+    public Map<String, List<ContributionTimeSlot>> getContributorsPerYearByScope() {
+        return timeSlots().getContributorsPerYearByScope();
+    }
 
-        Collections.sort(list, Comparator.comparing(ContributionTimeSlot::getTimeSlot).reversed());
+    @JsonIgnore
+    public Map<String, List<ContributionTimeSlot>> getContributorsPerMonthByScope() {
+        return timeSlots().getContributorsPerMonthByScope();
+    }
 
-        return list;
+    @JsonIgnore
+    public Map<String, List<ContributionTimeSlot>> getContributorsPerWeekByScope() {
+        return timeSlots().getContributorsPerWeekByScope();
+    }
+
+    @JsonIgnore
+    public Map<String, List<ContributionTimeSlot>> getContributorsPerDayByScope() {
+        return timeSlots().getContributorsPerDayByScope();
     }
 
     @JsonIgnore
     public List<Pair<String, List<ContributionTimeSlot>>> getContributorsPerRepositoryAndMonth() {
-        List<Pair<String, List<ContributionTimeSlot>>> list = new ArrayList<>();
-
-        getFilteredRepositoryAnalysisResults().forEach(repository -> {
-            ContributorsAnalysisResults contributorsAnalysisResults = repository.getAnalysisResults().getContributorsAnalysisResults();
-            List<ContributionTimeSlot> contributorsPerMonth = new ArrayList<>(contributorsAnalysisResults.getContributorsPerMonth());
-            Collections.sort(contributorsPerMonth, Comparator.comparing(ContributionTimeSlot::getTimeSlot));
-            String name = repository.getAnalysisResults().getMetadata().getName();
-            list.add(Pair.of(name, contributorsPerMonth));
-        });
-
-        return list;
+        return timeSlots().getContributorsPerRepositoryAndMonth();
     }
 
     @JsonIgnore
     public List<Pair<String, List<ContributionTimeSlot>>> getContributorsCommits() {
-        Map<String, Pair<String, Map<String, ContributionTimeSlot>>> map = new HashMap<>();
-
-        getAllContributors().forEach(contributor -> {
-            Map<String, ContributionTimeSlot> commits = new HashMap<>();
-            contributor.getContributor().getCommitDates().forEach(commitDate -> {
-                String month = DateUtils.getMonth(commitDate);
-                if (commits.containsKey(month)) {
-                    commits.get(month).setCommitsCount(commits.get(month).getCommitsCount() + 1);
-                } else {
-                    ContributionTimeSlot timeSlot = new ContributionTimeSlot(month);
-                    timeSlot.setContributorsCount(1);
-                    commits.put(month, timeSlot);
-                }
-            });
-            String email = contributor.getContributor().getEmail();
-
-            Pair<String, Map<String, ContributionTimeSlot>> pair = map.get(email);
-
-            if (pair == null) {
-                pair = Pair.of(email, new HashMap<>());
-                map.put(email, pair);
-            }
-
-            Pair<String, Map<String, ContributionTimeSlot>> finalPair = pair;
-            commits.values().forEach(commitTimeSlot -> {
-                String timeSlot = commitTimeSlot.getTimeSlot();
-                if (finalPair.getRight().containsKey(timeSlot)) {
-                    finalPair.getRight().get(timeSlot).setCommitsCount(finalPair.getRight().get(timeSlot).getCommitsCount() + commitTimeSlot.getCommitsCount());
-                } else {
-                    ContributionTimeSlot contributionTimeSlot = new ContributionTimeSlot(timeSlot);
-                    contributionTimeSlot.setCommitsCount(commitTimeSlot.getCommitsCount());
-                    contributionTimeSlot.setContributorsCount(1);
-                    finalPair.getRight().put(timeSlot, contributionTimeSlot);
-                }
-            });
-        });
-
-        List<Pair<String, List<ContributionTimeSlot>>> list = new ArrayList<>();
-
-        map.values().forEach(pair -> list.add(Pair.of(pair.getLeft(), new ArrayList<>(pair.getRight().values()))));
-
-        return list;
-    }
-
-    private void updateContributors(List<ContributionTimeSlot> list, Map<String, ContributionTimeSlot> map, List<ContributionTimeSlot> contributorsPerTimeSlot) {
-        contributorsPerTimeSlot.forEach(timeSlot -> {
-            ContributionTimeSlot contributionTimeSlot = map.get(timeSlot.getTimeSlot());
-            if (contributionTimeSlot == null) {
-                contributionTimeSlot = new ContributionTimeSlot();
-                contributionTimeSlot.setTimeSlot(timeSlot.getTimeSlot());
-                contributionTimeSlot.setContributorsCount(timeSlot.getContributorsCount());
-                contributionTimeSlot.setCommitsCount(timeSlot.getCommitsCount());
-                list.add(contributionTimeSlot);
-                map.put(timeSlot.getTimeSlot(), contributionTimeSlot);
-            } else {
-                contributionTimeSlot.setContributorsCount(contributionTimeSlot.getContributorsCount() + timeSlot.getContributorsCount());
-                contributionTimeSlot.setCommitsCount(contributionTimeSlot.getCommitsCount() + timeSlot.getCommitsCount());
-            }
-        });
+        return timeSlots().getContributorsCommits();
     }
 
     public int getCommitsCount() {
@@ -1066,304 +735,10 @@ public class LandscapeAnalysisResults {
         return (int) contributors.stream().filter(c -> c.getContributor().isRookie(RECENT_THRESHOLD_DAYS)).count();
     }
 
-    @JsonIgnore
-    public List<ComponentDependency> getPeopleDependencies30Days() {
-        return peopleDependencies30Days;
-    }
-
-    @JsonIgnore
-    public void setPeopleDependencies30Days(List<ComponentDependency> peopleDependencies30Days) {
-        this.peopleDependencies30Days = peopleDependencies30Days;
-    }
-
-    public List<ComponentDependency> getPeopleRepositoryDependencies30Days() {
-        return peopleRepositoryDependencies30Days;
-    }
-
-    public void setPeopleRepositoryDependencies30Days(List<ComponentDependency> peopleRepositoryDependencies30Days) {
-        this.peopleRepositoryDependencies30Days = peopleRepositoryDependencies30Days;
-    }
-
-    @JsonIgnore
-    public List<ComponentDependency> getPeopleDependencies90Days() {
-        return peopleDependencies90Days;
-    }
-
-    @JsonIgnore
-    public void setPeopleDependencies90Days(List<ComponentDependency> peopleDependencies90Days) {
-        this.peopleDependencies90Days = peopleDependencies90Days;
-    }
-
-    @JsonIgnore
-    public List<ComponentDependency> getPeopleDependencies180Days() {
-        return peopleDependencies180Days;
-    }
-
-    @JsonIgnore
-    public void setPeopleDependencies180Days(List<ComponentDependency> peopleDependencies180Days) {
-        this.peopleDependencies180Days = peopleDependencies180Days;
-    }
-
-    @JsonIgnore
-    public List<ContributorConnections> getConnectionsViaRepositories30Days() {
-        return connectionsViaRepositories30Days;
-    }
-
-    @JsonIgnore
-    public void setConnectionsViaRepositories30Days(List<ContributorConnections> connectionsViaRepositories30Days) {
-        this.connectionsViaRepositories30Days = connectionsViaRepositories30Days;
-    }
-
-    @JsonIgnore
-    public List<ContributorConnections> getConnectionsViaRepositories90Days() {
-        return connectionsViaRepositories90Days;
-    }
-
-    @JsonIgnore
-    public void setConnectionsViaRepositories90Days(List<ContributorConnections> connectionsViaRepositories90Days) {
-        this.connectionsViaRepositories90Days = connectionsViaRepositories90Days;
-    }
-
-    @JsonIgnore
-    public List<ContributorConnections> getConnectionsViaRepositories180Days() {
-        return connectionsViaRepositories180Days;
-    }
-
-    @JsonIgnore
-    public void setConnectionsViaRepositories180Days(List<ContributorConnections> connectionsViaRepositories180Days) {
-        this.connectionsViaRepositories180Days = connectionsViaRepositories180Days;
-    }
-
-    public double getcIndex30Days() {
-        return cIndex30Days;
-    }
-
-    public void setcIndex30Days(double cIndex30Days) {
-        this.cIndex30Days = cIndex30Days;
-    }
-
-    public double getcIndex90Days() {
-        return cIndex90Days;
-    }
-
-    public void setcIndex90Days(double cIndex90Days) {
-        this.cIndex90Days = cIndex90Days;
-    }
-
-    public double getcIndex180Days() {
-        return cIndex180Days;
-    }
-
-    public void setcIndex180Days(double cIndex180Days) {
-        this.cIndex180Days = cIndex180Days;
-    }
-
-    public double getcMean30Days() {
-        return cMean30Days;
-    }
-
-    public void setcMean30Days(double cMean30Days) {
-        this.cMean30Days = cMean30Days;
-    }
-
-    public double getcMean90Days() {
-        return cMean90Days;
-    }
-
-    public void setcMean90Days(double cMean90Days) {
-        this.cMean90Days = cMean90Days;
-    }
-
-    public double getcMean180Days() {
-        return cMean180Days;
-    }
-
-    public void setcMean180Days(double cMean180Days) {
-        this.cMean180Days = cMean180Days;
-    }
-
-    public double getcMedian30Days() {
-        return cMedian30Days;
-    }
-
-    public void setcMedian30Days(double cMedian30Days) {
-        this.cMedian30Days = cMedian30Days;
-    }
-
-    public double getcMedian90Days() {
-        return cMedian90Days;
-    }
-
-    public void setcMedian90Days(double cMedian90Days) {
-        this.cMedian90Days = cMedian90Days;
-    }
-
-    public double getcMedian180Days() {
-        return cMedian180Days;
-    }
-
-    public void setcMedian180Days(double cMedian180Days) {
-        this.cMedian180Days = cMedian180Days;
-    }
-
-    public double getpIndex30Days() {
-        return pIndex30Days;
-    }
-
-    public void setpIndex30Days(double pIndex30Days) {
-        this.pIndex30Days = pIndex30Days;
-    }
-
-    public double getpIndex90Days() {
-        return pIndex90Days;
-    }
-
-    public void setpIndex90Days(double pIndex90Days) {
-        this.pIndex90Days = pIndex90Days;
-    }
-
-    public double getpIndex180Days() {
-        return pIndex180Days;
-    }
-
-    public void setpIndex180Days(double pIndex180Days) {
-        this.pIndex180Days = pIndex180Days;
-    }
-
-    public double getpMean30Days() {
-        return pMean30Days;
-    }
-
-    public void setpMean30Days(double pMean30Days) {
-        this.pMean30Days = pMean30Days;
-    }
-
-    public double getpMean90Days() {
-        return pMean90Days;
-    }
-
-    public void setpMean90Days(double pMean90Days) {
-        this.pMean90Days = pMean90Days;
-    }
-
-    public double getpMean180Days() {
-        return pMean180Days;
-    }
-
-    public void setpMean180Days(double pMean180Days) {
-        this.pMean180Days = pMean180Days;
-    }
-
-    public double getpMedian30Days() {
-        return pMedian30Days;
-    }
-
-    public void setpMedian30Days(double pMedian30Days) {
-        this.pMedian30Days = pMedian30Days;
-    }
-
-    public double getpMedian90Days() {
-        return pMedian90Days;
-    }
-
-    public void setpMedian90Days(double pMedian90Days) {
-        this.pMedian90Days = pMedian90Days;
-    }
-
-    public double getpMedian180Days() {
-        return pMedian180Days;
-    }
-
-    public void setpMedian180Days(double pMedian180Days) {
-        this.pMedian180Days = pMedian180Days;
-    }
-
-    public List<Double> getcIndex30DaysHistory() {
-        return cIndex30DaysHistory;
-    }
-
-    public void setcIndex30DaysHistory(List<Double> cIndex30DaysHistory) {
-        this.cIndex30DaysHistory = cIndex30DaysHistory;
-    }
-
-    public List<Double> getpIndex30DaysHistory() {
-        return pIndex30DaysHistory;
-    }
-
-    public void setpIndex30DaysHistory(List<Double> pIndex30DaysHistory) {
-        this.pIndex30DaysHistory = pIndex30DaysHistory;
-    }
-
-    public List<Double> getcMean30DaysHistory() {
-        return cMean30DaysHistory;
-    }
-
-    public void setcMean30DaysHistory(List<Double> cMean30DaysHistory) {
-        this.cMean30DaysHistory = cMean30DaysHistory;
-    }
-
-    public List<Double> getpMean30DaysHistory() {
-        return pMean30DaysHistory;
-    }
-
-    public void setpMean30DaysHistory(List<Double> pMean30DaysHistory) {
-        this.pMean30DaysHistory = pMean30DaysHistory;
-    }
-
-    public List<Double> getcMedian30DaysHistory() {
-        return cMedian30DaysHistory;
-    }
-
-    public void setcMedian30DaysHistory(List<Double> cMedian30DaysHistory) {
-        this.cMedian30DaysHistory = cMedian30DaysHistory;
-    }
-
-    public List<Double> getpMedian30DaysHistory() {
-        return pMedian30DaysHistory;
-    }
-
-    public void setpMedian30DaysHistory(List<Double> pMedian30DaysHistory) {
-        this.pMedian30DaysHistory = pMedian30DaysHistory;
-    }
-
-    public List<Double> getConnectionsViaRepositories30DaysCountHistory() {
-        return connectionsViaRepositories30DaysCountHistory;
-    }
-
-    public void setConnectionsViaRepositories30DaysCountHistory(List<Double> connectionsViaRepositories30DaysCountHistory) {
-        this.connectionsViaRepositories30DaysCountHistory = connectionsViaRepositories30DaysCountHistory;
-    }
-
-    public List<Double> getPeopleDependenciesCount30DaysHistory() {
-        return peopleDependenciesCount30DaysHistory;
-    }
-
-    public void setPeopleDependenciesCount30DaysHistory(List<Double> peopleDependenciesCount30DaysHistory) {
-        this.peopleDependenciesCount30DaysHistory = peopleDependenciesCount30DaysHistory;
-    }
-
-    public List<Double> getActiveContributors30DaysHistory() {
-        return activeContributors30DaysHistory;
-    }
-
-    public void setActiveContributors30DaysHistory(List<Double> activeContributors30DaysHistory) {
-        this.activeContributors30DaysHistory = activeContributors30DaysHistory;
-    }
-
-    public double getC2cConnectionsCount30Days() {
-        return c2cConnectionsCount30Days;
-    }
-
-    public void setC2cConnectionsCount30Days(double c2cConnectionsCount30Days) {
-        this.c2cConnectionsCount30Days = c2cConnectionsCount30Days;
-    }
-
-    public double getC2pConnectionsCount30Days() {
-        return c2pConnectionsCount30Days;
-    }
-
-    public void setC2pConnectionsCount30Days(double c2pConnectionsCount30Days) {
-        this.c2pConnectionsCount30Days = c2pConnectionsCount30Days;
+    /** The people-connection metrics (dependencies, connections, c/p index-mean-median per window and their histories); serialized flat, as before. */
+    @JsonUnwrapped
+    public PeopleConnectionsMetrics getPeopleConnections() {
+        return peopleConnections;
     }
 
     public String getFirstCommitDate() {

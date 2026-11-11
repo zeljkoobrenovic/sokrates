@@ -1,15 +1,17 @@
 package nl.obren.sokrates.sourcecode.analysis.results;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import nl.obren.sokrates.sourcecode.analysis.FileHistoryAnalysisConfig;
 import nl.obren.sokrates.sourcecode.contributors.ContributionTimeSlot;
 import nl.obren.sokrates.sourcecode.contributors.Contributor;
 import nl.obren.sokrates.sourcecode.dependencies.ComponentDependency;
 import nl.obren.sokrates.sourcecode.githistory.CommitsPerExtension;
+import nl.obren.sokrates.sourcecode.metrics.NumericMetric;
 
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 public class ContributorsAnalysisResults {
     List<ComponentDependency> peopleDependencies30Days = new ArrayList<>();
@@ -22,7 +24,19 @@ public class ContributorsAnalysisResults {
     private List<ContributionTimeSlot> contributorsPerMonth = new ArrayList<>();
     private List<ContributionTimeSlot> contributorsPerDay = new ArrayList<>();
     private List<ContributionTimeSlot> contributorsPerWeek = new ArrayList<>();
+    // Parallel time-slot lists per scope (main, test, build, generated, other), keyed by scope name,
+    // backing the scope tabs in the activity diagrams. Empty for older analyses (callers fall back to
+    // showing only "All").
+    private Map<String, List<ContributionTimeSlot>> contributorsPerYearByScope = new LinkedHashMap<>();
+    private Map<String, List<ContributionTimeSlot>> contributorsPerMonthByScope = new LinkedHashMap<>();
+    private Map<String, List<ContributionTimeSlot>> contributorsPerDayByScope = new LinkedHashMap<>();
+    private Map<String, List<ContributionTimeSlot>> contributorsPerWeekByScope = new LinkedHashMap<>();
     private List<CommitsPerExtension> commitsPerExtensions = new ArrayList<>();
+    // Extensions of git-history files that fall in NO scope (the "unscoped"/residual tab) with their
+    // DISTINCT file counts as the value. These files are never analyzed, so there is no lines-of-code —
+    // the report shows "-" for the number and uses the count only for ordering. Empty for older analyses
+    // and for repos with no unscoped activity.
+    private List<NumericMetric> unscopedExtensionFileCounts = new ArrayList<>();
     private List<ComponentDependency> peopleFileDependencies30Days;
     private List<ComponentDependency> peopleFileDependencies90Days;
     private List<ComponentDependency> peopleFileDependencies180Days;
@@ -59,6 +73,14 @@ public class ContributorsAnalysisResults {
         this.commitsPerExtensions = commitsPerExtensions;
     }
 
+    public List<NumericMetric> getUnscopedExtensionFileCounts() {
+        return unscopedExtensionFileCounts;
+    }
+
+    public void setUnscopedExtensionFileCounts(List<NumericMetric> unscopedExtensionFileCounts) {
+        this.unscopedExtensionFileCounts = unscopedExtensionFileCounts;
+    }
+
     public List<ContributionTimeSlot> getContributorsPerMonth() {
         return contributorsPerMonth;
     }
@@ -83,6 +105,38 @@ public class ContributorsAnalysisResults {
         this.contributorsPerWeek = contributorsPerWeek;
     }
 
+    public Map<String, List<ContributionTimeSlot>> getContributorsPerYearByScope() {
+        return contributorsPerYearByScope;
+    }
+
+    public void setContributorsPerYearByScope(Map<String, List<ContributionTimeSlot>> contributorsPerYearByScope) {
+        this.contributorsPerYearByScope = contributorsPerYearByScope;
+    }
+
+    public Map<String, List<ContributionTimeSlot>> getContributorsPerMonthByScope() {
+        return contributorsPerMonthByScope;
+    }
+
+    public void setContributorsPerMonthByScope(Map<String, List<ContributionTimeSlot>> contributorsPerMonthByScope) {
+        this.contributorsPerMonthByScope = contributorsPerMonthByScope;
+    }
+
+    public Map<String, List<ContributionTimeSlot>> getContributorsPerDayByScope() {
+        return contributorsPerDayByScope;
+    }
+
+    public void setContributorsPerDayByScope(Map<String, List<ContributionTimeSlot>> contributorsPerDayByScope) {
+        this.contributorsPerDayByScope = contributorsPerDayByScope;
+    }
+
+    public Map<String, List<ContributionTimeSlot>> getContributorsPerWeekByScope() {
+        return contributorsPerWeekByScope;
+    }
+
+    public void setContributorsPerWeekByScope(Map<String, List<ContributionTimeSlot>> contributorsPerWeekByScope) {
+        this.contributorsPerWeekByScope = contributorsPerWeekByScope;
+    }
+
     @JsonIgnore
     public int getCommitsCount() {
         return contributors.stream().mapToInt(c -> c.getCommitsCount()).sum();
@@ -91,6 +145,37 @@ public class ContributorsAnalysisResults {
     @JsonIgnore
     public int getCommitsCount30Days() {
         return contributors.stream().mapToInt(c -> c.getCommitsCount30Days()).sum();
+    }
+
+    @JsonIgnore
+    public int getFileUpdatesCount30Days() {
+        return contributors.stream().mapToInt(c -> c.getFileUpdatesCount30Days()).sum();
+    }
+
+    @JsonIgnore
+    public int getLinesAdded30Days() {
+        return contributors.stream().mapToInt(c -> c.getLinesAdded30Days()).sum();
+    }
+
+    @JsonIgnore
+    public int getLinesDeleted30Days() {
+        return contributors.stream().mapToInt(c -> c.getLinesDeleted30Days()).sum();
+    }
+
+    // Total line churn (added + deleted) across all contributors, in the recent windows and all time.
+    @JsonIgnore
+    public int getChurn30Days() {
+        return contributors.stream().mapToInt(c -> c.getLinesAdded30Days() + c.getLinesDeleted30Days()).sum();
+    }
+
+    @JsonIgnore
+    public int getChurn90Days() {
+        return contributors.stream().mapToInt(c -> c.getLinesAdded90Days() + c.getLinesDeleted90Days()).sum();
+    }
+
+    @JsonIgnore
+    public int getChurn() {
+        return contributors.stream().mapToInt(c -> c.getLinesAdded() + c.getLinesDeleted()).sum();
     }
 
     @JsonIgnore
@@ -112,7 +197,6 @@ public class ContributorsAnalysisResults {
 
         return contributorsPerYear.stream().filter(c -> c.getTimeSlot().equals(year)).mapToInt(c -> c.getCommitsCount()).sum();
     }
-
 
     @JsonIgnore
     public List<ComponentDependency> getPeopleDependencies30Days() {

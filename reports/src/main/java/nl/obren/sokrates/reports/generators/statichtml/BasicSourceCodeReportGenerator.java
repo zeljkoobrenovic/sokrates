@@ -4,6 +4,7 @@
 
 package nl.obren.sokrates.reports.generators.statichtml;
 
+import nl.obren.sokrates.common.renderingutils.ReportTheme;
 import nl.obren.sokrates.common.utils.ProcessingStopwatch;
 import nl.obren.sokrates.reports.core.RichTextReport;
 import nl.obren.sokrates.reports.utils.HtmlTemplateUtils;
@@ -16,6 +17,7 @@ import org.apache.commons.logging.LogFactory;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 public class BasicSourceCodeReportGenerator {
@@ -27,8 +29,9 @@ public class BasicSourceCodeReportGenerator {
     private RichTextReport concernsReport = new RichTextReport("Features of Interest", "FeaturesOfInterest.html");
     private RichTextReport duplicationReport = new RichTextReport("Duplication", "Duplication.html");
     private RichTextReport fileSizeReport = new RichTextReport("File Size", "FileSize.html");
+    private RichTextReport fileComplexityReport = new RichTextReport("File Complexity", "FileComplexity.html");
     private RichTextReport fileHistoryReport = new RichTextReport("File Age & Freshness", "FileAge.html");
-    private RichTextReport fileChangeFrequencyReport = new RichTextReport("File Change Frequency", "FileChangeFrequency.html");
+    private RichTextReport FileChurnReport = new RichTextReport("File Churn", "FileChurn.html");
     private RichTextReport fileTemporalDependenciesReport = new RichTextReport("Temporal Dependencies", "FileTemporalDependencies.html");
     private RichTextReport unitSizeReport = new RichTextReport("Unit Size", "UnitSize.html");
     private RichTextReport conditionalComplexityReport = new RichTextReport("Conditional Complexity", "ConditionalComplexity.html");
@@ -52,7 +55,7 @@ public class BasicSourceCodeReportGenerator {
     }
 
     private static String getIconSvg(String icon) {
-        String svg = HtmlTemplateUtils.getResource("/icons/" + icon + ".svg");
+        String svg = ReportTheme.adaptiveIcon(HtmlTemplateUtils.getResource("/icons/" + icon + ".svg"));
         svg = svg.replaceAll("height='.*?'", "height='80px'");
         svg = svg.replaceAll("width='.*?'", "width='80px'");
         return svg;
@@ -61,10 +64,10 @@ public class BasicSourceCodeReportGenerator {
 
     private void decorateReport(RichTextReport report, String prefix, String logoLink) {
         if (StringUtils.isNotBlank(prefix)) {
-            report.setDisplayName("<div style='color: #bbbbbb; font-size: 60%;'>"
+            report.setDisplayName("<div style='color: #bbbbbb; font-size: 20px;'>"
                     + prefix
                     + "</div>"
-                    + "<div style='height: 34px; font-size: 100%'>" + report.getDisplayName() + "</div>");
+                    + "<div style='height: 34px; font-size: 42px'>" + report.getDisplayName() + "</div>");
         }
 
         report.setReportsFolder(reportsFolder);
@@ -75,59 +78,35 @@ public class BasicSourceCodeReportGenerator {
 
     public List<RichTextReport> report() {
         List<RichTextReport> reports = new ArrayList<>();
-
-        if (!codeAnalyzerSettings.isDataOnly()) {
-            createBasicReport();
-
-            if (codeAnalyzerSettings.isAnalyzeFilesInScope()) {
-                reports.add(overviewScopeReport);
-            }
-            if (codeAnalyzerSettings.isAnalyzeLogicalDecomposition()) {
-                reports.add(logicalComponentsReport);
-                if (codeAnalyzerSettings.isAnalyzeStaticDependencies()) {
-                    reports.add(logicalComponentsAndDependenciesReport);
-                }
-            }
-            if (codeAnalyzerSettings.isAnalyzeDuplication()) {
-                reports.add(duplicationReport);
-            }
-            if (codeAnalyzerSettings.isAnalyzeFileSize()) {
-                reports.add(fileSizeReport);
-            }
-            if (codeAnalyzerSettings.isAnalyzeFileHistory()) {
-                if (codeAnalysisResults.getCodeConfiguration().getFileHistoryAnalysis().filesHistoryImportPathExists(codeConfigurationFile.getParentFile())) {
-                    reports.add(fileHistoryReport);
-                    reports.add(fileChangeFrequencyReport);
-                    reports.add(fileTemporalDependenciesReport);
-                    reports.add(commitsReport);
-                    reports.add(contributorsReport);
-                }
-            }
-            if (codeAnalyzerSettings.isAnalyzeUnitSize()) {
-                reports.add(unitSizeReport);
-            }
-            if (codeAnalyzerSettings.isAnalyzeConditionalComplexity()) {
-                reports.add(conditionalComplexityReport);
-            }
-            if (codeAnalyzerSettings.isAnalyzeConcerns()) {
-                reports.add(concernsReport);
-            }
-
-            if (codeAnalyzerSettings.isAnalyzeFindings()) {
-                reports.add(findingsReport);
-            }
-
-            if (codeAnalyzerSettings.isCreateMetricsList()) {
-                reports.add(metricsReport);
-                reports.add(comparisonReport);
-            }
-
-            if (codeAnalyzerSettings.isAnalyzeControls()) {
-                reports.add(controlsReport);
-            }
+        if (codeAnalyzerSettings.isDataOnly()) {
+            return reports;
         }
-
+        createBasicReport();
+        addIf(reports, codeAnalyzerSettings.isAnalyzeFilesInScope(), overviewScopeReport);
+        addIf(reports, codeAnalyzerSettings.isAnalyzeLogicalDecomposition(), logicalComponentsReport);
+        addIf(reports, codeAnalyzerSettings.isAnalyzeLogicalDecomposition() && codeAnalyzerSettings.isAnalyzeStaticDependencies(), logicalComponentsAndDependenciesReport);
+        addIf(reports, codeAnalyzerSettings.isAnalyzeDuplication(), duplicationReport);
+        addIf(reports, codeAnalyzerSettings.isAnalyzeFileSize(), fileSizeReport);
+        addIf(reports, codeAnalyzerSettings.isAnalyzeConditionalComplexity(), fileComplexityReport);
+        addIf(reports, codeAnalyzerSettings.isAnalyzeFileHistory() && hasFileHistory(),
+                fileHistoryReport, FileChurnReport, fileTemporalDependenciesReport, commitsReport, contributorsReport);
+        addIf(reports, codeAnalyzerSettings.isAnalyzeUnitSize(), unitSizeReport);
+        addIf(reports, codeAnalyzerSettings.isAnalyzeConditionalComplexity(), conditionalComplexityReport);
+        addIf(reports, codeAnalyzerSettings.isAnalyzeConcerns(), concernsReport);
+        addIf(reports, codeAnalyzerSettings.isAnalyzeFindings(), findingsReport);
+        addIf(reports, codeAnalyzerSettings.isCreateMetricsList(), metricsReport, comparisonReport);
+        addIf(reports, codeAnalyzerSettings.isAnalyzeControls(), controlsReport);
         return reports;
+    }
+
+    private static void addIf(List<RichTextReport> reports, boolean enabled, RichTextReport... toAdd) {
+        if (enabled) {
+            reports.addAll(Arrays.asList(toAdd));
+        }
+    }
+
+    private boolean hasFileHistory() {
+        return codeAnalysisResults.getCodeConfiguration().getFileHistoryAnalysis().filesHistoryImportPathExists(codeConfigurationFile.getParentFile());
     }
 
     private void decorateReports() {
@@ -140,8 +119,9 @@ public class BasicSourceCodeReportGenerator {
         decorateReport(unitSizeReport, name, logoLink);
         decorateReport(conditionalComplexityReport, name, logoLink);
         decorateReport(fileSizeReport, name, logoLink);
+        decorateReport(fileComplexityReport, name, logoLink);
         decorateReport(fileHistoryReport, name, logoLink);
-        decorateReport(fileChangeFrequencyReport, name, logoLink);
+        decorateReport(FileChurnReport, name, logoLink);
         decorateReport(fileTemporalDependenciesReport, name, logoLink);
         decorateReport(commitsReport, name, logoLink);
         decorateReport(contributorsReport, name, logoLink);
@@ -156,91 +136,68 @@ public class BasicSourceCodeReportGenerator {
 
     private void createBasicReport() {
         if (codeAnalyzerSettings.isAnalyzeFilesInScope()) {
-            ProcessingStopwatch.start("reporting/basic");
-            new OverviewReportGenerator(codeAnalysisResults, codeConfigurationFile).addScopeAnalysisToReport(overviewScopeReport);
-            ProcessingStopwatch.end("reporting/basic");
+            timed("reporting/basic", () -> new OverviewReportGenerator(codeAnalysisResults, codeConfigurationFile).addScopeAnalysisToReport(overviewScopeReport));
         }
-
         if (codeAnalyzerSettings.isAnalyzeLogicalDecomposition()) {
-            ProcessingStopwatch.start("reporting/logical decomposition");
-            new LogicalComponentsReportGenerator(codeAnalysisResults, true).addCodeOrganizationToReport(logicalComponentsReport);
-            new LogicalComponentsReportGenerator(codeAnalysisResults, false).addCodeOrganizationToReport(logicalComponentsAndDependenciesReport);
-            ProcessingStopwatch.end("reporting/logical decomposition");
+            timed("reporting/logical decomposition", () -> {
+                new LogicalComponentsReportGenerator(codeAnalysisResults, true).addCodeOrganizationToReport(logicalComponentsReport);
+                new LogicalComponentsReportGenerator(codeAnalysisResults, false).addCodeOrganizationToReport(logicalComponentsAndDependenciesReport);
+            });
         }
-
         if (codeAnalyzerSettings.isAnalyzeConcerns()) {
-            ProcessingStopwatch.start("reporting/features of interest");
-            new ConcernsReportGenerator(codeAnalysisResults).addConcernsToReport(concernsReport);
-            ProcessingStopwatch.end("reporting/features of interest");
+            timed("reporting/features of interest", () -> new ConcernsReportGenerator(codeAnalysisResults).addConcernsToReport(concernsReport));
         }
-
         if (codeAnalyzerSettings.isAnalyzeDuplication()) {
-            ProcessingStopwatch.start("reporting/duplication");
-            int threshold = codeAnalysisResults.getCodeConfiguration().getAnalysis().getLocDuplicationThreshold();
-            int mainLoc = codeAnalysisResults.getMainAspectAnalysisResults().getLinesOfCode();
-            if (mainLoc <= threshold) {
-                new DuplicationReportGenerator(codeAnalysisResults, reportsFolder).addDuplicationToReport(duplicationReport);
-            } else {
-                codeAnalyzerSettings.setAnalyzeDuplication(false);
-            }
-            ProcessingStopwatch.end("reporting/duplication");
+            timed("reporting/duplication", this::createDuplicationReport);
         }
-
         if (codeAnalyzerSettings.isAnalyzeFileSize()) {
-            ProcessingStopwatch.start("reporting/file size");
-            new FileSizeReportGenerator(codeAnalysisResults).addFileSizeToReport(fileSizeReport);
-            ProcessingStopwatch.end("reporting/file size");
+            timed("reporting/file size", () -> new FileSizeReportGenerator(codeAnalysisResults).addFileSizeToReport(fileSizeReport));
         }
-
-        if (codeAnalyzerSettings.isAnalyzeFileHistory()) {
-            if (codeAnalysisResults.getCodeConfiguration().getFileHistoryAnalysis().filesHistoryImportPathExists(codeConfigurationFile.getParentFile())) {
-                ProcessingStopwatch.start("reporting/file age");
-                new FileAgeReportGenerator(codeAnalysisResults).addFileAgeToReport(fileHistoryReport);
-                ProcessingStopwatch.end("reporting/file age");
-                ProcessingStopwatch.start("reporting/file change frequency");
-                new FileChurnReportGenerator(codeAnalysisResults).addFileHistoryToReport(fileChangeFrequencyReport);
-                ProcessingStopwatch.end("reporting/file change frequency");
-                ProcessingStopwatch.start("reporting/temporal dependencies");
-                new FileTemporalDependenciesReportGenerator(codeAnalysisResults).addTemporalDependenciesToReport(reportsFolder, fileTemporalDependenciesReport);
-                ProcessingStopwatch.end("reporting/temporal dependencies");
-                ProcessingStopwatch.start("reporting/commits");
-                new CommitsReportGenerator(codeAnalysisResults).addContributorsAnalysisToReport(reportsFolder, commitsReport);
-                ProcessingStopwatch.end("reporting/commits");
-                ProcessingStopwatch.start("reporting/contributors");
-                new ContributorsReportGenerator(codeAnalysisResults).addContributorsAnalysisToReport(reportsFolder, contributorsReport);
-                ProcessingStopwatch.end("reporting/contributors");
-            }
-        }
-
-        if (codeAnalyzerSettings.isAnalyzeUnitSize()) {
-            ProcessingStopwatch.start("reporting/unit size");
-            new UnitsSizeReportGenerator(codeAnalysisResults).addUnitsSizeToReport(unitSizeReport);
-            ProcessingStopwatch.end("reporting/unit size");
-        }
-
         if (codeAnalyzerSettings.isAnalyzeConditionalComplexity()) {
-            ProcessingStopwatch.start("reporting/conditional complexity");
-            new ConditionalComplexityReportGenerator(codeAnalysisResults).addConditionalComplexityToReport(conditionalComplexityReport);
-            ProcessingStopwatch.end("reporting/conditional complexity");
+            timed("reporting/file complexity", () -> new FileComplexityReportGenerator(codeAnalysisResults).addFileComplexityToReport(fileComplexityReport));
         }
-
-        ProcessingStopwatch.start("reporting/findings");
-        new FindingsReportGenerator(codeConfigurationFile).generateReport(codeAnalysisResults, findingsReport);
-        ProcessingStopwatch.end("reporting/findings");
-
+        if (codeAnalyzerSettings.isAnalyzeFileHistory() && hasFileHistory()) {
+            createHistoryReports();
+        }
+        if (codeAnalyzerSettings.isAnalyzeUnitSize()) {
+            timed("reporting/unit size", () -> new UnitsSizeReportGenerator(codeAnalysisResults).addUnitsSizeToReport(unitSizeReport));
+        }
+        if (codeAnalyzerSettings.isAnalyzeConditionalComplexity()) {
+            timed("reporting/conditional complexity", () -> new ConditionalComplexityReportGenerator(codeAnalysisResults).addConditionalComplexityToReport(conditionalComplexityReport));
+        }
+        timed("reporting/findings", () -> new FindingsReportGenerator(codeConfigurationFile).generateReport(codeAnalysisResults, findingsReport));
         if (codeAnalyzerSettings.isCreateMetricsList()) {
-            ProcessingStopwatch.start("reporting/metrics");
-            new MetricsListReportGenerator().generateReport(codeAnalysisResults, metricsReport);
-            ProcessingStopwatch.end("reporting/metrics");
-            ProcessingStopwatch.start("reporting/trend");
-            new TrendReportGenerator(codeConfigurationFile).generateReport(codeAnalysisResults, comparisonReport);
-            ProcessingStopwatch.end("reporting/trend");
+            timed("reporting/metrics", () -> new MetricsListReportGenerator().generateReport(codeAnalysisResults, metricsReport));
         }
-
         if (codeAnalyzerSettings.isAnalyzeControls()) {
-            ProcessingStopwatch.start("reporting/controls");
-            new ControlsReportGenerator().generateReport(codeAnalysisResults, controlsReport);
-            ProcessingStopwatch.end("reporting/controls");
+            timed("reporting/controls", () -> new ControlsReportGenerator().generateReport(codeAnalysisResults, controlsReport));
         }
+    }
+
+    /** The duplication report, unless the main scope exceeds the configured LOC threshold (then duplication is switched off for the index too). */
+    private void createDuplicationReport() {
+        int threshold = codeAnalysisResults.getCodeConfiguration().getAnalysis().getLocDuplicationThreshold();
+        int mainLoc = codeAnalysisResults.getMainAspectAnalysisResults().getLinesOfCode();
+        if (mainLoc <= threshold) {
+            new DuplicationReportGenerator(codeAnalysisResults, reportsFolder).addDuplicationToReport(duplicationReport);
+        } else {
+            codeAnalyzerSettings.setAnalyzeDuplication(false);
+        }
+    }
+
+    /** The five git-history based reports: file age, file churn, temporal dependencies, commits, contributors. */
+    private void createHistoryReports() {
+        timed("reporting/file age", () -> new FileAgeReportGenerator(codeAnalysisResults).addFileAgeToReport(fileHistoryReport));
+        timed("reporting/file change frequency", () -> new FileChurnReportGenerator(codeAnalysisResults).addFileHistoryToReport(FileChurnReport));
+        timed("reporting/temporal dependencies", () -> new FileTemporalDependenciesReportGenerator(codeAnalysisResults).addTemporalDependenciesToReport(reportsFolder, fileTemporalDependenciesReport));
+        timed("reporting/commits", () -> new CommitsReportGenerator(codeAnalysisResults).addContributorsAnalysisToReport(reportsFolder, commitsReport));
+        timed("reporting/contributors", () -> new ContributorsReportGenerator(codeAnalysisResults).addContributorsAnalysisToReport(reportsFolder, contributorsReport));
+    }
+
+    /** Runs one reporting step between the matching ProcessingStopwatch start/end marks. */
+    private static void timed(String step, Runnable work) {
+        ProcessingStopwatch.start(step);
+        work.run();
+        ProcessingStopwatch.end(step);
     }
 }

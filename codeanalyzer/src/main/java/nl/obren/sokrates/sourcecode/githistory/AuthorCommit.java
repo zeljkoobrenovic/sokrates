@@ -2,18 +2,31 @@ package nl.obren.sokrates.sourcecode.githistory;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.lang3.math.NumberUtils;
 
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Calendar;
-import java.util.Date;
+import java.util.List;
+import java.util.stream.Collectors;
 
 public class AuthorCommit {
+    public static final String ISO_DATE_FORMAT = "yyyy-MM-dd";
     private String date = "";
     private String authorEmail = "";
     private String userName = "";
 
+    private int fileUpdatesCount = 1;
+
+    // Lines added/deleted across all files touched by this commit. Summed from the per-file
+    // FileUpdate churn columns; 0 for history files without churn data.
+    private int linesAdded = 0;
+    private int linesDeleted = 0;
+
     private boolean bot = false;
+
+    // Co-authors from the commit's trailers (see CoAuthorsConfig); empty for histories without
+    // the git-commit-trailers.txt sidecar.
+    private List<CoAuthor> coAuthors = new ArrayList<>();
 
     public AuthorCommit() {
     }
@@ -85,10 +98,31 @@ public class AuthorCommit {
             while (calendar.get(Calendar.DAY_OF_WEEK) != Calendar.MONDAY) {
                 calendar.add(Calendar.DATE, -1);
             }
-            return new SimpleDateFormat("yyyy-MM-dd").format(calendar.getTime());
+            return new SimpleDateFormat(ISO_DATE_FORMAT).format(calendar.getTime());
         }
 
         return "";
+    }
+
+    public List<CoAuthor> getCoAuthors() {
+        return coAuthors;
+    }
+
+    public void setCoAuthors(List<CoAuthor> coAuthors) {
+        this.coAuthors = coAuthors == null ? new ArrayList<>() : coAuthors;
+    }
+
+    @JsonIgnore
+    public boolean hasAiCoAuthor() {
+        return coAuthors.stream().anyMatch(CoAuthor::isAi);
+    }
+
+    /**
+     * Distinct AI agent names among the co-authors (e.g. "Claude Code"), in trailer order.
+     */
+    @JsonIgnore
+    public List<String> getAiAgents() {
+        return coAuthors.stream().filter(CoAuthor::isAi).map(CoAuthor::getAgent).distinct().collect(Collectors.toList());
     }
 
     public boolean isBot() {
@@ -97,5 +131,40 @@ public class AuthorCommit {
 
     public void setBot(boolean bot) {
         this.bot = bot;
+    }
+
+    public int getFileUpdatesCount() {
+        return fileUpdatesCount;
+    }
+
+    public void setFileUpdatesCount(int fileUpdatesCount) {
+        this.fileUpdatesCount = fileUpdatesCount;
+    }
+
+    @JsonIgnore
+    public void incrementFileUpdatesCount() {
+        this.fileUpdatesCount += 1;
+    }
+
+    public int getLinesAdded() {
+        return linesAdded;
+    }
+
+    public void setLinesAdded(int linesAdded) {
+        this.linesAdded = linesAdded;
+    }
+
+    public int getLinesDeleted() {
+        return linesDeleted;
+    }
+
+    public void setLinesDeleted(int linesDeleted) {
+        this.linesDeleted = linesDeleted;
+    }
+
+    @JsonIgnore
+    public void addChurn(int added, int deleted) {
+        this.linesAdded += added;
+        this.linesDeleted += deleted;
     }
 }

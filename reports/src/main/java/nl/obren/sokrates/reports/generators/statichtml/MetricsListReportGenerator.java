@@ -9,8 +9,6 @@ import nl.obren.sokrates.reports.utils.ReportUtils;
 import nl.obren.sokrates.sourcecode.analysis.results.CodeAnalysisResults;
 import nl.obren.sokrates.sourcecode.metrics.Metric;
 
-import java.text.DecimalFormat;
-
 public class MetricsListReportGenerator {
     private CodeAnalysisResults codeAnalysisResults;
     private RichTextReport report;
@@ -19,8 +17,9 @@ public class MetricsListReportGenerator {
         this.codeAnalysisResults = codeAnalysisResults;
         this.report = report;
 
-        addIntro();
+        report.setDescription("All numeric values measured by Sokrates.");
         addMetricsTable();
+        addAboutSection();
 
         return report;
     }
@@ -28,7 +27,7 @@ public class MetricsListReportGenerator {
     private void addMetricsTable() {
         report.startSection("Metrics", "");
         report.startDiv("width: 100%; overflow-x: auto");
-        report.startTable();
+        report.startDataTable();
         report.addTableHeader("Metric", "Value");
 
         codeAnalysisResults.getMetricsList().getMetrics().forEach(metric -> {
@@ -40,9 +39,8 @@ public class MetricsListReportGenerator {
         report.endSection();
     }
 
-    private void addIntro() {
-        report.addParagraph("All numeric values measured by Sokrates.", "margin-top: 12px; color: grey");
-        report.startSection("Intro", "");
+    private void addAboutSection() {
+        report.startSection("About This Analysis", "");
         report.startUnorderedList();
         report.addListItem("Metrics are all numeric values measured by Sokrates.");
         report.addListItem("You can use these metrics to define <a href='Controls.html'>goals and controls</a>.");

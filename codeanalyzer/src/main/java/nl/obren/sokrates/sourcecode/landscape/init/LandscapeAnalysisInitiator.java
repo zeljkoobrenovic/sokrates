@@ -6,11 +6,11 @@ package nl.obren.sokrates.sourcecode.landscape.init;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import nl.obren.sokrates.common.io.JsonGenerator;
-import nl.obren.sokrates.sourcecode.Link;
 import nl.obren.sokrates.sourcecode.Metadata;
 import nl.obren.sokrates.sourcecode.landscape.LandscapeConfiguration;
 import nl.obren.sokrates.sourcecode.landscape.SokratesRepositoryLink;
 import nl.obren.sokrates.sourcecode.landscape.SubLandscapeLink;
+import nl.obren.sokrates.sourcecode.landscape.analysis.LandscapeAnalysisUtils;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
@@ -32,19 +32,18 @@ public class LandscapeAnalysisInitiator {
     public LandscapeConfiguration initConfiguration(File analysisRoot, File landscapeConfigFile, boolean saveFile) {
         this.saveFile = saveFile;
         LandscapeConfiguration landscapeConfiguration = new LandscapeConfiguration();
-        landscapeConfiguration.setAnalysisRoot(analysisRoot.getPath());
+        landscapeConfiguration.setAnalysisRoot(analysisRootPath(analysisRoot, landscapeConfigFile));
 
+        // Single tree walk: sub-landscape and analysis-result files are mutually exclusive (distinct
+        // path endings) and feed separate lists, so dispatching on type in one pass is equivalent to
+        // two walks but halves the traversal of (potentially large) landscape roots.
         try (Stream<Path> paths = Files.walk(Paths.get(analysisRoot.getPath()))) {
-            paths.filter(file -> isSokratesLandscapeFile(file)).forEach(file -> {
-                addSubLandscape(analysisRoot, landscapeConfiguration, file);
-            });
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-
-        try (Stream<Path> paths = Files.walk(Paths.get(analysisRoot.getPath()))) {
-            paths.filter(file -> isSokratesAnalysisFile(file)).forEach(file -> {
-                processAnalysisResultFile(analysisRoot, landscapeConfiguration, file);
+            paths.filter(file -> !LandscapeAnalysisUtils.isInGeneratedVirtualLandscape(file)).forEach(file -> {
+                if (isSokratesLandscapeFile(file)) {
+                    addSubLandscape(analysisRoot, landscapeConfiguration, file);
+                } else if (isSokratesAnalysisFile(file)) {
+                    processAnalysisResultFile(analysisRoot, landscapeConfiguration, file);
+                }
             });
         } catch (IOException e) {
             e.printStackTrace();
@@ -98,8 +97,45 @@ public class LandscapeAnalysisInitiator {
         }
     }
 
+    /**
+     * The analysisRoot stored in the configuration. "." whenever the configuration lives in the
+     * default place, {@code <analysisRoot>/_sokrates_landscape/config.json} (the analyzer resolves a
+     * root starting with "." against that folder's parent, so only "." is right there; a relative
+     * path like "./acme" — analyzeGitHubOrg's per-organization root when run from the parent — would
+     * be resolved to "./acme/./acme" and find no repository). Any other layout keeps the path as given.
+     */
+    public static String analysisRootPath(File analysisRoot, File landscapeConfigFile) {
+        if (landscapeConfigFile == null) {
+            return ".";
+        }
+        try {
+            File configRoot = landscapeConfigFile.getAbsoluteFile().getParentFile().getParentFile();
+            if (configRoot != null && configRoot.getCanonicalFile().equals(analysisRoot.getCanonicalFile())) {
+                return ".";
+            }
+        } catch (IOException e) {
+            LOG.warn("Could not resolve " + analysisRoot.getPath() + ": " + e.getMessage());
+        }
+        return analysisRoot.getPath();
+    }
+
     private boolean isSokratesAnalysisFile(Path file) {
-        return file.endsWith("data/analysisResults.json");
+        // A landscape's own data/data.zip (landscapeAnalysisResults.json etc.) is not a repository;
+        // without this a re-run registers the landscape itself and then skips it with a warning.
+        if (LandscapeAnalysisUtils.isInLandscapeFolder(file)) {
+            return false;
+        }
+        // A repository's data folder is now packaged as data/data.zip (analysisResults.json lives
+        // inside it), so discover by that zip. Older reports (before data.zip packaging) still have
+        // a loose data/analysisResults.json — discover those too, but only when there is no sibling
+        // data.zip (a current repository), so a repository is never registered twice.
+        if (file.endsWith("data/data.zip")) {
+            return true;
+        }
+        if (file.endsWith("data/analysisResults.json")) {
+            return !new File(file.getParent().toFile(), "data.zip").exists();
+        }
+        return false;
     }
 
     private boolean isSokratesLandscapeFile(Path file) {
@@ -107,7 +143,11 @@ public class LandscapeAnalysisInitiator {
     }
 
     private void processAnalysisResultFile(File root, LandscapeConfiguration configuration, Path file) {
-        String relativePath = root.toPath().relativize(file).toString();
+        // file is the discovered data/data.zip (current) or data/analysisResults.json (older). The
+        // repository link always records the conceptual data/analysisResults.json path; its parent
+        // folder is the data/ folder the analyzer reads from (zip first, loose file as fallback).
+        String relativePath = root.toPath().relativize(file).toString()
+                .replaceAll("data\\.zip$", "analysisResults.json");
         configuration.getRepositories().add(new SokratesRepositoryLink(relativePath));
 
         LOG.info("Adding repositories: " + relativePath);

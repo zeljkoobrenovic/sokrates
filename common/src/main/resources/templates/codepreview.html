@@ -75,7 +75,7 @@
             editor.session.selection.clearSelection();
         } catch (err) {
             editor.setValue(err + "\n" + content);
-            document.getElementById("error").innerHTML = err;
+            document.getElementById("error").textContent = String(err);
         }
     }
 

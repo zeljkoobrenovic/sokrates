@@ -16,7 +16,6 @@ import nl.obren.sokrates.sourcecode.SourceFile;
 import nl.obren.sokrates.sourcecode.analysis.results.CodeAnalysisResults;
 import nl.obren.sokrates.sourcecode.analysis.results.FileAgeDistributionPerLogicalDecomposition;
 import nl.obren.sokrates.sourcecode.analysis.results.FilesHistoryAnalysisResults;
-import nl.obren.sokrates.sourcecode.aspects.LogicalDecomposition;
 import nl.obren.sokrates.sourcecode.filehistory.FileModificationHistory;
 import nl.obren.sokrates.sourcecode.stats.RiskDistributionStats;
 import nl.obren.sokrates.sourcecode.stats.SourceFileChangeDistribution;
@@ -38,7 +37,6 @@ public class FileChurnReportGenerator {
     private CodeAnalysisResults codeAnalysisResults;
     private List<String> changeFrequencyLabels;
     private List<String> contributorsCountFrequencyLabels;
-    private int graphCounter = 1;
 
     public FileChurnReportGenerator(CodeAnalysisResults codeAnalysisResults) {
         this.codeAnalysisResults = codeAnalysisResults;
@@ -49,14 +47,15 @@ public class FileChurnReportGenerator {
     }
 
     public void addFileHistoryToReport(RichTextReport report) {
-        report.addParagraph("File change frequency (churn) shows the distribution of file updates " +
-                "(days with at least one commit).", "margin-top: 12px; color: grey");
+        report.setDescription("File change frequency (churn) shows the distribution of file updates " +
+                "(days with at least one commit).");
 
         addOverallSections(report);
 
         addGraphsPerExtension(report);
         addGraphsPerLogicalComponents(report);
         addMostChangedFilesList(report);
+        addFilesWithMostChurnList(report);
         addFilesWithMostContributors(report);
         addFilesWithLeastContributors(report);
         addCorrelations(report);
@@ -81,22 +80,22 @@ public class FileChurnReportGenerator {
         addGraphOverallChange(report, codeAnalysisResults.getFilesHistoryAnalysisResults().getOverallFileChangeDistribution());
         report.addLineBreak();
         report.addHtmlContent("explore: ");
-        report.addHtmlContent("<a target='_blank' href='visuals/zoomable_circles_main_update_frequency_coloring.html'>grouped by folders</a>");
+        report.addHtmlContent("<a target='_blank' href='visuals/zoomable_circles.html#main_update_frequency_coloring'>grouped by folders</a>");
         report.addHtmlContent(" | ");
-        report.addHtmlContent("<a target='_blank' href='visuals/zoomable_circles_main_update_frequency_coloring_categories.html'>grouped by update frequency</a>");
+        report.addHtmlContent("<a target='_blank' href='visuals/zoomable_circles.html#main_update_frequency_coloring_categories'>grouped by update frequency</a>");
         report.addHtmlContent(" | ");
-        report.addHtmlContent("<a target='_blank' href='../data/text/mainFilesWithHistory.txt'>data</a>");
+        report.addHtmlContent("<a target='_blank' href='#' onclick=\"return downloadDataFile('text/mainFilesWithHistory.txt')\">data</a>");
         report.endSection();
 
         report.startSubSection("Contributors Count Frequency Overall", "");
         addGraphOverallContributorCount(report, codeAnalysisResults.getFilesHistoryAnalysisResults().getOverallContributorsCountDistribution());
         report.addLineBreak();
         report.addHtmlContent("explore: ");
-        report.addHtmlContent("<a target='_blank' href='visuals/zoomable_circles_main_contributors_count_coloring.html'>grouped by folders</a>");
+        report.addHtmlContent("<a target='_blank' href='visuals/zoomable_circles.html#main_contributors_count_coloring'>grouped by folders</a>");
         report.addHtmlContent(" | ");
-        report.addHtmlContent("<a target='_blank' href='visuals/zoomable_circles_main_contributors_count_coloring_categories.html'>grouped by contributors count</a>");
+        report.addHtmlContent("<a target='_blank' href='visuals/zoomable_circles.html#main_contributors_count_coloring_categories'>grouped by contributors count</a>");
         report.addHtmlContent(" | ");
-        report.addHtmlContent("<a target='_blank' href='../data/text/mainFilesWithHistory.txt'>data</a>");
+        report.addHtmlContent("<a target='_blank' href='#' onclick=\"return downloadDataFile('text/mainFilesWithHistory.txt')\">data</a>");
         report.endSection();
         report.endSection();
     }
@@ -178,16 +177,6 @@ public class FileChurnReportGenerator {
         report.endSection();
     }
 
-    private LogicalDecomposition getLogicalDecompositionByName(String name) {
-        for (LogicalDecomposition logicalDecomposition : this.codeAnalysisResults.getCodeConfiguration().getLogicalDecompositions()) {
-            if (logicalDecomposition.getName().equalsIgnoreCase(name)) {
-                return logicalDecomposition;
-            }
-        }
-
-        return null;
-    }
-
     private void addChangesPerLogicalDecomposition(RichTextReport report) {
         int logicalDecompositionCounter[] = {0};
         codeAnalysisResults.getCodeConfiguration().getLogicalDecompositions().forEach(logicalDecomposition -> {
@@ -202,7 +191,7 @@ public class FileChurnReportGenerator {
     }
 
     private void addChangeDetailsForLogicalDecomposition(RichTextReport report, FileAgeDistributionPerLogicalDecomposition logicalDecomposition) {
-        report.startSubSection("" + logicalDecomposition.getName()
+        report.startSubSectionText(logicalDecomposition.getName()
                 + " (" + THE_NUMBER_OF_FILE_CHANGES.toLowerCase() + ")", THE_NUMBER_OF_FILE_CHANGES_DESCRIPTION);
         report.startScrollingDiv();
         report.addHtmlContent(RiskDistributionStatsReportUtils.getRiskDistributionPerKeySvgBarChart(logicalDecomposition.getDistributionPerComponent(), changeFrequencyLabels, Palette.getHeatPalette()));
@@ -215,8 +204,24 @@ public class FileChurnReportGenerator {
         List<SourceFile> youngestFiles = codeAnalysisResults.getFilesHistoryAnalysisResults().getMostChangedFiles();
         report.startSection("Most Frequently Changed Files (Top " + youngestFiles.size() + ")", "");
         boolean cacheSourceFiles = codeAnalysisResults.getCodeConfiguration().getAnalysis().isSaveSourceFiles();
-        report.addParagraph("<a href='../data/text/mainFilesWithHistory.txt' target='_blank'>See data for all files...</a>");
-        report.addHtmlContent(FilesReportUtils.getFilesTable(youngestFiles, cacheSourceFiles, true, false, 500).toString());
+        report.addParagraph("<a href='#' onclick=\"return downloadDataFile('text/mainFilesWithHistory.txt')\" target='_blank'>See data for all files...</a>");
+        report.addHtmlContent(FilesReportUtils.getFilesTable(youngestFiles, cacheSourceFiles, true, false, 500, true).toString());
+        report.endSection();
+    }
+
+    private void addFilesWithMostChurnList(RichTextReport report) {
+        List<SourceFile> files = codeAnalysisResults.getFilesHistoryAnalysisResults().getFilesWithMostChurn();
+        // Only meaningful when the git history carried line-churn data; otherwise every file has 0
+        // churn and the ranking is arbitrary, so skip the section.
+        boolean hasChurn = files.stream().anyMatch(f -> f.getFileModificationHistory() != null
+                && f.getFileModificationHistory().getChurn() > 0);
+        if (!hasChurn) {
+            return;
+        }
+        report.startSection("Files With Most Churn (Top " + files.size() + ")", "Based on the number of lines added and deleted across all commits.");
+        boolean cacheSourceFiles = codeAnalysisResults.getCodeConfiguration().getAnalysis().isSaveSourceFiles();
+        report.addParagraph("<a href='#' onclick=\"return downloadDataFile('text/mainFilesWithHistory.txt')\" target='_blank'>See data for all files...</a>");
+        report.addHtmlContent(FilesReportUtils.getFilesTable(files, cacheSourceFiles, true, false, 500, true).toString());
         report.endSection();
     }
 
@@ -224,8 +229,8 @@ public class FileChurnReportGenerator {
         List<SourceFile> files = codeAnalysisResults.getFilesHistoryAnalysisResults().getFilesWithMostContributors();
         report.startSection("Files With Most Contributors (Top " + files.size() + ")", "Based on the number of unique email addresses found in commits.");
         boolean cacheSourceFiles = codeAnalysisResults.getCodeConfiguration().getAnalysis().isSaveSourceFiles();
-        report.addParagraph("<a href='../data/text/mainFilesWithHistory.txt' target='_blank'>See data for all files...</a>");
-        report.addHtmlContent(FilesReportUtils.getFilesTable(files, cacheSourceFiles, true, false, 500).toString());
+        report.addParagraph("<a href='#' onclick=\"return downloadDataFile('text/mainFilesWithHistory.txt')\" target='_blank'>See data for all files...</a>");
+        report.addHtmlContent(FilesReportUtils.getFilesTable(files, cacheSourceFiles, true, false, 500, true).toString());
         report.endSection();
     }
 
@@ -233,8 +238,8 @@ public class FileChurnReportGenerator {
         List<SourceFile> files = codeAnalysisResults.getFilesHistoryAnalysisResults().getFilesWithLeastContributors();
         report.startSection("Files With Least Contributors (Top " + files.size() + ")", "Based on the number of unique email addresses found in commits.");
         boolean cacheSourceFiles = codeAnalysisResults.getCodeConfiguration().getAnalysis().isSaveSourceFiles();
-        report.addParagraph("<a href='../data/text/mainFilesWithHistory.txt' target='_blank'>See data for all files...</a>");
-        report.addHtmlContent(FilesReportUtils.getFilesTable(files, cacheSourceFiles, true, false, 500).toString());
+        report.addParagraph("<a href='#' onclick=\"return downloadDataFile('text/mainFilesWithHistory.txt')\" target='_blank'>See data for all files...</a>");
+        report.addHtmlContent(FilesReportUtils.getFilesTable(files, cacheSourceFiles, true, false, 500, true).toString());
         report.endSection();
     }
 
@@ -249,7 +254,9 @@ public class FileChurnReportGenerator {
 
             codeAnalysisResults.getFilesAnalysisResults().getAllFiles().forEach(sourceFile -> {
                 linesOfCodeMap.put(sourceFile.getRelativePath(), sourceFile.getLinesOfCode());
-                countributorsCountMap.put(sourceFile.getRelativePath(), sourceFile.getFileModificationHistory() == null ? 1 : sourceFile.getFileModificationHistory().countContributors());
+                if (sourceFile.getFileModificationHistory() != null) {
+                    countributorsCountMap.put(sourceFile.getRelativePath(), sourceFile.getFileModificationHistory().countContributors());
+                }
             });
             ProcessingStopwatch.start("reporting/file update frequency/correlations");
             correlationDiagramGenerator.addCorrelations("File Size vs. Number of Changes", "lines of code", "# changes",
@@ -266,6 +273,26 @@ public class FileChurnReportGenerator {
                     p -> countributorsCountMap.getOrDefault(p.getPath(), 0),
                     p -> linesOfCodeMap.getOrDefault(p.getPath(), 0),
                     p -> p.getPath());
+
+            // Churn correlations - only meaningful when the git history carried line-churn data.
+            boolean hasChurn = codeAnalysisResults.getFilesHistoryAnalysisResults().getHistory(Integer.MAX_VALUE)
+                    .stream().anyMatch(p -> p.getChurn() > 0);
+            if (hasChurn) {
+                correlationDiagramGenerator.addCorrelations("Number of Changes vs. Line Churn", "# changes", "line churn",
+                        p -> p.getDates().size(),
+                        p -> p.getChurn(),
+                        p -> p.getPath());
+
+                correlationDiagramGenerator.addCorrelations("Number of Contributors vs. Line Churn", "# contributors", "line churn",
+                        p -> countributorsCountMap.getOrDefault(p.getPath(), 0),
+                        p -> p.getChurn(),
+                        p -> p.getPath());
+
+                correlationDiagramGenerator.addCorrelations("File Size vs. Line Churn", "lines of code", "line churn",
+                        p -> linesOfCodeMap.getOrDefault(p.getPath(), 0),
+                        p -> p.getChurn(),
+                        p -> p.getPath());
+            }
 
             ProcessingStopwatch.end("reporting/file update frequency/correlations");
             report.endSection();

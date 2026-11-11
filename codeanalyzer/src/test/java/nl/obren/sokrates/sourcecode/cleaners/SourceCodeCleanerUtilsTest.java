@@ -135,6 +135,15 @@ public class SourceCodeCleanerUtilsTest {
     }
 
     @Test
+    public void trimLinesCollapsesInteriorSpaceRuns() throws Exception {
+        // Runs of 2+ interior spaces (and tabs) collapse to a single space, in one pass.
+        assertEquals("a b c", SourceCodeCleanerUtils.trimLines("a   b     c"));
+        assertEquals("int x = 1;", SourceCodeCleanerUtils.trimLines("int    x  =   1;"));
+        assertEquals("a b", SourceCodeCleanerUtils.trimLines("a\t\tb"));
+        assertEquals("a b\nc d", SourceCodeCleanerUtils.trimLines("  a    b  \n   c  d   "));
+    }
+
+    @Test
     public void getUnifiedEndOfLines() throws Exception {
         assertEquals(SourceCodeCleanerUtils.normalizeLineEnds("a\nb\nc"), "a\nb\nc");
         assertEquals(SourceCodeCleanerUtils.normalizeLineEnds("a\r\nb\r\nc"), "a\nb\nc");

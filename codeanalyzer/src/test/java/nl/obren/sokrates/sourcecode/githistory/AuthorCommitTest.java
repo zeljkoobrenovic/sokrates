@@ -3,7 +3,6 @@ package nl.obren.sokrates.sourcecode.githistory;
 import org.junit.Test;
 
 import java.util.Calendar;
-import java.util.Date;
 
 import static org.junit.jupiter.api.Assertions.*;
 

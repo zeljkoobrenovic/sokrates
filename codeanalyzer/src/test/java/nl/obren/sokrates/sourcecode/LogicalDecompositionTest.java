@@ -13,7 +13,11 @@ import java.io.File;
 import java.util.Arrays;
 import java.util.List;
 
+import java.util.ArrayList;
+
 import static junit.framework.TestCase.assertEquals;
+import static junit.framework.TestCase.assertFalse;
+import static junit.framework.TestCase.assertTrue;
 
 public class LogicalDecompositionTest {
     private File root = new File("/root/system/");
@@ -103,6 +107,32 @@ public class LogicalDecompositionTest {
         assertEquals(logicalDecomposition.getComponents().get(0).getSourceFiles().size(), 2);
         assertEquals(logicalDecomposition.getComponents().get(0).getSourceFiles().get(0).getRelativePath(), "a" + SEPARATOR + "a1" + SEPARATOR + "file1.java");
         assertEquals(logicalDecomposition.getComponents().get(0).getSourceFiles().get(1).getRelativePath(), "a" + SEPARATOR + "a2" + SEPARATOR + "file2.java");
+    }
+
+    @Test
+    public void isInScopeMatchesByFileAndReflectsComponentChanges() throws Exception {
+        SourceFile inA = new SourceFile(new File("/root/system/a/a1/file1.java")).relativize(root);
+        SourceFile inB = new SourceFile(new File("/root/system/b/b1/file3.java")).relativize(root);
+        SourceFile notIncluded = new SourceFile(new File("/root/system/c/file9.java")).relativize(root);
+
+        NamedSourceCodeAspect componentA = new NamedSourceCodeAspect("A");
+        componentA.getSourceFiles().add(inA);
+
+        LogicalDecomposition logicalDecomposition = new LogicalDecomposition("test");
+        logicalDecomposition.getComponents().add(componentA);
+
+        // A different SourceFile instance for the same file must still be in scope (matched by file).
+        assertTrue(logicalDecomposition.isInScope(new SourceFile(new File("/root/system/a/a1/file1.java")).relativize(root)));
+        assertFalse(logicalDecomposition.isInScope(inB));
+        assertFalse(logicalDecomposition.isInScope(notIncluded));
+
+        // Replacing components invalidates the cache, so a newly-scoped file becomes in scope.
+        NamedSourceCodeAspect componentB = new NamedSourceCodeAspect("B");
+        componentB.getSourceFiles().add(inB);
+        logicalDecomposition.setComponents(new ArrayList<>(Arrays.asList(componentB)));
+
+        assertTrue(logicalDecomposition.isInScope(inB));
+        assertFalse(logicalDecomposition.isInScope(inA));
     }
 
     @Test

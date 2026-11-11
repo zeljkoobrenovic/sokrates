@@ -10,6 +10,6 @@ import nl.obren.sokrates.sourcecode.units.CStyleHeuristicUnitsExtractor;
 public class RHeuristicUnitsExtractor extends CStyleHeuristicUnitsExtractor {
     @Override
     public boolean isUnitSignature(String line) {
-        return RegexUtils.matchesEntirely("[ ]*[a-zA-Z_0-9]+[ ]* [<][-][ ]*function[ ]*[(].*", line);
+        return RegexUtils.matchesEntirely("[ ]*[\\p{L}\\p{N}_][\\p{L}\\p{M}\\p{N}_]*[ ]* [<][-][ ]*function[ ]*[(].*", line);
     }
 }

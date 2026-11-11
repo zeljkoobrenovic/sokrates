@@ -70,17 +70,17 @@ public class NamedSourceCodeAspectTest {
         aspect.getSourceFiles().add(new SourceFile(new File("/testdir/A.java")));
 
         assertEquals(SourceCodeAspectUtils.getAspectsPerExtensions(aspect).size(), 1);
-        assertEquals(SourceCodeAspectUtils.getAspectsPerExtensions(aspect).get(0).getName(), "  *.java");
+        assertEquals(SourceCodeAspectUtils.getAspectsPerExtensions(aspect).get(0).getName(), "java");
         assertEquals(SourceCodeAspectUtils.getAspectsPerExtensions(aspect).get(0).getSourceFiles().size(), 1);
         assertEquals(SourceCodeAspectUtils.getAspectsPerExtensions(aspect).get(0).getSourceFiles().get(0).getFile().getName(), "A.java");
 
         aspect.getSourceFiles().add(new SourceFile(new File("/testdir/a.js")));
 
         assertEquals(SourceCodeAspectUtils.getAspectsPerExtensions(aspect).size(), 2);
-        assertEquals(SourceCodeAspectUtils.getAspectsPerExtensions(aspect).get(0).getName(), "  *.java");
+        assertEquals(SourceCodeAspectUtils.getAspectsPerExtensions(aspect).get(0).getName(), "java");
         assertEquals(SourceCodeAspectUtils.getAspectsPerExtensions(aspect).get(0).getSourceFiles().size(), 1);
         assertEquals(SourceCodeAspectUtils.getAspectsPerExtensions(aspect).get(0).getSourceFiles().get(0).getFile().getName(), "A.java");
-        assertEquals(SourceCodeAspectUtils.getAspectsPerExtensions(aspect).get(1).getName(), "  *.js");
+        assertEquals(SourceCodeAspectUtils.getAspectsPerExtensions(aspect).get(1).getName(), "js");
         assertEquals(SourceCodeAspectUtils.getAspectsPerExtensions(aspect).get(1).getSourceFiles().size(), 1);
         assertEquals(SourceCodeAspectUtils.getAspectsPerExtensions(aspect).get(1).getSourceFiles().get(0).getFile().getName(), "a.js");
 
@@ -88,11 +88,11 @@ public class NamedSourceCodeAspectTest {
         aspect.getSourceFiles().add(new SourceFile(new File("/testdir/b.js")));
 
         assertEquals(SourceCodeAspectUtils.getAspectsPerExtensions(aspect).size(), 2);
-        assertEquals(SourceCodeAspectUtils.getAspectsPerExtensions(aspect).get(0).getName(), "  *.java");
+        assertEquals(SourceCodeAspectUtils.getAspectsPerExtensions(aspect).get(0).getName(), "java");
         assertEquals(SourceCodeAspectUtils.getAspectsPerExtensions(aspect).get(0).getSourceFiles().size(), 2);
         assertEquals(SourceCodeAspectUtils.getAspectsPerExtensions(aspect).get(0).getSourceFiles().get(0).getFile().getName(), "A.java");
         assertEquals(SourceCodeAspectUtils.getAspectsPerExtensions(aspect).get(0).getSourceFiles().get(1).getFile().getName(), "B.java");
-        assertEquals(SourceCodeAspectUtils.getAspectsPerExtensions(aspect).get(1).getName(), "  *.js");
+        assertEquals(SourceCodeAspectUtils.getAspectsPerExtensions(aspect).get(1).getName(), "js");
         assertEquals(SourceCodeAspectUtils.getAspectsPerExtensions(aspect).get(1).getSourceFiles().size(), 2);
         assertEquals(SourceCodeAspectUtils.getAspectsPerExtensions(aspect).get(1).getSourceFiles().get(0).getFile().getName(), "a.js");
         assertEquals(SourceCodeAspectUtils.getAspectsPerExtensions(aspect).get(1).getSourceFiles().get(1).getFile().getName(), "b.js");
@@ -115,7 +115,7 @@ public class NamedSourceCodeAspectTest {
         aspect.getSourceFiles().add(sourceFile3);
 
         assertEquals(SourceCodeAspectUtils.getAspectsPerExtensions(aspect).size(), 1);
-        assertEquals(SourceCodeAspectUtils.getAspectsPerExtensions(aspect).get(0).getName(), "  *.java");
+        assertEquals(SourceCodeAspectUtils.getAspectsPerExtensions(aspect).get(0).getName(), "java");
         assertEquals(SourceCodeAspectUtils.getAspectsPerExtensions(aspect).get(0).getSourceFiles().size(), 3);
     }
 

@@ -1,12 +1,9 @@
 package nl.obren.sokrates.sourcecode.lang.plsql;
 
-import junit.framework.TestCase;
 import nl.obren.sokrates.common.utils.ProgressFeedback;
 import nl.obren.sokrates.sourcecode.SourceFile;
 import nl.obren.sokrates.sourcecode.dependencies.Dependency;
 import nl.obren.sokrates.sourcecode.dependencies.DependencyAnchor;
-import nl.obren.sokrates.sourcecode.lang.python.PythonDependenciesExtractor;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.File;

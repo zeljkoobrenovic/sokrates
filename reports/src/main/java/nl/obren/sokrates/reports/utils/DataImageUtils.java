@@ -1,9 +1,14 @@
 package nl.obren.sokrates.reports.utils;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Base64;
+import java.util.Collection;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 public class DataImageUtils {
@@ -22,6 +27,7 @@ public class DataImageUtils {
         map.put("py", "Python.png");
         map.put("py3", "Python.png");
         map.put("pyx", "Python.png");
+        map.put("pyl", "Python.png");
         map.put("sql", "SQL.png");
         map.put("php", "PHP.png");
         map.put("php3", "PHP.png");
@@ -32,6 +38,7 @@ public class DataImageUtils {
         map.put("go", "Go.png");
         map.put("pas", "Delphi_Object_Pascal.png");
         map.put("rb", "Ruby.png");
+        map.put("rbi", "Ruby.png");
         map.put("erb", "Ruby.png");
         map.put("gemspec", "Ruby.png");
         map.put("graphql", "graphql.png");
@@ -108,6 +115,7 @@ public class DataImageUtils {
         map.put("tf", "terraform.png");
         map.put("tfstate", "terraform.png");
         map.put("tfvars", "terraform.png");
+        map.put("hcl", "hcl.png");
         map.put("ts", "ts.png");
         map.put("yaml", "yaml.png");
         map.put("yml", "yaml.png");
@@ -159,6 +167,32 @@ public class DataImageUtils {
         map.put("pug", "pug.png");
         map.put("cls", "cls.png");
         map.put("phtml", "phtml.png");
+        map.put("zip", "zip.png");
+
+        map.put("txt", "txt.png");
+        map.put("csv", "csv.png");
+        map.put("pdf", "pdf.png");
+        map.put("doc", "doc.png");
+        map.put("ppt", "ppt.png");
+        map.put("pptx", "pptx.png");
+        map.put("ptx", "ptx.png");
+        map.put("las", "las.png");
+        map.put("png", "png.png");
+        map.put("jar", "jar.png");
+        map.put("jpeg", "jpg.png");
+        map.put("jpg", "jpg.png");
+        map.put("wav", "wav.png");
+        map.put("xlsm", "xlsm.png");
+        map.put("eps", "eps.png");
+        map.put("mkv", "mkv.png");
+        map.put("wma", "wma.png");
+        map.put("avi", "avi.png");
+        map.put("mp3", "mp3.png");
+        map.put("mp4", "mp4.png");
+        map.put("ods", "ods.png");
+        map.put("xlsx", "xlsx.png");
+        map.put("gif", "gif.png");
+        map.put("csproj", "csproj.png");
 
         map.put(".github", "github.png");
         map.put(".gh-pages", "github.png");
@@ -259,11 +293,39 @@ public class DataImageUtils {
     }
 
     public static String getLangDataImage(String lang) {
-        if (map.containsKey(lang.toLowerCase())) {
+        if (lang != null && map.containsKey(lang.toLowerCase().trim())) {
             return getImageBase64("/lang/" + map.get(lang.toLowerCase().trim()));
         }
 
         return null;
+    }
+
+    /**
+     * Builds a JSON object literal mapping each given language/extension to its base64 image data URI,
+     * suitable for embedding directly in a generated HTML template (e.g. as <code>const langIcons = {...}</code>).
+     * Languages without a known icon are skipped, and each icon is emitted only once even if requested repeatedly.
+     */
+    public static String getLangDataImageMapJson(Collection<String> langs) {
+        Map<String, String> icons = new LinkedHashMap<>();
+        for (String lang : langs) {
+            if (lang == null) {
+                continue;
+            }
+            String key = lang.toLowerCase().trim();
+            if (key.isEmpty() || icons.containsKey(key)) {
+                continue;
+            }
+            String image = getLangDataImage(key);
+            if (image != null) {
+                icons.put(key, image);
+            }
+        }
+        try {
+            return new ObjectMapper().writer().writeValueAsString(icons);
+        } catch (JsonProcessingException e) {
+            e.printStackTrace();
+            return "{}";
+        }
     }
 
     public static String getImageBase64(String imageResourcePath) {
@@ -299,15 +361,18 @@ public class DataImageUtils {
 
     public static String getLangDataImageDiv(String lang, int size, int fontSize1, int fontSize2, int padding1, int padding2) {
         String image = DataImageUtils.getLangDataImage(lang);
+        // The label is a file extension, i.e. repository-controlled: escaped for both the title
+        // attribute and the text bubble. The bubble's font size is chosen on the raw length.
+        int nameLength = lang.length();
+        lang = HtmlEscapeUtils.escape(lang);
         if (image != null) {
-            return "<img title='" + lang + "' style=\"margin-right: 3px; vertical-align: top; background-color: #f1f1f1; border-radius: 50%; border: 1px solid lightgrey; width: " + size + "px; height: " + size + "px; object-fit: contain;\" src=\"" +
+            return "<img title='" + lang + "' style=\"margin-right: 3px; vertical-align: top; background-color: #f1f1f1; border-radius: 50%; border: 1px solid #e5e7eb; width: " + size + "px; height: " + size + "px; object-fit: contain;\" src=\"" +
                     image + "\">";
         } else {
-            int nameLength = lang.length();
             return "<div title='" + lang + "' style=\"" +
                     "margin-right: 3px; display: inline-block; vertical-align: top; " +
-                    "padding: auto; background-color: #D6E4E1; border-radius: 50%; border: 1px solid grey; " +
-                    "object-fit: contain; overflow: hidden; color: darkblue; " +
+                    "padding: auto; background-color: #f1f1f1; border-radius: 50%; border: 1px solid #e5e7eb; " +
+                    "object-fit: contain; overflow: hidden; color: #374151; " +
                     "width: " + size + "px; " +
                     "height: " + size + "px; " +
                     "font-size: " + (nameLength <= 3 ? fontSize1 : fontSize2) + "px; font-weight: bold; text-align: center;\">" +

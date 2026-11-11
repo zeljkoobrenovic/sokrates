@@ -9,12 +9,10 @@ import java.util.regex.Pattern;
 public class CppUnitsExtractor extends CStyleHeuristicUnitsExtractor {
     @Override
     protected int getEndOfUnitBodyIndex(List<String> lines, int startIndex) {
-        StringBuilder unitBody = new StringBuilder();
         int startCount = 0;
         int endCount = 0;
         for (int i = startIndex; i < lines.size(); i++) {
             String line = lines.get(i).trim();
-            unitBody.append(line + "\n");
             startCount += StringUtils.countMatches(line, "{");
             endCount += StringUtils.countMatches(line, "}");
 
@@ -42,7 +40,7 @@ public class CppUnitsExtractor extends CStyleHeuristicUnitsExtractor {
         if (line.contains("(") && !line.contains("new ") && !line.trim().startsWith("else ")
                 && !line.trim().startsWith("?") && !line.trim().startsWith(":")) {
             line = line.substring(0, line.indexOf("(") + 1);
-            String identifierPattern = "[a-zA-Z0-9_$?:~]+";
+            String identifierPattern = "[\\p{L}\\p{N}_$?:~][\\p{L}\\p{M}\\p{N}_$?:~]*";
             String startUnitRegex = "(" + identifierPattern + "[ ]+)+" + identifierPattern + "[ ]*[(]";
             Pattern pattern = Pattern.compile(startUnitRegex);
             Matcher matcher = pattern.matcher(line);

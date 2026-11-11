@@ -8,20 +8,15 @@ import nl.obren.sokrates.common.renderingutils.RichTextRenderingUtils;
 import nl.obren.sokrates.common.utils.FormattingUtils;
 import nl.obren.sokrates.reports.charts.SimpleOneBarChart;
 import nl.obren.sokrates.reports.core.RichTextReport;
+import nl.obren.sokrates.reports.utils.HtmlEscapeUtils;
 import nl.obren.sokrates.sourcecode.SourceFileFilter;
 import nl.obren.sokrates.sourcecode.aspects.NamedSourceCodeAspect;
 import nl.obren.sokrates.sourcecode.metrics.NumericMetric;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.text.StringEscapeUtils;
 
-import java.text.DecimalFormat;
-import java.text.DecimalFormatSymbols;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Locale;
-
-import static nl.obren.sokrates.reports.landscape.statichtml.LandscapeReportGenerator.OPEN_IN_NEW_TAB_SVG_ICON;
 
 public class ScopesRenderer {
     private List<String> aspectsFileListPaths;
@@ -160,26 +155,7 @@ public class ScopesRenderer {
                 if (inSection) {
                     report.startSubSection(title, description);
                     if (describe) {
-                        if (StringUtils.isNotBlank(extraIntroHtmlFragment)) {
-                            report.addHtmlContent(extraIntroHtmlFragment);
-                        }
-                        renderDetails(report, false);
-                        if (renderingList.size() > 1) {
-                            report.startUnorderedList();
-                            NumericMetric firstMetric = renderingList.get(0).getLinesOfCode();
-                            double firstPercentage = 100.0 * firstMetric.getValue().doubleValue() / linesCount;
-                            DecimalFormat decimalFormat = new DecimalFormat("##.##");
-                            decimalFormat.setDecimalFormatSymbols(new DecimalFormatSymbols(Locale.ENGLISH));
-                            report.addListItem("\"" + firstMetric.getName() + "\" is biggest, containing <b>" + decimalFormat.format(firstPercentage) + "%</b> of " + metric + ".");
-                            if (renderingList.size() >= 2) {
-                                NumericMetric lastMetric = renderingList.get(renderingList.size() - 1).getLinesOfCode();
-                                double lastPercentage = 100.0 * lastMetric.getValue().doubleValue() / linesCount;
-                                report.addListItem("\"" + lastMetric.getName() + "\" is smallest, containing <b>" + decimalFormat.format(lastPercentage) + "%</b> of " + metric + ".");
-                            }
-                            report.endUnorderedList();
-                        }
-                        report.addLineBreak();
-                        report.addLineBreak();
+                        renderIntro(report, extraIntroHtmlFragment, renderingList);
                     }
                 }
 
@@ -187,9 +163,24 @@ public class ScopesRenderer {
                 getSvgBars(report, renderingList);
                 report.endDiv();
 
-                if (inSection) report.endSection();
+                if (inSection) {
+                    if (describe) {
+                        // The scope details close the sub-section, below the bars.
+                        renderScopeDetailsBlock(report);
+                    }
+                    report.endSection();
+                }
             }
         }
+    }
+
+    /** The optional intro fragment and the explorer links (the scope details follow the bars). */
+    private void renderIntro(RichTextReport report, String extraIntroHtmlFragment, List<ScopeRendererItem> renderingList) {
+        if (StringUtils.isNotBlank(extraIntroHtmlFragment)) {
+            report.addHtmlContent(extraIntroHtmlFragment);
+        }
+        renderExplorerLinks(report);
+        report.addLineBreak();
     }
 
     private List<ScopeRendererItem> getRenderingList() {
@@ -204,8 +195,8 @@ public class ScopesRenderer {
                 filesFragment = FormattingUtils.formatCountPlural(count, "file", "files");
                 if (aspectsFileListPaths != null && aspectsFileListPaths.size() > i) {
                     if (count > 0) {
-                        filesFragment = "<u><a target='_blank' href='../data/text/aspect_" + aspectsFileListPaths.get(i)
-                                + ".txt'>" + filesFragment + "</a></u>";
+                        filesFragment = "<u><a href='#' onclick=\"return downloadDataFile('text/aspect_" + aspectsFileListPaths.get(i)
+                                + ".txt')\">" + filesFragment + "</a></u>";
                     }
                 }
                 item.setFilesFragment(filesFragment);
@@ -231,12 +222,12 @@ public class ScopesRenderer {
         report.startDiv("min-width: 1000px");
         renderingList.forEach(rendererItem -> {
             int metricLinesOfCode = rendererItem.getLinesOfCode().getValue().intValue();
-            double percentage = 100.0 * metricLinesOfCode / maxLinesOfCode;
+            double percentage = maxLinesOfCode > 0 ? 100.0 * metricLinesOfCode / maxLinesOfCode : 0;
             String filesFragment = StringUtils.defaultIfBlank(rendererItem.getFilesFragment(), "");
 
             report.addContentInDiv(chart.getPercentageSvg(percentage, rendererItem.getLinesOfCode().getName(),
                     "" + metricLinesOfCode + " " + metric + " (" +
-                            StringEscapeUtils.escapeHtml4(FormattingUtils.getFormattedPercentage(percentage))
+                            HtmlEscapeUtils.escape(FormattingUtils.getFormattedPercentage(percentage))
                             + "%) " + filesFragment), "");
         });
         report.endDiv();
@@ -276,75 +267,98 @@ public class ScopesRenderer {
         if (renderTitle) {
             report.addHtmlContent("<h3>" + title + "</h3>");
         }
+        renderExplorerLinks(report);
+        report.addLineBreak();
+        renderScopeDetailsBlock(report);
+    }
 
-        if (StringUtils.isNotBlank(explorers)) {
-            report.startDiv("");
-            report.addHtmlContent("Explore:&nbsp;&nbsp;");
-            report.addNewTabLink("circles", "visuals/zoomable_circles_" + explorers + ".html");
-            report.addHtmlContent("&nbsp;|&nbsp;");
-            report.addNewTabLink("sunburst", "visuals/zoomable_sunburst_" + explorers + ".html");
-            report.endDiv();
-        }
-
+    // The collapsed "scope details..." block: the selection criteria, the description and the matches.
+    private void renderScopeDetailsBlock(RichTextReport report) {
+        report.addLineBreak();
+        report.startDetailsBlock("scope details...");
         boolean criteriaDefined = aspect != null && aspect.getSourceFileFilters().size() > 0;
         if (criteriaDefined) {
-            report.startUnorderedList();
-            report.addListItem("The following criteria are used to filter files:");
-            report.startUnorderedList();
-            aspect.getSourceFileFilters().forEach(filter -> report.addListItem(describeFilters(filter)));
-            report.endUnorderedList();
-            report.endUnorderedList();
+            renderCriteria(report);
         }
-
         if (filesCount == 0) {
             report.startUnorderedList();
             report.addListItem("There are no \"" + title.toLowerCase() + "\" files.");
             report.endUnorderedList();
-            return;
-        }
-
-        if (StringUtils.isNotBlank(description)) {
-            report.startUnorderedList();
-            report.addListItem(description);
-            report.endUnorderedList();
-        }
-        report.startUnorderedList();
-        if (criteriaDefined) {
-            String filesFragment;
-            String filesPhrase = filesCount == 1 ? "file" : "files";
-            if (StringUtils.isNotBlank(filesListPath)) {
-                filesFragment = "<a href='../data/text/" + filesListPath + "'><b>" + filesCount + "</b> " + filesPhrase + "</a>";
-            } else {
-                filesFragment = "<b>" + filesCount + "</b> " + filesPhrase;
-            }
-            report.addListItem(filesFragment + " match" + (filesCount == 1 ? "es" : "") + " defined criteria (" +
-                    "<b>" + RichTextRenderingUtils.renderNumber(linesCount) + "</b> " + metric + ", "
-                    + "<b>" + RichTextRenderingUtils.renderNumber(100.0 * linesCount / linesOfCodeInMain) + "%</b> vs. main code)"
-                    + (fileCountPerComponent.size() == 1 ? ". All matches are in " + fileCountPerComponent.get(0).getName() + " files." : ":"));
-            report.startUnorderedList();
-            if (fileCountPerComponent.size() > 1) {
-                for (int i = 0; i < fileCountPerComponent.size(); i++) {
-                    NumericMetric fileCountMetric = fileCountPerComponent.get(i);
-                    NumericMetric linesOfCodeMetric = linesOfCode.get(i);
-                    report.addListItem("<b>" + RichTextRenderingUtils.renderNumber(fileCountMetric.getValue().intValue()) + "</b>"
-                            + " " + fileCountMetric.getName() + " files"
-                            + " (<b>" + RichTextRenderingUtils.renderNumber(linesOfCodeMetric.getValue().intValue()) + "</b> " + metric + ")");
-                }
-            }
-            report.endUnorderedList();
-            if (totalNumberOfRegexMatches > 0) {
-                report.addListItem(totalNumberOfRegexMatches == 1
-                        ? "<b>1</b> line matches the content pattern."
-                        : "<b>" + RichTextRenderingUtils.renderNumber(totalNumberOfRegexMatches) + "</b> lines match the content pattern.");
-            }
         } else {
-            report.addListItem("<b>" + RichTextRenderingUtils.renderNumber(filesCount) + "</b> files, " +
-                    "<b>" + RichTextRenderingUtils.renderNumber(linesCount) + "</b> " + metric + " ("
-                    + "<b>" + RichTextRenderingUtils.renderNumber(100.0 * linesCount / maxLinesOfCode) + "%</b> vs. main code).");
+            if (StringUtils.isNotBlank(description)) {
+                report.startUnorderedList();
+                report.addListItem(description);
+                report.endUnorderedList();
+            }
+            report.startUnorderedList();
+            if (criteriaDefined) {
+                renderMatchesSummary(report);
+            } else {
+                report.addListItem("<b>" + RichTextRenderingUtils.renderNumber(filesCount) + "</b> files, " +
+                        "<b>" + RichTextRenderingUtils.renderNumber(linesCount) + "</b> " + metric + " ("
+                        + "<b>" + RichTextRenderingUtils.renderNumber(maxLinesOfCode > 0 ? 100.0 * linesCount / maxLinesOfCode : 0) + "%</b> vs. main code).");
+            }
+            report.endUnorderedList();
         }
+        report.endDetailsBlock();
+    }
 
+    private void renderExplorerLinks(RichTextReport report) {
+        if (StringUtils.isNotBlank(explorers)) {
+            report.startDiv("");
+            report.addHtmlContent("Explore:&nbsp;&nbsp;");
+            report.addNewTabLink("circles", "visuals/zoomable_circles.html#" + explorers);
+            report.addHtmlContent("&nbsp;|&nbsp;");
+            report.addNewTabLink("sunburst", "visuals/zoomable_sunburst.html#" + explorers);
+            report.endDiv();
+        }
+    }
+
+    private void renderCriteria(RichTextReport report) {
+        report.startUnorderedList();
+        report.addListItem("The following criteria are used to filter files:");
+
+        report.startUnorderedList();
+        aspect.getSourceFileFilters().forEach(filter -> report.addListItem(describeFilters(filter)));
         report.endUnorderedList();
 
+        report.endUnorderedList();
+    }
+
+    /** How many files match the criteria, with their lines, per-component split and content-pattern matches. */
+    private void renderMatchesSummary(RichTextReport report) {
+        report.addListItem(filesFragment() + " match" + (filesCount == 1 ? "es" : "") + " defined criteria (" +
+                "<b>" + RichTextRenderingUtils.renderNumber(linesCount) + "</b> " + metric + ", "
+                + "<b>" + RichTextRenderingUtils.renderNumber(linesOfCodeInMain > 0 ? 100.0 * linesCount / linesOfCodeInMain : 0) + "%</b> vs. main code)"
+                + (fileCountPerComponent.size() == 1 ? ". All matches are in " + HtmlEscapeUtils.escape(fileCountPerComponent.get(0).getName()) + " files." : ":"));
+        report.startUnorderedList();
+        if (fileCountPerComponent.size() > 1) {
+            addPerComponentItems(report);
+        }
+        report.endUnorderedList();
+        if (totalNumberOfRegexMatches > 0) {
+            report.addListItem(totalNumberOfRegexMatches == 1
+                    ? "<b>1</b> line matches the content pattern."
+                    : "<b>" + RichTextRenderingUtils.renderNumber(totalNumberOfRegexMatches) + "</b> lines match the content pattern.");
+        }
+    }
+
+    /** "<n> file(s)", linked to the exported file list when there is one. */
+    private String filesFragment() {
+        String filesPhrase = filesCount == 1 ? "file" : "files";
+        return StringUtils.isNotBlank(filesListPath)
+                ? "<a href='#' onclick=\"return downloadDataFile('text/" + filesListPath + "')\"><b>" + filesCount + "</b> " + filesPhrase + "</a>"
+                : "<b>" + filesCount + "</b> " + filesPhrase;
+    }
+
+    private void addPerComponentItems(RichTextReport report) {
+        for (int i = 0; i < fileCountPerComponent.size(); i++) {
+            NumericMetric fileCountMetric = fileCountPerComponent.get(i);
+            NumericMetric linesOfCodeMetric = linesOfCode.get(i);
+            report.addListItem("<b>" + RichTextRenderingUtils.renderNumber(fileCountMetric.getValue().intValue()) + "</b>"
+                    + " " + HtmlEscapeUtils.escape(fileCountMetric.getName()) + " files"
+                    + " (<b>" + RichTextRenderingUtils.renderNumber(linesOfCodeMetric.getValue().intValue()) + "</b> " + metric + ")");
+        }
     }
 
     public NamedSourceCodeAspect getAspect() {

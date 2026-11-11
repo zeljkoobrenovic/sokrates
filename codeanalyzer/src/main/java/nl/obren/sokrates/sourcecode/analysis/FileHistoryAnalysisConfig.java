@@ -6,13 +6,11 @@ package nl.obren.sokrates.sourcecode.analysis;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import nl.obren.sokrates.common.utils.ProcessingStopwatch;
-import nl.obren.sokrates.common.utils.RegexUtils;
 import nl.obren.sokrates.sourcecode.contributors.Contributor;
 import nl.obren.sokrates.sourcecode.contributors.ContributorsImport;
 import nl.obren.sokrates.sourcecode.contributors.GitContributorsUtil;
 import nl.obren.sokrates.sourcecode.filehistory.FileModificationHistory;
 import nl.obren.sokrates.sourcecode.filehistory.GitHistoryUtil;
-import nl.obren.sokrates.sourcecode.githistory.AuthorCommit;
 import nl.obren.sokrates.sourcecode.githistory.CommitsPerExtension;
 import nl.obren.sokrates.sourcecode.githistory.GitHistoryUtils;
 import nl.obren.sokrates.sourcecode.operations.OperationStatement;
@@ -34,11 +32,22 @@ public class FileHistoryAnalysisConfig {
     // An optional list of regex expression used to detect bots
     private List<String> bots = new ArrayList<>(Arrays.asList(".*\\[bot\\].*", ".*[-]bot[@].*"));
 
+    // Optional: how commit-message trailers (git-commit-trailers.txt) become co-author info and
+    // which co-authors are AI coding agents
+    private CoAuthorsConfig coAuthors = new CoAuthorsConfig();
+
     // If true, contributors IDs (e.g. emails) will be replaced with anonymous IDs (e.g. Contributor 1, Contributor 2)
     private boolean anonymizeContributors = false;
 
     // An optional list of string transformation used to transform contributor IDs (e.g. to remove domain from email)
     private List<OperationStatement> transformContributorEmails = new ArrayList<>();
+
+    // Optional people config (config-people.json, same model as landscapes), loaded at analysis time
+    // and NOT part of config.json. When set, a contributor whose (transformed) email matches a person's
+    // emailPatterns is remapped to that person's canonical email and its userName is overridden — so
+    // the per-repository reports group a person's emails and show their display name. Transient.
+    @JsonIgnore
+    private nl.obren.sokrates.sourcecode.landscape.PeopleConfig peopleConfig = null;
 
     public String getImportPath() {
         return importPath;
@@ -75,8 +84,13 @@ public class FileHistoryAnalysisConfig {
 
     @JsonIgnore
     public ContributorsImport getContributors(File sokratesConfigFolder, FileHistoryAnalysisConfig config) {
+        return getContributors(sokratesConfigFolder, config, null);
+    }
+
+    @JsonIgnore
+    public ContributorsImport getContributors(File sokratesConfigFolder, FileHistoryAnalysisConfig config, java.util.Map<String, java.util.Set<String>> pathsByScope) {
         ProcessingStopwatch.start("analysis/contributors/loading/import");
-        ContributorsImport contributorsImport = GitContributorsUtil.importGitContributorsExport(getContributorsFile(sokratesConfigFolder), config);
+        ContributorsImport contributorsImport = GitContributorsUtil.importGitContributorsExport(getContributorsFile(sokratesConfigFolder), config, pathsByScope);
         ProcessingStopwatch.end("analysis/contributors/loading/import");
         ProcessingStopwatch.start("analysis/contributors/loading/ignore filtering");
         List<Contributor> contributors = contributorsImport.getContributors()
@@ -109,12 +123,30 @@ public class FileHistoryAnalysisConfig {
         this.bots = bots;
     }
 
+    public CoAuthorsConfig getCoAuthors() {
+        return coAuthors;
+    }
+
+    public void setCoAuthors(CoAuthorsConfig coAuthors) {
+        this.coAuthors = coAuthors == null ? new CoAuthorsConfig() : coAuthors;
+    }
+
     public List<OperationStatement> getTransformContributorEmails() {
         return transformContributorEmails;
     }
 
     public void setTransformContributorEmails(List<OperationStatement> transformContributorEmails) {
         this.transformContributorEmails = transformContributorEmails;
+    }
+
+    @JsonIgnore
+    public nl.obren.sokrates.sourcecode.landscape.PeopleConfig getPeopleConfig() {
+        return peopleConfig;
+    }
+
+    @JsonIgnore
+    public void setPeopleConfig(nl.obren.sokrates.sourcecode.landscape.PeopleConfig peopleConfig) {
+        this.peopleConfig = peopleConfig;
     }
 
     public boolean isAnonymizeContributors() {

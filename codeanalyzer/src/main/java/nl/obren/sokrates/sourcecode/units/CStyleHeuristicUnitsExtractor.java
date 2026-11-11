@@ -18,6 +18,13 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class CStyleHeuristicUnitsExtractor {
+    // Constant unit-signature pattern: one or more space-separated identifiers followed by "(".
+    // Compiled once (static) rather than per candidate line — isUnitSignature runs for every line
+    // of every file across all C-style languages, so recompiling here was a measurable hot spot.
+    private static final String IDENTIFIER_PATTERN = "[\\p{L}\\p{N}_$?:~][\\p{L}\\p{M}\\p{N}_$?:~]*";
+    private static final Pattern START_UNIT_PATTERN =
+            Pattern.compile("(" + IDENTIFIER_PATTERN + "[ ]+)+" + IDENTIFIER_PATTERN + "[ ]*[(]");
+
     private boolean extractRecursively = false;
 
     private SourceFile sourceFile;
@@ -33,7 +40,7 @@ public class CStyleHeuristicUnitsExtractor {
             " while ",
             " for ",
             " foreach ",
-            "case ",
+            " case ",
             "&&",
             "||",
             " ? ",
@@ -56,10 +63,6 @@ public class CStyleHeuristicUnitsExtractor {
 
         removeOverlaps(units);
         return units;
-    }
-    public int getMcCabeIndex(SourceFile sourceFile) {
-        String cleanedBody = getCleanedBody(cleanedLines, 0, cleanedLines.size());
-        return getMcCabeIndex(cleanedBody);
     }
 
     private int extractUnit(int lineIndex, String line) {
@@ -212,10 +215,15 @@ public class CStyleHeuristicUnitsExtractor {
         return 0;
     }
 
-    private int getMcCabeIndex(String body) {
+    protected String getBodyForMcCabeSearch(String body) {
         String bodyForSearch = " " + body.replace("\n", " ");
         bodyForSearch = bodyForSearch.replace("(", " (");
         bodyForSearch = bodyForSearch.replace("{", " {");
+        return bodyForSearch;
+    }
+
+    protected int getMcCabeIndex(String body) {
+        String bodyForSearch = getBodyForMcCabeSearch(body);
 
         int mcCabeIndex = 1;
         for (String mcCabeIndexLiteral : getMcCabeIndexLiterals()) {
@@ -231,6 +239,7 @@ public class CStyleHeuristicUnitsExtractor {
         cleanedContent = cleanedContent.replaceAll("@\".*?\"", "\"\"");
         cleanedContent = cleanedContent.replaceAll("\".*?\"", "\"\"");
         cleanedContent = cleanedContent.replaceAll("'.*?'", "''");
+        cleanedContent = cleanedContent.replaceAll("`[^`]*`", "``");
         cleanedContent = cleanedContent.replaceAll("/.+?/", "\"\"");
         cleanedContent = cleanedContent.replace("://", ":/ /");
         cleanedContent = cleanedContent.replaceAll("[<].*?[>]", "");
@@ -241,12 +250,10 @@ public class CStyleHeuristicUnitsExtractor {
     }
 
     protected int getEndOfUnitBodyIndex(List<String> lines, int startIndex) {
-        StringBuilder unitBody = new StringBuilder();
         int startCount = 0;
         int endCount = 0;
         for (int i = startIndex; i < lines.size(); i++) {
             String line = lines.get(i).trim();
-            unitBody.append(line + "\n");
             startCount += StringUtils.countMatches(line, "{");
             endCount += StringUtils.countMatches(line, "}");
 
@@ -265,10 +272,7 @@ public class CStyleHeuristicUnitsExtractor {
         if (line.contains("(") && !line.contains(";") && !line.contains("new ") && !line.trim().startsWith("else ")
                 && !line.contains("return ") && !line.trim().startsWith("?") && !line.trim().startsWith(":")) {
             line = line.substring(0, line.indexOf("(") + 1);
-            String identifierPattern = "[a-zA-Z0-9_$?:~]+";
-            String startUnitRegex = "(" + identifierPattern + "[ ]+)+" + identifierPattern + "[ ]*[(]";
-            Pattern pattern = Pattern.compile(startUnitRegex);
-            Matcher matcher = pattern.matcher(line);
+            Matcher matcher = START_UNIT_PATTERN.matcher(line);
             if (matcher.matches()) {
                 return true;
             }

@@ -4,21 +4,21 @@
 
 package nl.obren.sokrates.reports.core;
 
+import nl.obren.sokrates.common.renderingutils.ReportTheme;
 import nl.obren.sokrates.common.utils.FormattingUtils;
-import nl.obren.sokrates.reports.generators.statichtml.ContributorsReportUtils;
-import nl.obren.sokrates.reports.generators.statichtml.HistoryPerLanguageGenerator;
+import nl.obren.sokrates.reports.generators.explorers.AiInsightsExplorerGenerator;
 import nl.obren.sokrates.reports.utils.DataImageUtils;
+import nl.obren.sokrates.reports.utils.HtmlEscapeUtils;
 import nl.obren.sokrates.reports.utils.HtmlTemplateUtils;
-import nl.obren.sokrates.reports.utils.PromptsUtils;
 import nl.obren.sokrates.sourcecode.Link;
 import nl.obren.sokrates.sourcecode.Metadata;
-import nl.obren.sokrates.sourcecode.analysis.results.AspectAnalysisResults;
 import nl.obren.sokrates.sourcecode.analysis.results.CodeAnalysisResults;
 import nl.obren.sokrates.sourcecode.analysis.results.ContributorsAnalysisResults;
-import nl.obren.sokrates.sourcecode.analysis.results.HistoryPerExtension;
-import nl.obren.sokrates.sourcecode.contributors.ContributionTimeSlot;
-import nl.obren.sokrates.sourcecode.contributors.Contributor;
+import nl.obren.sokrates.sourcecode.analysis.scores.MaintainabilityScore;
+import nl.obren.sokrates.sourcecode.analysis.scores.MaintainabilityScores;
+import nl.obren.sokrates.sourcecode.analysis.scores.SubScore;
 import nl.obren.sokrates.sourcecode.core.CodeConfiguration;
+import nl.obren.sokrates.sourcecode.core.CustomTab;
 import nl.obren.sokrates.sourcecode.core.CodeConfigurationUtils;
 import nl.obren.sokrates.sourcecode.filehistory.DateUtils;
 import nl.obren.sokrates.sourcecode.metrics.NumericMetric;
@@ -26,103 +26,71 @@ import nl.obren.sokrates.sourcecode.stats.SourceFileAgeDistribution;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 
+import java.util.function.Predicate;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.PrintWriter;
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
 import java.text.SimpleDateFormat;
 import java.util.*;
+import java.util.stream.Collectors;
 
 import static nl.obren.sokrates.reports.landscape.statichtml.LandscapeReportGenerator.*;
 
 public class ReportFileExporter {
-    private static String htmlReportsSubFolder = "html";
-
-    public static void exportHtml(File folder, String subFolder, RichTextReport report, String customHeaderFragment) {
-        htmlReportsSubFolder = subFolder;
-        File htmlReportsFolder = getHtmlReportsFolder(folder);
-        String reportFileName = getReportFileName(report);
-        export(htmlReportsFolder, report, reportFileName, customHeaderFragment);
-    }
-
-    private static void export(File folder, RichTextReport report, String reportFileName, String customHeaderFragment) {
-        File reportFile = new File(folder, reportFileName);
-        try {
-            PrintWriter out = new PrintWriter(reportFile);
-            String titleText = extractTitle(report.getDisplayName());
-            String reportsHtmlHeader = ReportConstants.REPORTS_HTML_HEADER.replace(
-                    "<title></title>",
-                    "<title>" + titleText + "</title>"
-            );
-            reportsHtmlHeader = reportsHtmlHeader.replace("<!-- CUSTOM HEADER FRAGMENT -->", customHeaderFragment);
-            if (report.isEmbedded()) {
-                reportsHtmlHeader = reportsHtmlHeader.replace(" ${margin-left}", "0");
-                reportsHtmlHeader = reportsHtmlHeader.replace(" ${margin-right}", "0");
-            } else {
-                reportsHtmlHeader = reportsHtmlHeader.replace(" ${margin-left}", "5%");
-                reportsHtmlHeader = reportsHtmlHeader.replace(" ${margin-right}", "5%");
-            }
-            reportsHtmlHeader = minimize(reportsHtmlHeader);
-            out.println(reportsHtmlHeader + "\n<body><div id=\"report\">\n" + "\n");
-            new ReportRenderer().render(report, getReportRenderingClient(out, folder));
-            out.println("</div>\n</body>\n</html>");
-            out.flush();
-            out.close();
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
-        }
-    }
-
-    protected static String extractTitle(String displayName) {
-        return displayName.replaceAll("<.*?>", " ").replaceAll("  ", " ").trim();
-    }
-
-    private static String minimize(String html) {
-        html = StringUtils.replace(html, "  ", " ");
-        html = StringUtils.replace(html, "\n\n", "\n");
-        return html;
-    }
-
-    private static ReportRenderingClient getReportRenderingClient(PrintWriter out, File reportsFolder) {
-        return new ReportRenderingClient() {
-            @Override
-            public void append(String text) {
-                out.println(text);
-            }
-
-            @Override
-            public File getVisualsExportFolder() {
-                File visualsFolder = new File(reportsFolder, "visuals");
-                visualsFolder.mkdirs();
-                return visualsFolder;
-            }
-        };
-    }
-
-    private static String getReportFileName(RichTextReport report) {
-        return report.getFileName();
-    }
+    static String htmlReportsSubFolder = "html";
 
     public static void exportReportsIndexFile(File reportsFolder, CodeAnalysisResults analysisResults, File sokratesConfigFolder) {
-        List<String[]> reportList = getReportsList(analysisResults, sokratesConfigFolder);
+        exportReportsIndexFile(reportsFolder, analysisResults, sokratesConfigFolder, AiInsightsExplorerGenerator.load(reportsFolder));
+    }
 
+    /** As above, with the AI scanner findings already loaded (their sidebar groups and tab when there are any). */
+    public static void exportReportsIndexFile(File reportsFolder, CodeAnalysisResults analysisResults, File sokratesConfigFolder,
+                                              AiInsightsExplorerGenerator aiInsights) {
         File htmlExportFolder = getHtmlReportsFolder(reportsFolder);
-
         Metadata metadata = analysisResults.getCodeConfiguration().getMetadata();
-        String title = metadata.getName();
-        RichTextReport indexReport = new RichTextReport(title, "", metadata.getLogoLink());
+        RichTextReport indexReport = new RichTextReport(metadata.getName(), "", metadata.getLogoLink());
         if (StringUtils.isNotBlank(metadata.getDescription())) {
-            indexReport.addContentInDiv(metadata.getDescription(), "white-space: nowrap; overflow: hidden; margin-left: 2px; margin-top: 0px; margin-bottom: 14px; color: grey; font-size: 90%");
+            indexReport.setDescription(metadata.getDescription());
         }
+        List<CustomTab> customTabs = getCustomTabs(analysisResults, aiInsights);
+        indexReport.setNavigation(repositoryNavigation(analysisResults, sokratesConfigFolder, aiInsights), "overview");
+        addTabStrip(indexReport, customTabs);
+        addOverviewTab(indexReport, analysisResults);
+        addHighlightsTab(indexReport, analysisResults);
+        addAnalysesTab(indexReport, analysisResults);
+        addExplorerTabs(indexReport, customTabs);
+        aiInsights.addTab(indexReport);
+        ReportActivityTab.addActivityTab(indexReport, analysisResults);
+        addVisualsAndDataTabs(indexReport, analysisResults, htmlExportFolder);
+        ReportHtmlWriter.export(htmlExportFolder, indexReport, "index.html", analysisResults.getCodeConfiguration().getAnalysis().getCustomHtmlReportHeaderFragment());
 
-        appendLinks(indexReport, analysisResults);
+        exportRootRedirect(reportsFolder);
+    }
 
-        boolean hasLinks = metadata.getLinks().size() > 0;
-        indexReport.addContentInDiv("", "height; 10px; margin-top: " + (hasLinks ? 6 : 0) + "px; margin-bottom: 6px;");
+    // The index's tab strip; the sidebar (repositoryNavigation) replaces it on screen, so it is hidden
+    // (sk-index-tabs) but still marks the active tab for openTab.
+    private static void addTabStrip(RichTextReport indexReport, List<CustomTab> customTabs) {
+        indexReport.addHtmlContent("<div class=\"tab sk-index-tabs\">");
+        indexReport.addTab("overview", "Overview", true);
+        indexReport.addTab("highlights", "Highlights", false);
+        indexReport.addTab("quality", "Analysis Summary", false);
+        indexReport.addTab("structure", "Structure", false);
+        indexReport.addTab("commits", "Activity", false);
+        indexReport.addTab("files", "Files", false);
+        indexReport.addTab("units", "Units*", false);
+        // The plain "commits" id is taken by the Activity tab above.
+        indexReport.addTab("commits-explorer", "Commits", false);
+        indexReport.addTab("ai-cost", "AI Cost Estimator*", false);
+        indexReport.addTab("visuals", "Visuals", false);
+        indexReport.addTab("data", "Data", false);
+        for (int i = 0; i < customTabs.size(); i++) {
+            indexReport.addTabText(customTabId(i), customTabs.get(i).getLabel(), false);
+        }
+        indexReport.endDiv();
+    }
 
-        int linesOfCodeMain = analysisResults.getMainAspectAnalysisResults().getLinesOfCode();
-        int mainLoc = linesOfCodeMain;
+    private static void addOverviewTab(RichTextReport indexReport, CodeAnalysisResults analysisResults) {
+        int mainLoc = analysisResults.getMainAspectAnalysisResults().getLinesOfCode();
         int mainFilesCount = analysisResults.getMainAspectAnalysisResults().getFilesCount();
         int testLoc = analysisResults.getTestAspectAnalysisResults().getLinesOfCode();
         int secondaryLoc = analysisResults.getBuildAndDeployAspectAnalysisResults().getLinesOfCode()
@@ -133,18 +101,9 @@ public class ReportFileExporter {
                 + analysisResults.getGeneratedAspectAnalysisResults().getFilesCount()
                 + analysisResults.getOtherAspectAnalysisResults().getFilesCount();
 
-
-        indexReport.startTabGroup();
-        indexReport.addTab("overview", "Overview", true);
-        indexReport.addTab("quality", "Analyses", false);
-        indexReport.addTab("commits", "Activity", false);
-        indexReport.addTab("files", "Files", false);
-        indexReport.addTab("visuals", "Visuals", false);
-        indexReport.addTab("data", "Data", false);
-        indexReport.addTab("prompts", "AI Prompts", false);
-        indexReport.endDiv();
-
         indexReport.startTabContentSection("overview", true);
+        // The repository's own links (metadata.links) belong to the Overview, not above every index tab.
+        appendLinks(indexReport, analysisResults);
 
         indexReport.startDiv("white-space: nowrap; overflow: hidden");
 
@@ -163,42 +122,54 @@ public class ReportFileExporter {
             String age = ageInDays < 365 ? "<1y" : (int) Math.round(ageInDays / 365.0) + "y";
             addInfoBlockWithColor(indexReport, age, "age", FormattingUtils.formatCount(ageInDays) + " days", MAIN_LOC_FRESH_COLOR, "", "file_history", "FileAge.html");
             addInfoBlockWithColor(indexReport, FormattingUtils.getFormattedPercentage(100 - notChangedPerc) + "%", "main code touched", "1 year (" + FormattingUtils.getSmallTextForNumber(mainLoc - notChanged) + " LOC)", MAIN_LOC_FRESH_COLOR, "", "touch", "FileAge.html");
-            addInfoBlockWithColor(indexReport, FormattingUtils.getFormattedPercentage(100 - oldPerc) + "%", "new main code", "1 year (" + FormattingUtils.getSmallTextForNumber(mainLoc - old) + " LOC)", MAIN_LOC_FRESH_COLOR, "", "new", "FileAge.html");
         }
+        addMaintainabilityScoreBlocks(indexReport, HealthSummary.shownScores(analysisResults));
         indexReport.endDiv();
-        StringBuilder icons = new StringBuilder("");
-        addIconsMainCode(analysisResults, icons);
-        indexReport.startDiv("margin-left: 0px; margin-top: -65px; padding-top: 32px; margin-bottom: 0px; padding-left: 0px; padding-bottom: 10px");
-        indexReport.startTable("margin-bottom: -20px");
-        indexReport.startTableRow();
-        indexReport.addTableCell(icons.toString(), "border: none;");
-        indexReport.endTableRow();
-        indexReport.endTable();
+        // The per-language icons used to sit here (always "main", above the scope toggle); they now live
+        // inside each scope panel of the activity table, showing that scope's languages.
+        indexReport.startDiv("margin-left: 0px; margin-top: -33px; margin-bottom: 0px; padding-left: 0px; padding-bottom: 10px");
         indexReport.startDiv("");
 
         if (contributorsAnalysisResults.getCommitsCount() > 0) {
-            addSummaryActivityTable(contributorsAnalysisResults, indexReport);
+            ReportActivityTab.addSummaryActivityTable(analysisResults, indexReport);
+        } else {
+            // No git history: no activity table (and thus no per-scope panels) — still show the main
+            // language icons so the Overview isn't missing them.
+            addScopeLanguageIcons(indexReport, analysisResults, "main");
         }
 
         indexReport.endDiv();
         indexReport.endDiv();
 
-        indexReport.addHtmlContent("<iframe src='Structure.html' style='border: none; width: 1000px; height: 1090px; overflow: hidden'></iframe>");
-        indexReport.endTabContentSection();
+        RuleOfThumbEstimates.add(indexReport, analysisResults);
 
+        indexReport.endTabContentSection();
+    }
+
+    // The health tiles and the "Where to look first" hotspots (ReportHealthSection).
+    private static void addHighlightsTab(RichTextReport indexReport, CodeAnalysisResults analysisResults) {
+        indexReport.startTabContentSection("highlights", false);
+        ReportHealthSection.add(indexReport, analysisResults);
+        indexReport.endTabContentSection();
+    }
+
+    private static void addAnalysesTab(RichTextReport indexReport, CodeAnalysisResults analysisResults) {
         indexReport.startTabContentSection("quality", false);
         indexReport.addLineBreak();
         indexReport.startDiv("margin: 10px");
         summarize(indexReport, analysisResults);
         indexReport.addLineBreak();
         indexReport.endDiv();
-        indexReport.startDiv("margin: 24px");
-        indexReport.addLevel2Header("All Analysis Reports");
-        for (String[] report : reportList) {
-            addReportFragment(htmlExportFolder, indexReport, report);
-        }
-        indexReport.endDiv();
 
+        indexReport.endTabContentSection();
+    }
+
+    private static void addExplorerTabs(RichTextReport indexReport, List<CustomTab> customTabs) {
+        // The circle-packing views lay out to the size of their frame, so Structure.html loads only when
+        // its tab is first shown (data-sk-src, see sokratesShowTab), never inside a hidden tab.
+        indexReport.startTabContentSection("structure", false);
+        indexReport.addLineBreak();
+        indexReport.addHtmlContent("<iframe data-sk-src='Structure.html' style='width: 100%; border: none; height: calc(100vh - 220px); overflow: hidden; margin-top: -12px'></iframe>");
         indexReport.endTabContentSection();
 
         indexReport.startTabContentSection("files", false);
@@ -207,753 +178,149 @@ public class ReportFileExporter {
 
         indexReport.endTabContentSection();
 
-        indexReport.startTabContentSection("commits", false);
+        indexReport.startTabContentSection("units", false);
+        indexReport.addLineBreak();
+        indexReport.addHtmlContent("<iframe src='../explorers/units-explorer.html' style='width: 100%; border: none; height: calc(100vh - 220px); overflow: hidden; margin-top: -12px'></iframe>");
 
-        if (contributorsAnalysisResults.getCommitsCount() > 0) {
-            indexReport.startDiv("margin: 32px; font-size: 110%");
-            indexReport.addLevel2Header("Overall Activity Per Year", "");
-
-            indexReport.addParagraph("Latest commit date: " + contributorsAnalysisResults.getLatestCommitDate() + "",
-                    "color: grey; font-size: 80%; margin-bottom: 2px;");
-            indexReport.addParagraph("Reference analysis date: " + DateUtils.getAnalysisDate() + "",
-                    "color: grey; font-size: 80%;");
-
-            long contributorsCount = contributorsAnalysisResults.getContributors().stream().filter(c -> !c.isBot() && c.isActive(Contributor.RECENTLY_ACTIVITY_THRESHOLD_DAYS)).count();
-            int commitsCount30Days = contributorsAnalysisResults.getCommitsCount30Days();
-
-            indexReport.startTable();
-            indexReport.startTableRow();
-
-            indexReport.startTableCell("border: none; vertical-align: top;");
-
-            indexReport.startDiv("margin-top: 8px; width: 80px; height: 81px; background-color: white; border-radius: 5px; vertical-align: middle; text-align: center");
-            indexReport.startNewTabLink("Commits.html", "");
-            indexReport.addContentInDiv(FormattingUtils.getSmallTextForNumber(commitsCount30Days),
-                    "padding-top: 12px; font-size: 36px;");
-            indexReport.addContentInDiv((commitsCount30Days == 1 ? "commit" : "commits") + "<br>(30 days)", "color: black; font-size: 80%");
-            indexReport.endNewTabLink();
-            indexReport.endDiv();
-
-            indexReport.startDiv("margin-top: 32px; width: 80px; height: 81px; background-color: white; border-radius: 5px; vertical-align: middle; text-align: center");
-            indexReport.startNewTabLink("Contributors.html", "");
-            indexReport.addContentInDiv(FormattingUtils.getSmallTextForNumber((int) contributorsCount),
-                    "padding-top: 12px; font-size: 36px;");
-            indexReport.addContentInDiv((contributorsCount == 1 ? "contributor" : "contributors") + "<br>(30 days)", "color: black; font-size: 80%");
-            indexReport.endNewTabLink();
-            indexReport.endDiv();
-
-            indexReport.endTableCell();
-
-            indexReport.startTableCell("border: none");
-            List<ContributionTimeSlot> contributorsPerYear = contributorsAnalysisResults.getContributorsPerYear();
-            ContributorsReportUtils.addContributorsPerTimeSlot(indexReport, contributorsPerYear, 20, true, true, 8, commitsCount30Days == 0);
-            indexReport.endTableCell();
-            indexReport.endTableRow();
-            indexReport.endTable();
-
-            indexReport.startDiv("font-size: 110%");
-            indexReport.addLineBreak();
-            indexReport.addLevel3Header("Activity Per File Extension");
-            indexReport.startTable();
-            indexReport.startTableRow();
-            indexReport.addTableCell(getIconSvg("commits") + "<div style='font-size: 80%'>commits</div>", "border: none; text-align: center");
-            indexReport.startTableCell("border: none");
-            List<HistoryPerExtension> historyPerExtensionPerYear = analysisResults.getFilesHistoryAnalysisResults().getHistoryPerExtensionPerYear();
-            List<String> extensions = analysisResults.getMainAspectAnalysisResults().getExtensions();
-            HistoryPerLanguageGenerator.getInstanceCommits(historyPerExtensionPerYear, extensions).addHistoryPerLanguage(indexReport);
-            indexReport.endTableCell();
-            indexReport.endTableRow();
-            indexReport.startTableRow();
-            indexReport.addTableCell("&nbsp;", "border: none");
-            indexReport.addTableCell("&nbsp;", "border: none");
-            indexReport.endTableRow();
-            indexReport.startTableRow();
-            indexReport.addTableCell(getIconSvg("contributors") + "<div style='font-size: 80%'>contributors</div>", "border: none; text-align: center");
-            indexReport.startTableCell("border: none");
-            HistoryPerLanguageGenerator.getInstanceContributors(historyPerExtensionPerYear, extensions).addHistoryPerLanguage(indexReport);
-            indexReport.endTableCell();
-            indexReport.endTableRow();
-            indexReport.endTable();
-            indexReport.endTabContentSection();
-            indexReport.endDiv();
-            indexReport.endDiv();
-        } else {
-            indexReport.addParagraph("No commit history found.", "color: grey; margin-left: 10px; margin: 15px");
-        }
         indexReport.endTabContentSection();
 
+        indexReport.startTabContentSection("commits-explorer", false);
+        indexReport.addLineBreak();
+        indexReport.addHtmlContent("<iframe src='../explorers/commits-explorer.html' style='width: 100%; border: none; height: calc(100vh - 220px); overflow: hidden; margin-top: -12px'></iframe>");
+
+        indexReport.endTabContentSection();
+
+        indexReport.startTabContentSection("ai-cost", false);
+        indexReport.addLineBreak();
+        indexReport.addHtmlContent("<iframe data-sk-src='../explorers/ai-cost-estimator.html' style='width: 100%; border: none; height: calc(100vh - 220px); margin-top: -12px'></iframe>");
+
+        indexReport.endTabContentSection();
+
+        for (int i = 0; i < customTabs.size(); i++) {
+            indexReport.startTabContentSection(customTabId(i), false);
+            indexReport.addLineBreak();
+            indexReport.addHtmlContent(customTabIframe(customTabs.get(i)));
+            indexReport.endTabContentSection();
+        }
+    }
+
+    private static void addVisualsAndDataTabs(RichTextReport indexReport, CodeAnalysisResults analysisResults, File htmlExportFolder) {
         indexReport.startTabContentSection("visuals", false);
         indexReport.startDiv("margin: 24px");
-        addVisuals(indexReport, analysisResults, htmlExportFolder);
+        ReportVisualsTab.addVisuals(indexReport, analysisResults, htmlExportFolder);
         indexReport.endDiv();
         indexReport.endTabContentSection();
 
         indexReport.startTabContentSection("data", false);
         indexReport.startDiv("margin: 24px");
-        addData(indexReport, analysisResults);
+        ReportDataTab.addData(indexReport, analysisResults);
         indexReport.endDiv();
         indexReport.endTabContentSection();
-
-        indexReport.startTabContentSection("prompts", false);
-        indexReport.startDiv("margin: 24px");
-        addPrompts(indexReport, analysisResults);
-        indexReport.endDiv();
-        indexReport.endTabContentSection();
-
-        String dateOfUpdate = new SimpleDateFormat("yyyy-MM-dd").format(new Date());
-        String referenceDate = new SimpleDateFormat("yyyy-MM-dd").format(DateUtils.getCalendar().getTime());
-        indexReport.addParagraph("generated by <a target='_blank' href='https://sokrates.dev/'>sokrates.dev</a> " +
-                        " (<a href='../data/config.json' target='_blank'>configuration</a>)" +
-                        " on " + dateOfUpdate + (!referenceDate.equals(dateOfUpdate) ? "; reference date: " + referenceDate : ""),
-                "color: grey; font-size: 80%; margin-left: 10px; margin-bottom: 30px");
-        export(htmlExportFolder, indexReport, "index.html", analysisResults.getCodeConfiguration().getAnalysis().getCustomHtmlReportHeaderFragment());
     }
 
-    private static void addPrompts(RichTextReport report, CodeAnalysisResults analysisResults) {
-        report.addParagraph("Generative AI tools, like ChatGPT or Gemini, can help you explore and discuss various aspects of source code repositories using simple prompts and file uploads. Sokrates provides you with curated data that you can use to analyze your source code further.", "");
 
-        PromptsUtils.addRepositoryPromptSection("git-history-analyzer", report, analysisResults, "Example Prompt 1: Repository Evolution Analyzer (based on git history)", "", Arrays.asList(new Link[]{new Link("git-history.zip", "../data/zips/git-history.zip")}));
-
-        PromptsUtils.addRepositoryPromptSection("path-name-conventions-analyzer", report, analysisResults, "Example Prompt 2: File name conventions", "", Arrays.asList(new Link("files.json", "../data/files.json")));
-
-        PromptsUtils.addRepositoryPromptSection("technology-analyzer", report, analysisResults, "Example Prompt 3: Technology analyzer (based of file paths)", "", Arrays.asList(new Link("files.json", "../data/files.json")));
+    // Writes a minimal index.html at the reports root that redirects to html/index.html,
+    // so opening the reports folder lands on the main report.
+    private static void exportRootRedirect(File reportsFolder) {
+        String target = htmlReportsSubFolder + "/index.html";
+        File redirectFile = new File(reportsFolder, "index.html");
+        try {
+            PrintWriter out = new PrintWriter(redirectFile);
+            out.println("<!DOCTYPE html>");
+            out.println("<html lang=\"en\">");
+            out.println("<head>");
+            out.println("<meta charset=\"UTF-8\">");
+            out.println("<meta http-equiv=\"refresh\" content=\"0; url=" + target + "\">");
+            out.println("<title>Sokrates report</title>");
+            out.println("</head>");
+            out.println("<body>");
+            out.println("Redirecting to <a href=\"" + target + "\">" + target + "</a>...");
+            out.println("</body>");
+            out.println("</html>");
+            out.flush();
+            out.close();
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        }
     }
 
-    private static void addSummaryActivityTable(ContributorsAnalysisResults contributorsAnalysisResults, RichTextReport indexReport) {
-        List<ContributionTimeSlot> contributorsPerYear = contributorsAnalysisResults.getContributorsPerYear();
-        Map<String, ContributionTimeSlot> map = new HashMap<>();
-        contributorsPerYear.forEach(c -> map.put(c.getTimeSlot(), c));
-
-        int currentYear = Calendar.getInstance().get(Calendar.YEAR);
-
-        String year = currentYear + "";
-
-        while (!map.containsKey(year)) {
-            contributorsPerYear.add(new ContributionTimeSlot(year));
-            currentYear -= 1;
-            year = currentYear + "";
+    // Renders the language icons for a scope inside its activity panel (replacing the old single
+    // always-main icon strip above the toggle). No-op when the scope has no extensions. The unscoped tab
+    // shows "-" for the number (its files aren't analyzed, so there is no lines-of-code).
+    static void addScopeLanguageIcons(RichTextReport indexReport, CodeAnalysisResults analysisResults, String scope) {
+        List<NumericMetric> extensions = extensionsForScope(analysisResults, scope);
+        if (extensions == null || extensions.isEmpty()) {
+            return;
         }
-
-        long contributorsCount = contributorsAnalysisResults.getContributors().stream().filter(c -> !c.isBot() && c.isActive(Contributor.RECENTLY_ACTIVITY_THRESHOLD_DAYS)).count();
-        int commitsCount30Days = contributorsAnalysisResults.getCommitsCount30Days();
-        indexReport.startTable("margin-bottom: -20px; border-top: 1px dashed grey; border-bottom: 1px dashed grey; padding-top: 10px; margin-top: 10px; margin-bottom: 10px;");
-        indexReport.startTableRow();
-
-        indexReport.startTableCell("border: none; vertical-align: top;");
-
-        indexReport.startDiv("margin-top: 8px; width: 80px; height: 81px; background-color: white; border-radius: 5px; vertical-align: middle; text-align: center");
-        indexReport.startNewTabLink("Commits.html", commitsCount30Days == 0 ? "opacity: 0.4" : "");
-        indexReport.addContentInDiv(FormattingUtils.getSmallTextForNumber(commitsCount30Days),
-                "padding-top: 12px; font-size: 36px;");
-        indexReport.addContentInDiv((commitsCount30Days == 1 ? "commit" : "commits") + "<br>(30 days)", "color: black; font-size: 80%");
-        indexReport.endNewTabLink();
-        indexReport.endDiv();
-
-        indexReport.startDiv("margin-top: 32px; width: 80px; height: 81px; background-color: white; border-radius: 5px; vertical-align: middle; text-align: center");
-        indexReport.startNewTabLink("Contributors.html", contributorsCount == 0 ? "opacity: 0.4" : "");
-        indexReport.addContentInDiv(FormattingUtils.getSmallTextForNumber((int) contributorsCount),
-                "padding-top: 12px; font-size: 36px;");
-        indexReport.addContentInDiv((contributorsCount == 1 ? "contributor" : "contributors") + "<br>(30 days)", "color: black; font-size: 80%");
-        indexReport.endNewTabLink();
-        indexReport.endDiv();
-        indexReport.endTableCell();
-        indexReport.startTableCell("border: none");
-        ContributorsReportUtils.addContributorsPerTimeSlot(indexReport, contributorsPerYear, 20, true, true, 8, contributorsCount == 0);
-        indexReport.endTableCell();
-        indexReport.endTableRow();
-        indexReport.endTable();
+        boolean showDash = "unscoped".equals(scope);
+        StringBuilder icons = new StringBuilder("");
+        addIconsForExtensions(extensions, icons, showDash);
+        indexReport.addHtmlContent(icons.toString());
     }
 
-    private static void addVisuals(RichTextReport report, CodeAnalysisResults analysisResults, File htmlExportFolder) {
-        AspectAnalysisResults main = analysisResults.getMainAspectAnalysisResults();
-        AspectAnalysisResults test = analysisResults.getTestAspectAnalysisResults();
-        AspectAnalysisResults build = analysisResults.getBuildAndDeployAspectAnalysisResults();
-        AspectAnalysisResults generated = analysisResults.getGeneratedAspectAnalysisResults();
-        AspectAnalysisResults other = analysisResults.getOtherAspectAnalysisResults();
-
-        report.addLevel2Header("Visual Code Explorers");
-
-        report.startTable();
-        addScopeVisuals(report, "main", main.getFilesCount());
-        addScopeVisuals(report, "test", test.getFilesCount());
-        addScopeVisuals(report, "build and deployment", build.getFilesCount());
-        addScopeVisuals(report, "generated", generated.getFilesCount());
-        addScopeVisuals(report, "other", other.getFilesCount());
-        report.endTable();
-
-        report.addLineBreak();
-        report.addLineBreak();
-        report.addLevel2Header("File Visualizations");
-
-        report.addParagraph("<a target='_blank' href='FileSize.html'>File size</a> views:", "margin-bottom: 0;");
-        report.startTable("");
-        report.startTableRow();
-        report.startTableCell("border: none");
-        report.addHtmlContent(getIconSvg("file_size", 50));
-        report.endTableCell();
-        report.startTableCell("border: none");
-        report.startUnorderedList();
-        report.startListItem();
-        report.addNewTabLink("3D view of file size", "visuals/files_3d.html");
-        report.endListItem();
-        report.startListItem();
-        report.addNewTabLink("files grouped by size category", "visuals/zoomable_circles_main_loc_coloring_categories.html");
-        report.endListItem();
-        report.startListItem();
-        report.addNewTabLink("files grouped by folder", "visuals/zoomable_circles_main_loc_coloring.html");
-        report.endListItem();
-        report.endUnorderedList();
-        report.endTable();
-
-        boolean showDuplication = !analysisResults.skipDuplicationAnalysis() && analysisResults.getDuplicationAnalysisResults().getAllDuplicates().size() > 0;
-        if (showDuplication) {
-            report.addParagraph("<a target='_blank' href='Duplication.html'>Duplication</a> views:", "margin-bottom: 0;");
-            report.startTable("");
-            report.startTableRow();
-            report.startTableCell("border: none");
-            report.addHtmlContent(getIconSvg("duplication", 50));
-            report.endTableCell();
-            report.startTableCell("border: none");
-            report.startUnorderedList();
-            report.startListItem();
-            report.addNewTabLink("graphviz graph of duplication among files", "visuals/duplication_among_files.svg");
-            report.endListItem();
-            report.startListItem();
-            report.addNewTabLink("2D force graph of duplication among files", "visuals/duplication_among_files_force_2d.html");
-            report.endListItem();
-            report.startListItem();
-            report.addNewTabLink("3D force graph of duplication among files", "visuals/duplication_among_files_force_3d.html");
-            report.endListItem();
-            report.startListItem();
-            report.addNewTabLink("2D view of duplication among files (with duplicates)", "visuals/duplication_among_files_with_duplicates_force_2d.html");
-            report.endListItem();
-            report.startListItem();
-            report.addNewTabLink("3D view of duplication among files (with duplicates)", "visuals/duplication_among_files_with_duplicates_force_3d.html");
-            report.endListItem();
-            report.endUnorderedList();
-            report.endTable();
+    // The Human and AI ease of change (maintainability scores), linking to their breakdown on the Highlights tab.
+    private static void addMaintainabilityScoreBlocks(RichTextReport report, MaintainabilityScores scores) {
+        if (scores == null) {
+            return;
         }
-
-        report.addParagraph("<a target='_blank' href='FileAge.html'>File age</a> views:", "margin-bottom: 0;");
-        report.startTable("");
-        report.startTableRow();
-        report.startTableCell("border: none");
-        report.addHtmlContent(getIconSvg("file_history", 50));
-        report.endTableCell();
-        report.startTableCell("border: none");
-        report.startUnorderedList();
-        report.startListItem();
-        report.addNewTabLink("files grouped by age category", "visuals/zoomable_circles_main_age_coloring_categories.html");
-        report.endListItem();
-        report.startListItem();
-        report.addNewTabLink("files grouped by folder", "visuals/zoomable_circles_main_age_coloring.html");
-        report.endListItem();
-        report.endUnorderedList();
-        report.endTableCell();
-        report.endTableRow();
-        report.startTableRow();
-        report.startTableCell("border: none");
-        report.addHtmlContent(getIconSvg("file_history", 50));
-        report.endTableCell();
-        report.startTableCell("border: none");
-        report.startUnorderedList();
-        report.startListItem();
-        report.addNewTabLink("files grouped by freshness category", "visuals/zoomable_circles_main_freshness_coloring_categories.html");
-        report.endListItem();
-        report.startListItem();
-        report.addNewTabLink("files grouped by folder", "visuals/zoomable_circles_main_freshness_coloring.html");
-        report.endListItem();
-        report.endUnorderedList();
-        report.endTableCell();
-        report.endTableRow();
-        report.endTable();
-
-        report.addParagraph("<a target='_blank' href='FileChangeFrequency.html'>File change frequency</a> views:", "margin-bottom: 0;");
-        report.startTable("");
-        report.startTableRow();
-        report.startTableCell("border: none");
-        report.addHtmlContent(getIconSvg("change", 50));
-        report.endTableCell();
-        report.startTableCell("border: none");
-        report.startUnorderedList();
-        report.startListItem();
-        report.addNewTabLink("files grouped by change frequency category", "visuals/zoomable_circles_main_update_frequency_coloring_categories.html");
-        report.endListItem();
-        report.startListItem();
-        report.addNewTabLink("files grouped by folder", "visuals/zoomable_circles_main_update_frequency_coloring.html");
-        report.endListItem();
-        report.endUnorderedList();
-        report.endTableCell();
-        report.endTableRow();
-        report.endTable();
-
-        report.addParagraph("<a target='_blank' href='FileChangeFrequency.html'>Contributors per file</a> views:", "margin-bottom: 0;");
-        report.startTable("");
-        report.startTableRow();
-        report.startTableCell("border: none");
-        report.addHtmlContent(getIconSvg("change", 50));
-        report.endTableCell();
-        report.startTableCell("border: none");
-        report.startUnorderedList();
-        report.startListItem();
-        report.addNewTabLink("files grouped by number of contributors category", "visuals/zoomable_circles_main_contributors_count_coloring_categories.html");
-        report.endListItem();
-        report.startListItem();
-        report.addNewTabLink("files grouped by folder", "visuals/zoomable_circles_main_contributors_count_coloring.html");
-        report.endListItem();
-        report.endUnorderedList();
-        report.endTableCell();
-        report.endTableRow();
-        report.endTable();
-
-        report.addLineBreak();
-        report.addLevel2Header("Contributor Visualizations");
-        report.addParagraph("<a target='_blank' href='Contributors.html'>Contributor dependency</a> views:", "margin-bottom: 0;");
-        report.startTable("");
-        report.startTableRow();
-        report.startTableCell("border: none");
-        report.addHtmlContent(getIconSvg("contributors", 50));
-        report.endTableCell();
-        report.startTableCell("border: none");
-        report.startUnorderedList();
-        report.startListItem();
-        report.addHtmlContent("past 30 days: ");
-        report.addNewTabLink("graphviz", "visuals/people_dependencies_30_1.svg");
-        report.addHtmlContent(" | ");
-        report.addNewTabLink("2D graph", "visuals/people_dependencies_30_1_force_2d.html");
-        report.addHtmlContent(" | ");
-        report.addNewTabLink("2D graph (with files)", "visuals/people_dependencies_via_files_30_2_force_2d.html");
-        report.addHtmlContent(" | ");
-        report.addNewTabLink("2D graph (with shared files only)", "visuals/people_dependencies_via_files_30_2_force_2d_only_shared_file.html");
-        report.addHtmlContent(" | ");
-        report.addNewTabLink("3D graph", "visuals/people_dependencies_30_1_force_3d.html");
-        report.addHtmlContent(" | ");
-        report.addNewTabLink("3D graph (with files)", "visuals/people_dependencies_via_files_30_2_force_3d.html");
-        report.addHtmlContent(" | ");
-        report.addNewTabLink("3D graph (with shared files only)", "visuals/people_dependencies_via_files_30_2_force_3d_only_shared_file.html");
-        report.endListItem();
-        report.startListItem();
-        report.addHtmlContent("past 3 months: ");
-        report.addNewTabLink("graphviz", "visuals/people_dependencies_90_3.svg");
-        report.addHtmlContent(" | ");
-        report.addNewTabLink("2D graph", "visuals/people_dependencies_90_3_force_2d.html");
-        report.addHtmlContent(" | ");
-        report.addNewTabLink("2D graph (with files)", "visuals/people_dependencies_via_files_90_4_force_2d.html");
-        report.addHtmlContent(" | ");
-        report.addNewTabLink("2D graph (with shared files only)", "visuals/people_dependencies_via_files_90_4_force_2d_only_shared_file.html");
-        report.addHtmlContent(" | ");
-        report.addNewTabLink("3D graph", "visuals/people_dependencies_90_3_force_3d.html");
-        report.addHtmlContent(" | ");
-        report.addNewTabLink("3D graph (with files)", "visuals/people_dependencies_via_files_90_4_force_3d.html");
-        report.addHtmlContent(" | ");
-        report.addNewTabLink("3D graph (with shared files only)", "visuals/people_dependencies_via_files_90_4_force_3d_only_shared_file.html");
-        report.endListItem();
-        report.startListItem();
-        report.addHtmlContent("past 6 months: ");
-        report.addNewTabLink("graphviz", "visuals/people_dependencies_180_5.svg");
-        report.addHtmlContent(" | ");
-        report.addNewTabLink("2D graph", "visuals/people_dependencies_180_5_force_2d.html");
-        report.addHtmlContent(" | ");
-        report.addNewTabLink("2D graph (with files)", "visuals/people_dependencies_via_files_180_6_force_2d.html");
-        report.addHtmlContent(" | ");
-        report.addNewTabLink("2D graph (with shared files only)", "visuals/people_dependencies_via_files_180_6_force_2d_only_shared_file.html");
-        report.addHtmlContent(" | ");
-        report.addNewTabLink("3D graph", "visuals/people_dependencies_180_5_force_3d.html");
-        report.addHtmlContent(" | ");
-        report.addNewTabLink("3D graph (with files)", "visuals/people_dependencies_via_files_180_6_force_3d.html");
-        report.addHtmlContent(" | ");
-        report.addNewTabLink("3D graph (with shared files only)", "visuals/people_dependencies_via_files_180_6_force_3d_only_shared_file.html");
-        report.endListItem();
-        report.startListItem();
-        report.addHtmlContent("past year: ");
-        report.addNewTabLink("graphviz", "visuals/people_dependencies_365_7.svg");
-        report.addHtmlContent(" | ");
-        report.addNewTabLink("2D graph", "visuals/people_dependencies_365_7_force_2d.html");
-        report.addHtmlContent(" | ");
-        report.addNewTabLink("2D graph (with files)", "visuals/people_dependencies_via_files_365_8_force_2d.html");
-        report.addHtmlContent(" | ");
-        report.addNewTabLink("2D graph (with shared files only)", "visuals/people_dependencies_via_files_365_8_force_2d_only_shared_file.html");
-        report.addHtmlContent(" | ");
-        report.addNewTabLink("3D graph", "visuals/people_dependencies_365_7_force_3d.html");
-        report.addHtmlContent(" | ");
-        report.addNewTabLink("3D graph (with files)", "visuals/people_dependencies_via_files_365_8_force_3d.html");
-        report.addHtmlContent(" | ");
-        report.addNewTabLink("3D graph (with shared files only)", "visuals/people_dependencies_via_files_365_8_force_3d_only_shared_file.html");
-        report.endListItem();
-        report.endTableRow();
-        report.endTable();
-
-        report.addLineBreak();
-        report.addLevel2Header("Components and Dependencies Visualizations");
-
-        report.startTable("text-align: center");
-        report.addHtmlContent("<tr>");
-        report.addHtmlContent("<td rowspan='3' style='border: none'></td>");
-        report.addHtmlContent("<td colspan='2' style='text-align: center; border: none'>" + getIconSvg("code_organization", 50) + "</td>");
-        report.addHtmlContent("<td colspan='6' style='text-align: center; border: none'>" + getIconSvg("temporal_dependency", 50) + "</td>");
-        report.addHtmlContent("<td colspan='1' style='text-align: center; border: none'>" + getIconSvg("duplication", 50) + "</td>");
-        report.addHtmlContent("<td colspan='2' style='text-align: center; border: none'>" + getIconSvg("commits", 50) + "</td>");
-        report.addHtmlContent("</tr>");
-        report.addHtmlContent("<tr>");
-        report.addHtmlContent("<td colspan='2' rowspan='2' style='text-align: center'><a target='_blank' href='Components.html'>Components</a></td>");
-        report.addHtmlContent("<td colspan='9' style='text-align: center'><a target='_blank' href='FileTemporalDependencies.html'>Temporal Dependencies</a></td>");
-        report.addHtmlContent("<td colspan='1' rowspan='2' style='text-align: center'><a target='_blank' href='Duplication.html'>Duplication</a></td>");
-        report.addHtmlContent("<td colspan='2' rowspan='2' style='text-align: center'><a target='_blank' href='Commits.html'>Commits Racing Charts</a></td>");
-        report.addHtmlContent("</tr>");
-        report.addHtmlContent("<tr>");
-        report.addHtmlContent("<td colspan='3' style='text-align: center'>30 days</td>");
-        report.addHtmlContent("<td colspan='3' style='text-align: center'>3 months</td>");
-        report.addHtmlContent("<td colspan='3' style='text-align: center'>6 months</td>");
-        report.addHtmlContent("</tr>");
-
-        int index[] = {0};
-        analysisResults.getLogicalDecompositionsAnalysisResults().forEach(logicalDecomposition -> {
-            index[0] += 1;
-            report.startTableRow();
-            report.addTableCell(logicalDecomposition.getKey().toUpperCase() + " (" + logicalDecomposition.getComponents().size() + ")");
-            report.startTableCell("text-align: center");
-            report.addNewTabLink("Bubble Chart", "visuals/bubble_chart_components_" + index[0] + ".html");
-            report.endTableCell();
-            report.startTableCell("text-align: center");
-            report.addNewTabLink("Tree Map", "visuals/tree_map_components_" + index[0] + ".html");
-            report.endTableCell();
-            report.startTableCell("text-align: center");
-            if (analysisResults.getFilesHistoryAnalysisResults().getFilePairsChangedTogether30Days().size() > 0) {
-                report.addNewTabLink("graphviz", "visuals/file_changed_together_dependencies_logical_decomposition_" + index[0] + "_30_days.svg");
-            } else {
-                report.addContentInDiv("graphviz", "color: #c0c0c0");
-            }
-            report.endTableCell();
-            report.startTableCell("text-align: center");
-            if (analysisResults.getFilesHistoryAnalysisResults().getFilePairsChangedTogether30Days().size() > 0) {
-                report.addNewTabLink("2D", "visuals/file_changed_together_dependencies_logical_decomposition_" + index[0] + "_30_days_force_2d.html");
-            } else {
-                report.addContentInDiv("2D", "color: #c0c0c0");
-            }
-            report.endTableCell();
-            report.startTableCell("text-align: center");
-            if (analysisResults.getFilesHistoryAnalysisResults().getFilePairsChangedTogether30Days().size() > 0) {
-                report.addNewTabLink("3D", "visuals/file_changed_together_dependencies_logical_decomposition_" + index[0] + "_30_days_force_3d.html");
-            } else {
-                report.addContentInDiv("3D", "color: #c0c0c0");
-            }
-            report.endTableCell();
-            report.startTableCell("text-align: center");
-            if (analysisResults.getFilesHistoryAnalysisResults().getFilePairsChangedTogether90Days().size() > 0) {
-                report.addNewTabLink("graphviz", "visuals/file_changed_together_dependencies_logical_decomposition_" + index[0] + "_90_days.svg");
-            } else {
-                report.addContentInDiv("graphviz", "color: #c0c0c0");
-            }
-            report.endTableCell();
-            report.startTableCell("text-align: center");
-            if (analysisResults.getFilesHistoryAnalysisResults().getFilePairsChangedTogether90Days().size() > 0) {
-                report.addNewTabLink("2D", "visuals/file_changed_together_dependencies_logical_decomposition_" + index[0] + "_90_days_force_2d.html");
-            } else {
-                report.addContentInDiv("2D", "color: #c0c0c0");
-            }
-            report.endTableCell();
-            report.startTableCell("text-align: center");
-            if (analysisResults.getFilesHistoryAnalysisResults().getFilePairsChangedTogether90Days().size() > 0) {
-                report.addNewTabLink("3D", "visuals/file_changed_together_dependencies_logical_decomposition_" + index[0] + "_90_days_force_3d.html");
-            } else {
-                report.addContentInDiv("3D", "color: #c0c0c0");
-            }
-            report.endTableCell();
-            report.startTableCell("text-align: center");
-            if (analysisResults.getFilesHistoryAnalysisResults().getFilePairsChangedTogether180Days().size() > 0) {
-                report.addNewTabLink("graphviz", "visuals/file_changed_together_dependencies_logical_decomposition_" + index[0] + "_180_days.svg");
-            } else {
-                report.addContentInDiv("graphviz", "color: #c0c0c0");
-            }
-            report.endTableCell();
-            report.startTableCell("text-align: center");
-            if (analysisResults.getFilesHistoryAnalysisResults().getFilePairsChangedTogether180Days().size() > 0) {
-                report.addNewTabLink("2D", "visuals/file_changed_together_dependencies_logical_decomposition_" + index[0] + "_180_days_force_2d.html");
-            } else {
-                report.addContentInDiv("2D", "color: #c0c0c0");
-            }
-            report.endTableCell();
-            report.startTableCell("text-align: center");
-            if (analysisResults.getFilesHistoryAnalysisResults().getFilePairsChangedTogether180Days().size() > 0) {
-                report.addNewTabLink("3D", "visuals/file_changed_together_dependencies_logical_decomposition_" + index[0] + "_180_days_force_3d.html");
-            } else {
-                report.addContentInDiv("3D", "color: #c0c0c0");
-            }
-            report.endTableCell();
-            report.startTableCell("text-align: center");
-            String duplicationGraphPath = "visuals/duplication_dependencies_" + index[0] + ".svg";
-            if (new File(htmlExportFolder, duplicationGraphPath).exists()) {
-                report.addNewTabLink("Duplication Graph", duplicationGraphPath);
-            } else {
-                report.addContentInDiv("Duplication Graph", "color: #c0c0c0");
-            }
-            report.endTableCell();
-            report.startTableCell("text-align: center");
-            report.addNewTabLink("All Time", "visuals/racing_charts_component_commits_" + index[0] + ".html?tickDuration=600");
-            report.endTableCell();
-            report.startTableCell("text-align: center");
-            report.addNewTabLink("12 Months", "visuals/racing_charts_component_commits_12_months_window_" + index[0] + ".html?tickDuration=600");
-            report.endTableCell();
-            report.endTableRow();
-        });
-        report.endTable();
-
-
-        report.addLineBreak();
-        report.addLineBreak();
-        report.addLevel2Header("File Dependencies Visualizations");
-
-        report.addParagraph("<a target='_blank' href='FileTemporalDependencies.html'>Temporal dependencies</a> among files:", "margin-bottom: 0;");
-        report.startTable("");
-        report.startTableRow();
-        report.startTableCell("border: none");
-        report.addHtmlContent(getIconSvg("temporal_dependency", 50));
-        report.endTableCell();
-        report.startTableCell("border: none");
-        report.startUnorderedList();
-        report.startListItem();
-        report.addHtmlContent("past 30 days: ");
-        if (analysisResults.getFilesHistoryAnalysisResults().getFilePairsChangedTogether30Days().size() > 0) {
-            report.addNewTabLink("graphviz", "visuals/file_changed_together_dependencies_files_30_days.svg");
-            report.addHtmlContent(" | ");
-            report.addNewTabLink("2D graph", "visuals/file_changed_together_dependencies_files_30_days_force_2d.html");
-            report.addHtmlContent(" | ");
-            report.addNewTabLink("2D graph (with commits)", "visuals/file_changed_together_dependencies_with_commits_components_30_days_force_2d.html");
-            report.addHtmlContent(" | ");
-            report.addNewTabLink("3D graph", "visuals/file_changed_together_dependencies_files_30_days_force_3d.html");
-            report.addHtmlContent(" | ");
-            report.addNewTabLink("3D graph (with commits)", "visuals/file_changed_together_dependencies_with_commits_components_30_days_force_3d.html");
-        } else {
-            report.addHtmlContent("no dependencies");
-        }
-        report.endListItem();
-        report.startListItem();
-        report.addHtmlContent("past 3 months: ");
-        if (analysisResults.getFilesHistoryAnalysisResults().getFilePairsChangedTogether90Days().size() > 0) {
-            report.addNewTabLink("graphviz", "visuals/file_changed_together_dependencies_files_90_days.svg");
-            report.addHtmlContent(" | ");
-            report.addNewTabLink("2D graph", "visuals/file_changed_together_dependencies_files_90_days_force_2d.html");
-            report.addHtmlContent(" | ");
-            report.addNewTabLink("2D graph (with commits)", "visuals/file_changed_together_dependencies_with_commits_components_90_days_force_2d.html");
-            report.addHtmlContent(" | ");
-            report.addNewTabLink("3D graph", "visuals/file_changed_together_dependencies_files_90_days_force_3d.html");
-            report.addHtmlContent(" | ");
-            report.addNewTabLink("3D graph (with commits)", "visuals/file_changed_together_dependencies_with_commits_components_90_days_force_3d.html");
-        } else {
-            report.addHtmlContent("no dependencies");
-        }
-        report.endListItem();
-        report.startListItem();
-        report.addHtmlContent("past 6 months: ");
-        if (analysisResults.getFilesHistoryAnalysisResults().getFilePairsChangedTogether180Days().size() > 0) {
-            report.addNewTabLink("graphviz", "visuals/file_changed_together_dependencies_files_180_days.svg");
-            report.addHtmlContent(" | ");
-            report.addNewTabLink("2D graph", "visuals/file_changed_together_dependencies_files_180_days_force_2d.html");
-            report.addHtmlContent(" | ");
-            report.addNewTabLink("2D graph (with commits)", "visuals/file_changed_together_dependencies_with_commits_components_180_days_force_2d.html");
-            report.addHtmlContent(" | ");
-            report.addNewTabLink("3D graph", "visuals/file_changed_together_dependencies_files_180_days_force_3d.html");
-            report.addHtmlContent(" | ");
-            report.addNewTabLink("3D graph (with commits)", "visuals/file_changed_together_dependencies_with_commits_components_180_days_force_3d.html");
-        } else {
-            report.addHtmlContent("no dependencies");
-        }
-        report.endListItem();
-        report.endUnorderedList();
-        report.endTableCell();
-        report.endTableRow();
-        report.endTable();
-
-        report.addLineBreak();
-        report.addLineBreak();
-        report.addLevel2Header("Units Visualizations");
-
-        report.addParagraph("Unit <a target='_blank' href='UnitSize.html'>size</a> and <a target='_blank' href='ConditionalComplexity.html'>conditional complexity</a> views:", "margin-bottom: 0;");
-        report.startTable("");
-        report.startTableRow();
-        report.startTableCell("border: none");
-        report.addHtmlContent(getIconSvg("unit_size", 50));
-        report.endTableCell();
-        report.startTableCell("border: none");
-        report.startUnorderedList();
-        report.startListItem();
-        report.addNewTabLink("3D view of unit size", "visuals/units_3d_size.html");
-        report.endListItem();
-        report.startListItem();
-        report.addNewTabLink("3D view of unit complexity", "visuals/units_3d_complexity.html");
-        report.endListItem();
-        report.endUnorderedList();
-        report.endTableCell();
-        report.endTableRow();
-        report.endTable();
-
-        report.addLineBreak();
-
+        addScoreBlock(report, scores.getHuman(), "for people*", "contributors");
+        addScoreBlock(report, scores.getAi(), "for AI*", "bot");
     }
 
-    private static void addData(RichTextReport report, CodeAnalysisResults analysisResults) {
-        AspectAnalysisResults main = analysisResults.getMainAspectAnalysisResults();
-        AspectAnalysisResults test = analysisResults.getTestAspectAnalysisResults();
-        AspectAnalysisResults build = analysisResults.getBuildAndDeployAspectAnalysisResults();
-        AspectAnalysisResults generated = analysisResults.getGeneratedAspectAnalysisResults();
-        AspectAnalysisResults other = analysisResults.getOtherAspectAnalysisResults();
-
-        report.addLevel2Header("Lists of Files Per Scope");
-
-        report.startUnorderedList();
-        addListsOfFilesInScope(report, "main", main.getFilesCount());
-        addListsOfFilesInScope(report, "test", test.getFilesCount());
-        addListsOfFilesInScope(report, "build and deployment", build.getFilesCount());
-        addListsOfFilesInScope(report, "generated", generated.getFilesCount());
-        addListsOfFilesInScope(report, "other", other.getFilesCount());
-        report.startListItem();
-        report.addHtmlContent("FILES: ");
-        report.addNewTabLink("History Data", "../data/text/mainFilesWithHistory.txt");
-        report.endListItem();
-        report.startListItem();
-        report.addHtmlContent("IGNORED FILES: ");
-        report.addNewTabLink("By Extension", "../data/text/excluded_files_ignored_extensions.txt");
-        report.addHtmlContent(" | ");
-        report.addNewTabLink("By Rule", "../data/text/excluded_files_ignored_rules.txt");
-        report.endListItem();
-        report.endUnorderedList();
-
-        report.addLineBreak();
-        report.addLevel2Header("Analysis Results");
-        report.startUnorderedList();
-
-        report.startListItem();
-        report.addHtmlContent("CONFIGURATION: ");
-        report.addNewTabLink("JSON", "../data/config.json");
-        report.endListItem();
-
-        report.startListItem();
-        report.addHtmlContent("ALL ANALYSIS RESULTS: ");
-        report.addNewTabLink("JSON", "../data/analysisResults.json");
-        report.endListItem();
-
-        report.startListItem();
-        report.addHtmlContent("DUPLICATES: ");
-        report.addNewTabLink("TXT", "../data/text/duplicates.txt");
-        report.addHtmlContent(" | ");
-        report.addNewTabLink("JSON", "../data/duplicates.json");
-        report.endListItem();
-
-        report.startListItem();
-        report.addHtmlContent("UNITS: ");
-        report.addNewTabLink("TXT", "../data/text/units.txt");
-        report.addHtmlContent(" | ");
-        report.addNewTabLink("JSON", "../data/units.json");
-        report.endListItem();
-
-        report.startListItem();
-        report.addHtmlContent("CONTRIBUTORS: ");
-        report.addNewTabLink("TXT", "../data/text/contributors.txt");
-        report.addHtmlContent(" | ");
-        report.addNewTabLink("JSON", "../data/contributors.json");
-        report.endListItem();
-
-        report.startListItem();
-        report.addHtmlContent("LOGICAL DECOMPOSITIONS: ");
-        report.addNewTabLink("JSON", "../data/logical_decompositions.json");
-        report.endListItem();
-
-        report.startListItem();
-        report.addHtmlContent("CONCERNS: ");
-        report.addNewTabLink("JSON", "../data/concerns.json");
-        report.endListItem();
-
-        report.startListItem();
-        report.addHtmlContent("CONTROLS: ");
-        report.addNewTabLink("TXT", "../data/text/controls.txt");
-        report.endListItem();
-
-        report.startListItem();
-        report.addHtmlContent("ALL METRICS: ");
-        report.addNewTabLink("TXT", "../data/text/metrics.txt");
-        report.endListItem();
-
-
-        report.endUnorderedList();
-
-        //
-
-        report.addLineBreak();
-        report.addLevel2Header("Zipped Files");
-        report.startUnorderedList();
-
-        report.startListItem();
-        report.addHtmlContent("GIT HISTORY: ");
-        report.addNewTabLink("ZIP", "../data/zips/git-history.zip");
-        report.endListItem();
-
-        report.startListItem();
-        report.addHtmlContent("ALL FILES IN ALL ANALYSIS SCOPES: ");
-        report.addNewTabLink("ZIP", "../data/zips/all_files.zip");
-        report.endListItem();
-
-
-        report.endUnorderedList();
+    private static void addScoreBlock(RichTextReport report, MaintainabilityScore score, String audienceLabel, String icon) {
+        HealthSummary.Status status = HealthSummary.gradeStatus(score.getGrade());
+        String color = status == HealthSummary.Status.GOOD ? "#dff3e3" : (status == HealthSummary.Status.WATCH ? "#fdf0d5" : "#fbe1e1");
+        String drags = score.getSubScores().stream().filter(s -> s.getDrag() > 0)
+                .sorted(Comparator.comparingDouble(SubScore::getDrag).reversed()).limit(3)
+                .map(s -> s.getLabel() + String.format(Locale.US, " -%.1f", s.getDrag())).collect(Collectors.joining(", "));
+        String tooltip = String.format(Locale.US, "%.1f of 10, grade %s: ease of change*", score.getValue(), score.getGrade()) + (drags.isEmpty() ? "" : "; biggest drags: " + drags)
+                + (score.getCappedBy().isEmpty() ? "" : "; held down by " + score.getCappedBy())
+                + (score.getCoverageText().isEmpty() ? "" : "; " + score.getCoverageText());
+        // The info block's layout with the grade instead of a number (the number is in the hover text and on Highlights):
+        // the A-E scale, current grade large, over a two-line label ("ease of change" / "for people*"), in the same
+        // 130 x 102 card as the size cards next to it.
+        String audience = score.isFullyMeasured() ? audienceLabel : audienceLabel + " (" + score.getCoverageShort() + ")";
+        report.addHtmlContent("<a href='index.html#highlights' style='color: var(--sk-text, black);'>");
+        report.startDiv("display: inline-block; text-align: center; margin-top: 12px; cursor: pointer;");
+        report.addHtmlContent("<div style='vertical-alignment: bottom; margin: 0px; margin-bottom: -10px; z-index: 3;'>" + getIconSvg(icon, 40) + "</div>");
+        report.startDiv("border-radius: 12px; cursor: pointer; margin: 12px 12px 36px 0px; display: inline-block; width: 130px; height: 102px; "
+                + "z-index: 2; --sk-tint: " + color + "; background-color: var(--sk-tint); text-align: center; vertical-align: middle; "
+                + "box-shadow: rgba(0, 0, 0, 0.15) 2.4px 2.4px 3.2px;", HtmlEscapeUtils.escape(tooltip));
+        report.addHtmlContent("<div style='padding-top: 20px; height: 34px;'>" + ReportHealthSection.gradeScale(score.getGrade(), true) + "</div>");
+        report.addHtmlContent("<div style='margin-top: 10px; color: var(--sk-text, black); font-size: 12px; line-height: 1.25;'>ease of change<br>"
+                + HtmlEscapeUtils.escape(audience) + "</div>");
+        report.endDiv();
+        report.endDiv();
+        report.addHtmlContent("</a>");
     }
 
-    private static void addListsOfFilesInScope(RichTextReport report, String scopeName, int filesCount) {
-        String technicalName = scopeName.toLowerCase().replace(" ", "_");
-        boolean exists = filesCount > 0;
-        String infoText = filesCount + (filesCount == 1 ? " file" : " files");
-        String displayName = scopeName.toUpperCase();
-        report.startListItem();
-        if (exists) {
-            report.addNewTabLink(displayName + " (" + infoText + ")", "../data/text/aspect_" + technicalName + ".txt");
-        } else {
-            report.addContentInDiv(displayName, "color: #c0c0c0");
-        }
-        report.endListItem();
+    static void addInfoBlockWithColor(RichTextReport report, String mainValue, String subtitle, String extra, String color, String tooltip, String icon, String link) {
+        addInfoBlockWithColor(report, mainValue, subtitle, extra, color, tooltip, icon, link, true);
     }
 
-    private static void addScopeVisuals(RichTextReport report, String scopeName, int filesCount) {
-        String technicalName = scopeName.toLowerCase().replace(" ", "_");
-        boolean exists = filesCount > 0;
-        report.startTableRow(exists ? "" : "color: #c0c0c0");
-        report.startTableCell();
-        report.addHtmlContent(getIconSvg(technicalName, 42));
-        report.endTableCell();
-        report.addTableCell(scopeName.toUpperCase() + " (" + filesCount + ")", "");
-        report.startTableCell();
-        if (exists) {
-            report.addNewTabLink("Circles", "visuals/zoomable_circles_" + technicalName.replace("_and_deployment", "") + ".html");
-        } else {
-            report.addContentInDiv("Circles", "color: #c0c0c0");
-        }
-        report.endTableCell();
-        report.startTableCell();
-        if (exists) {
-            report.addNewTabLink("Sunburst", "visuals/zoomable_sunburst_" + technicalName.replace("_and_deployment", "") + ".html");
-        } else {
-            report.addContentInDiv("Sunburst", "color: #c0c0c0");
-        }
-        report.endTableCell();
-        report.endTableCell();
-        report.endTableRow();
-    }
-
-    private static void addInfoBlockWithColor(RichTextReport report, String mainValue, String subtitle, String extra, String color, String tooltip, String icon, String link) {
+    // newTab false: a plain link, which the shell routes in-page when it names an index tab.
+    static void addInfoBlockWithColor(RichTextReport report, String mainValue, String subtitle, String extra, String color, String tooltip, String icon, String link, boolean newTab) {
         boolean isZero = mainValue.replaceAll("<.*?>", "").replaceAll("\\%", "").equals("0");
 
         String style = "border-radius: 12px;cursor: pointer;";
 
         style += "margin: 12px 12px 12px 0px;";
         style += "display: inline-block; width: 130px; height: 102px; z-index: 2;";
-        style += "background-color: " + color + "; text-align: center; vertical-align: middle; margin-bottom: 36px;";
+        style += "--sk-tint: " + color + "; background-color: var(--sk-tint); text-align: center; vertical-align: middle; margin-bottom: 36px;";
         style += "box-shadow: rgba(0, 0, 0, 0.15) 2.4px 2.4px 3.2px;";
 
-        String specialColor = isZero ? " color: grey;" : "color: black;";
-        report.startNewTabLink(link, specialColor + "");
+        String specialColor = isZero ? " color: var(--sk-text-faint, grey);" : "color: var(--sk-text, black);";
+        if (newTab) {
+            report.startNewTabLink(link, specialColor + "");
+        } else {
+            report.addHtmlContent("<a href='" + link + "' style='" + specialColor + "'>");
+        }
         report.startDiv("display: inline-block; text-align: center; margin-top: 12px; cursor: pointer;");
         report.addHtmlContent("<div style='vertical-alignment: bottom; margin: 0px; margin-bottom: -10px; z-index: 3;" + (isZero ? "opacity: 0.4;" : "") + "'>" + getIconSvg(icon, 40) + "</div>");
         report.startDiv(style, tooltip);
         report.addHtmlContent("<div style='font-size: 40px; margin-top: 12px;" + specialColor + "'>" + mainValue + "</div>");
-        report.addHtmlContent("<div style='color: #434343; font-size: 12px;" + specialColor + "'>" + subtitle + "</div>");
-        report.addHtmlContent("<div style='margin-top: 4px; color: #434343; font-size: 11px;'>" + extra + "</div>");
+        report.addHtmlContent("<div style='color: var(--sk-text-muted, #434343); font-size: 12px;" + specialColor + "'>" + subtitle + "</div>");
+        report.addHtmlContent("<div style='margin-top: 4px; color: var(--sk-text-muted, #434343); font-size: 11px;'>" + extra + "</div>");
         report.endDiv();
         report.endDiv();
         report.endNewTabLink();
@@ -964,39 +331,82 @@ public class ReportFileExporter {
 
         style += "margin: 12px 12px 12px 0px;";
         style += "display: inline-block; width: 130px; height: 93px;";
-        style += "background-color: " + color + "; text-align: center; vertical-align: middle; margin-bottom: 36px;";
+        style += "--sk-tint: " + color + "; background-color: var(--sk-tint); text-align: center; vertical-align: middle; margin-bottom: 36px;";
 
         report.startDiv(style, tooltip);
         String specialColor = mainValue.equals("<b>0</b>") ? " color: grey;" : "";
         report.addHtmlContent("<div style='font-size: 40px; margin-top: 10px;" + specialColor + "'>" + mainValue + "</div>");
-        report.addHtmlContent("<div style='color: #434343; font-size: 12px;" + specialColor + "'>" + subtitle + "</div>");
-        report.addHtmlContent("<div style='color: #434343; font-size: 11px;color: grey'>" + extra + "</div>");
+        report.addHtmlContent("<div style='color: var(--sk-text-muted, #434343); font-size: 12px;" + specialColor + "'>" + subtitle + "</div>");
+        report.addHtmlContent("<div style='color: var(--sk-text-muted, #434343); font-size: 11px;color: grey'>" + extra + "</div>");
         report.endDiv();
     }
 
-    private static void addIconsMainCode(CodeAnalysisResults analysisResults, StringBuilder summary) {
-        List<NumericMetric> extensions = analysisResults.getMainAspectAnalysisResults().getLinesOfCodePerExtension();
+    // Renders the per-extension language icons for a given extension list. The number line shows the
+    // extension's lines of code, unless showDash is true (the unscoped tab, whose files aren't analyzed
+    // and have no LOC) — then it shows "-". First/biggest gets a larger icon. No-op (empty div) when
+    // there are no extensions.
+    private static void addIconsForExtensions(List<NumericMetric> extensions, StringBuilder summary, boolean showDash) {
         summary.append("<div style='margin-bottom: 20px; white-space: nowrap; overflow: hidden;'>");
         boolean first[] = {true};
         extensions.stream().limit(16).forEach(ext -> {
             String lang = ext.getName().toUpperCase().replace("*.", "").trim();
-            int loc = ext.getValue().intValue();
-            int fontSize = loc >= 1000 ? 20 : 20;
-            int width = (first[0] ? loc >= 1000 ? 64 : 65 : loc >= 1000 ? 42 : 43);
-            summary.append("<div style='width: " + width + "px; text-align: center; display: inline-block; border-radius: 5px; background-color: white; padding: 8px; margin-right: 4px;'>"
+            int value = ext.getValue().intValue();
+            int fontSize = 20;
+            int width = (first[0] ? value >= 1000 ? 64 : 65 : value >= 1000 ? 42 : 43);
+            String numberLine = showDash ? "-" : FormattingUtils.getSmallTextForNumberMinK(value);
+            summary.append("<div style='width: " + width + "px; text-align: center; display: inline-block; border-radius: 5px; padding: 8px; margin-right: 4px;'>"
                     + (first[0] ? DataImageUtils.getLangDataImageDiv64(lang) : DataImageUtils.getLangDataImageDiv42(lang))
-                    + "<div style='margin-top: 3px; font-size: " + fontSize + "px'>" + FormattingUtils.getSmallTextForNumberMinK(loc) + "</div>"
-                    + "<div style='font-size: 10px; white-space: no-wrap; overflow: hidden; color: grey;'>" + lang.toLowerCase() + "</div>"
+                    + "<div style='margin-top: 3px; font-size: " + fontSize + "px'>" + numberLine + "</div>"
+                    + "<div style='font-size: 10px; white-space: no-wrap; overflow: hidden; color: grey;'>" + HtmlEscapeUtils.escape(lang.toLowerCase()) + "</div>"
                     + "</div>");
             first[0] = false;
         });
         summary.append("</div>");
     }
 
+    // The per-extension list backing a scope's language icons:
+    //  - main/test/build/generated/other: that aspect's lines-of-code per extension.
+    //  - "All": the union of ALL analyzed scopes' LOC per extension (unscoped excluded — those files
+    //    aren't analyzed, so they carry no LOC and would distort the union).
+    //  - "unscoped": the residual git-history extensions with distinct file counts (rendered with "-"
+    //    for the number, since these files are never analyzed).
+    private static List<NumericMetric> extensionsForScope(CodeAnalysisResults analysisResults, String scope) {
+        switch (scope) {
+            case "main":
+                return analysisResults.getMainAspectAnalysisResults().getLinesOfCodePerExtension();
+            case "test":
+                return analysisResults.getTestAspectAnalysisResults().getLinesOfCodePerExtension();
+            case "build":
+                return analysisResults.getBuildAndDeployAspectAnalysisResults().getLinesOfCodePerExtension();
+            case "generated":
+                return analysisResults.getGeneratedAspectAnalysisResults().getLinesOfCodePerExtension();
+            case "other":
+                return analysisResults.getOtherAspectAnalysisResults().getLinesOfCodePerExtension();
+            case "unscoped":
+                return analysisResults.getContributorsAnalysisResults().getUnscopedExtensionFileCounts();
+            default: // "All": union of analyzed scopes, by LOC desc
+                return unionAnalyzedExtensions(analysisResults);
+        }
+    }
+
+    // Merges the per-extension LOC across all analyzed scopes (main/test/build/generated/other) into a
+    // single extension->total-LOC list, ordered by LOC descending. Backs the "All" tab's language icons.
+    private static List<NumericMetric> unionAnalyzedExtensions(CodeAnalysisResults analysisResults) {
+        Map<String, Integer> locByExtension = new LinkedHashMap<>();
+        for (String scope : new String[]{"main", "test", "build", "generated", "other"}) {
+            for (NumericMetric ext : extensionsForScope(analysisResults, scope)) {
+                locByExtension.merge(ext.getName(), ext.getValue().intValue(), Integer::sum);
+            }
+        }
+        List<NumericMetric> result = new ArrayList<>();
+        locByExtension.forEach((name, loc) -> result.add(new NumericMetric(name, loc)));
+        result.sort((a, b) -> b.getValue().intValue() - a.getValue().intValue());
+        return result;
+    }
+
     public static String getDetailsIcon() {
         return getIconSvg("details", 22);
     }
-
 
     private static void summarize(RichTextReport indexReport, CodeAnalysisResults analysisResults) {
         new SummaryUtils().summarize(analysisResults, indexReport);
@@ -1005,19 +415,20 @@ public class ReportFileExporter {
     private static void appendLinks(RichTextReport report, CodeAnalysisResults analysisResults) {
         List<Link> links = analysisResults.getCodeConfiguration().getMetadata().getLinks();
         if (links.size() > 0) {
-            report.startDiv("font-size: 80%; margin-top: 0px; margin-bottom: 12px; margin-left: 2px;");
+            report.startDiv("font-size: 70%; margin-top: 0px; margin-bottom: 14px; margin-top: -2px; margin-left: 0;");
             links.forEach(link -> {
                 if (links.indexOf(link) > 0) {
                     report.addHtmlContent(" | ");
                 }
-                report.addNewTabLink(link.getLabel() + "&nbsp;" + OPEN_IN_NEW_TAB_SVG_ICON_SMALL, link.getHref());
+                report.startDiv("display: inline-block; padding: 4px 6px; border-radius: 999px; background-color: var(--sk-surface-3, #f4f4f4);");
+                report.addNewTabLink(link.getLabel() + "&nbsp;" + OPEN_IN_NEW_TAB_SVG_ICON_EXTRA_SMALL, link.getHref());
+                report.endDiv();
             });
             report.endDiv();
         }
     }
 
-
-    private static File getHtmlReportsFolder(File reportsFolder) {
+    static File getHtmlReportsFolder(File reportsFolder) {
         File htmlExportFolder = new File(reportsFolder, htmlReportsSubFolder);
         htmlExportFolder.mkdirs();
         return htmlExportFolder;
@@ -1028,43 +439,74 @@ public class ReportFileExporter {
     }
 
     public static String getIconSvg(String icon, int size) {
-        String svg = HtmlTemplateUtils.getResource("/icons/" + icon + ".svg");
+        String svg = ReportTheme.adaptiveIcon(HtmlTemplateUtils.getResource("/icons/" + icon + ".svg"));
         svg = svg.replaceAll("height='.*?'", "height='" + size + "px'");
         svg = svg.replaceAll("width='.*?'", "width='" + size + "px'");
         return svg;
     }
 
-    private static void addReportFragment(File reportsFolder, RichTextReport indexReport, String[] report) {
-        String reportFileName = report[0];
-        String reportTitle = report[1];
-        File reportFile = new File(reportsFolder, reportFileName);
-        boolean showReport = reportFile.exists() && StringUtils.isNotBlank(reportFileName);
+    /**
+     * The configured custom tabs, without one that embeds the sokrates-skills' standalone explorer
+     * (ai-insights/index.html, which the skills used to suggest adding) when the report shows the AI
+     * findings itself: that page has its own sidebar, so it would repeat the AI Insights items as a second menu.
+     */
+    static List<CustomTab> getCustomTabs(CodeAnalysisResults analysisResults, AiInsightsExplorerGenerator aiInsights) {
+        List<CustomTab> tabs = new ArrayList<>();
+        CodeConfiguration configuration = analysisResults.getCodeConfiguration();
+        if (configuration != null && configuration.getCustomTabs() != null) {
+            configuration.getCustomTabs().stream().filter(tab -> tab != null && tab.isValid())
+                    .filter(tab -> aiInsights == null || aiInsights.isEmpty() || !embedsStandaloneAiExplorer(tab))
+                    .forEach(tabs::add);
+        }
+        return tabs;
+    }
 
-        if (showReport) {
-            indexReport.addHtmlContent("<a target='_blank' style='text-decoration: none' href=\"" + reportFileName + "\">");
-            indexReport.addHtmlContent("<div class='group' style='border-radius: 8px; padding: 0px 20px 5px 20px; margin: 10px; width: 130px; height: 175px; text-align: center; display: inline-block; vertical-align: top'>");
-        } else {
-            indexReport.addHtmlContent("<div class='group' style='border-radius: 8px; padding: 0px 20px 5px 20px; margin: 10px; width: 130px; height: 175px; text-align: center; display: inline-block; vertical-align: top; opacity: 0.4'>");
-        }
+    static boolean embedsStandaloneAiExplorer(CustomTab tab) {
+        String link = tab.getIframeLink() == null ? "" : tab.getIframeLink().trim().split("[?#]")[0];
+        return link.equals(AiInsightsExplorerGenerator.INSIGHTS_FOLDER + "/index.html")
+                || link.endsWith("/" + AiInsightsExplorerGenerator.INSIGHTS_FOLDER + "/index.html");
+    }
 
-        indexReport.startDiv("padding: 20px;");
-        if (StringUtils.isNotBlank(report[2])) {
-            indexReport.addHtmlContent(getIconSvg(report[2]));
-        } else {
-            indexReport.addHtmlContent(ReportConstants.REPORT_SVG_ICON);
+    static String customTabId(int index) {
+        // Ids must not clash with the built-in tab ids (overview, quality, commits, files, ...)
+        return "custom-tab-" + (index + 1);
+    }
+
+    /**
+     * The custom tab's iframe link for "Open in new tab": http(s) or relative links only (the link comes
+     * from the configuration; a javascript: or data: URL gets no link). Null when not safe or blank.
+     */
+    static String customTabLink(String iframeLink) {
+        if (StringUtils.isBlank(iframeLink)) {
+            return null;
         }
-        indexReport.endDiv();
-        if (showReport) {
-            indexReport.startDiv("color:blue; ");
-            indexReport.addHtmlContent("<b>" + reportTitle + "</b>");
-            indexReport.endDiv();
-            indexReport.addHtmlContent("</a>");
-        } else {
-            indexReport.startDiv("");
-            indexReport.addHtmlContent("<b>" + reportTitle + "</b>");
-            indexReport.endDiv();
+        String link = iframeLink.trim();
+        String scheme = link.matches("^[A-Za-z][A-Za-z0-9+.-]*:.*") ? link.substring(0, link.indexOf(':')).toLowerCase() : "";
+        return scheme.isEmpty() || scheme.equals("http") || scheme.equals("https") ? link : null;
+    }
+
+    // "Embedded from <host>" for an absolute link, "Embedded page" otherwise.
+    static String customTabSubtitle(String link) {
+        if (link != null) {
+            try {
+                String host = new java.net.URI(link).getHost();
+                if (StringUtils.isNotBlank(host)) {
+                    return "Embedded from " + host;
+                }
+            } catch (java.net.URISyntaxException e) {
+                // not a parsable URI: fall through to the generic subtitle
+            }
         }
-        indexReport.endDiv();
+        return "Embedded page";
+    }
+
+    static String customTabIframe(CustomTab tab) {
+        String link = customTabLink(tab.getIframeLink());
+        if (link == null) {
+            // Same rule as the "Open in new tab" link: a javascript: or data: URL is not embedded.
+            return "<p style='color: var(--sk-text-muted); margin: 20px'>This tab's link is not an http(s) or relative URL, so it is not embedded.</p>";
+        }
+        return "<iframe src='" + HtmlEscapeUtils.escape(link) + "' style='width: 100%; border: none; height: calc(100vh - 220px); overflow: hidden;'></iframe>";
     }
 
     private static void addExplorerFragment(RichTextReport indexReport, String explorer[]) {
@@ -1078,7 +520,7 @@ public class ReportFileExporter {
         indexReport.addHtmlContent(ReportConstants.REPORT_SVG_ICON);
         indexReport.endDiv();
 
-        indexReport.startDiv("font-size:100%; color:blue; ");
+        indexReport.startDiv("font-size:100%; color: var(--sk-link, blue); ");
         indexReport.addHtmlContent("<b><a style='text-decoration: none' href=\"../explorers/" + explorer[0] + "\">" + explorer[1] + "</a></b>");
         indexReport.endDiv();
 
@@ -1090,106 +532,166 @@ public class ReportFileExporter {
         indexReport.addHtmlContent("</div>");
     }
 
+    /** What the overview can link to: the flags the report list depends on. */
+    private static final class ReportAvailability {
+        final boolean mainExists, history, duplication, dependencies, concerns, controls, units, findings;
+
+        ReportAvailability(CodeAnalysisResults analysisResults, File sokratesConfigFolder) {
+            CodeConfiguration config = analysisResults.getCodeConfiguration();
+            mainExists = analysisResults.getMainAspectAnalysisResults().getFilesCount() > 0;
+            history = mainExists && config.getFileHistoryAnalysis().filesHistoryImportPathExists(sokratesConfigFolder);
+            duplication = mainExists && !analysisResults.skipDuplicationAnalysis();
+            dependencies = mainExists && !config.getAnalysis().isSkipDependencies();
+            concerns = mainExists && config.countAllConcernsDefinitions() > 1;
+            controls = mainExists && config.getGoalsAndControls().size() > 0;
+            units = mainExists && analysisResults.getUnitsAnalysisResults().getTotalNumberOfUnits() > 0;
+            File findingsFile = CodeConfigurationUtils.getDefaultSokratesFindingsFile(sokratesConfigFolder);
+            findings = findingsFile.exists() && FileUtils.sizeOf(findingsFile) > 10;
+        }
+    }
+
+    /** A report link: file (blank = not available, shown greyed), label, icon, and when it is listed. */
+    private static final class ReportEntry {
+        final String file, label, icon;
+        final Predicate<ReportAvailability> when;
+
+        ReportEntry(String file, String label, String icon, Predicate<ReportAvailability> when) {
+            this.file = file;
+            this.label = label;
+            this.icon = icon;
+            this.when = when;
+        }
+    }
+
+    // The available reports, in display order, followed by the greyed placeholders of what is not available.
+    private static final List<ReportEntry> REPORT_ENTRIES = Arrays.asList(
+            new ReportEntry("SourceCodeOverview.html", "Code Volume", "codebase", a -> true),
+            new ReportEntry("Duplication.html", "Duplication", "duplication", a -> a.duplication),
+            new ReportEntry("FileSize.html", "File Size", "file_size", a -> a.mainExists),
+            new ReportEntry("FileComplexity.html", "File Complexity*", "conditional", a -> a.units),
+            new ReportEntry("FileAge.html", "File Age & Freshness", "file_history", a -> a.history),
+            new ReportEntry("FileChurn.html", "File Churn", "change", a -> a.history),
+            new ReportEntry("Commits.html", "Commits", "commits", a -> a.history),
+            new ReportEntry("Contributors.html", "Contributors", "contributors", a -> a.history),
+            new ReportEntry("UnitSize.html", "Unit Size*", "unit_size", a -> a.units),
+            new ReportEntry("ConditionalComplexity.html", "Unit Complexity*", "conditional", a -> a.units),
+            new ReportEntry("Components.html", "Logical Components", "code_organization", a -> a.mainExists),
+            new ReportEntry("FileTemporalDependencies.html", "Temporal Dependencies", "temporal_dependency", a -> a.mainExists && a.history),
+            new ReportEntry("ComponentsAndDependencies.html", "Static Dependencies*", "dependencies", a -> a.mainExists && a.dependencies),
+            new ReportEntry("FeaturesOfInterest.html", "Features of Interest", "cross_cutting_concerns", a -> a.concerns),
+            new ReportEntry("Controls.html", "Goals & Controls", "goal", a -> a.controls),
+            new ReportEntry("Metrics.html", "All Metrics", "metrics", a -> true),
+            new ReportEntry("", "Components and Dependencies", "dependencies", a -> !a.mainExists && a.dependencies),
+            new ReportEntry("", "Components", "dependencies", a -> !a.mainExists && !a.dependencies),
+            new ReportEntry("", "Duplication", "duplication", a -> !a.duplication),
+            new ReportEntry("", "File Size", "file_size", a -> !a.mainExists),
+            new ReportEntry("", "File Complexity", "conditional", a -> !a.units),
+            new ReportEntry("", "File Age & Freshness", "file_history", a -> !a.history),
+            new ReportEntry("", "File Churn", "change", a -> !a.history),
+            new ReportEntry("", "Temporal Dependencies", "temporal_dependency", a -> !a.history),
+            new ReportEntry("", "Contributors", "contributors", a -> !a.history),
+            new ReportEntry("", "Unit Size", "unit_size", a -> !a.units),
+            new ReportEntry("", "Conditional Complexity", "conditional", a -> !a.units),
+            new ReportEntry("ComponentsAndDependencies.html", "Component Dependencies*", "dependencies", a -> !a.dependencies),
+            new ReportEntry("", "Features of Interest", "cross_cutting_concerns", a -> !a.concerns),
+            new ReportEntry("", "Goals & Controls", "goal", a -> !a.controls));
+
+    // Sidebar icon (ReportNavigation) per analysis report.
+    private static final Map<String, String> NAVIGATION_ICONS = new HashMap<>();
+
+    static {
+        NAVIGATION_ICONS.put("SourceCodeOverview.html", "code");
+        NAVIGATION_ICONS.put("Components.html", "components");
+        NAVIGATION_ICONS.put("ComponentsAndDependencies.html", "dependencies");
+        NAVIGATION_ICONS.put("FileTemporalDependencies.html", "temporal");
+        NAVIGATION_ICONS.put("Duplication.html", "duplication");
+        NAVIGATION_ICONS.put("FileSize.html", "size");
+        NAVIGATION_ICONS.put("FileComplexity.html", "file_complexity");
+        NAVIGATION_ICONS.put("FileAge.html", "age");
+        NAVIGATION_ICONS.put("FileChurn.html", "churn");
+        NAVIGATION_ICONS.put("Commits.html", "commits");
+        NAVIGATION_ICONS.put("Contributors.html", "contributors");
+        NAVIGATION_ICONS.put("UnitSize.html", "units");
+        NAVIGATION_ICONS.put("ConditionalComplexity.html", "complexity");
+        NAVIGATION_ICONS.put("FeaturesOfInterest.html", "features");
+        NAVIGATION_ICONS.put("Metrics.html", "metrics");
+        NAVIGATION_ICONS.put("Controls.html", "controls");
+        NAVIGATION_ICONS.put("Notes.html", "notes");
+    }
+
+    /**
+     * The sidebar shared by the index and every analysis report of a repository: the index tabs (as
+     * <code>index.html#&lt;tab&gt;</code> links, routed in-page on the index; the file, unit and commit
+     * explorers in their own "Explorers" group, Visuals and Data in a closing "Index" group) and the available analysis
+     * reports, in the order of the Analyses tab. A report page's active id is its file name.
+     */
+    public static ReportNavigation repositoryNavigation(CodeAnalysisResults analysisResults, File sokratesConfigFolder) {
+        return repositoryNavigation(analysisResults, sokratesConfigFolder, null);
+    }
+
+    /** As above, plus the AI Insights groups (after the analyses, before Index) when aiInsights has findings. */
+    public static ReportNavigation repositoryNavigation(CodeAnalysisResults analysisResults, File sokratesConfigFolder,
+                                                       AiInsightsExplorerGenerator aiInsights) {
+        Metadata metadata = analysisResults.getCodeConfiguration().getMetadata();
+        ReportNavigation navigation = new ReportNavigation(metadata.getName(), "index.html#overview");
+        String generatedOn = new SimpleDateFormat("yyyy-MM-dd").format(new Date());
+        String referenceDate = new SimpleDateFormat("yyyy-MM-dd").format(DateUtils.getCalendar().getTime());
+        navigation.setGeneratedOn(generatedOn, referenceDate.equals(generatedOn) ? null : referenceDate);
+        ReportNavigation.Group report = navigation.addGroup("At a Glance");
+        String overviewSubtitle = StringUtils.isNotBlank(metadata.getDescription())
+                ? metadata.getDescription() : "Size, age and recent activity of the codebase.";
+        report.addTabItem("overview", "At a Glance", "index.html#overview", "overview", overviewSubtitle);
+        // The Overview's header shows the configured name and logo; "At a Glance" and its icon when there are none.
+        navigation.setPageTitle("overview", metadata.getName());
+        navigation.setPageIcon("overview", metadata.getLogoLink());
+        report.addTabItem("structure", "Structure", "index.html#structure", "structure",
+                "The codebase as nested circles: folders and files sized by lines of code, colored by scope or risk.");
+        report.addTabItem("commits", "Activity", "index.html#commits", "activity",
+                "Commits, contributors and code churn over time, per year, month, week and day.");
+        report.addTabItem("highlights", "Highlights", "index.html#highlights", "highlights",
+                "Headline numbers, scores and the files to look at first.");
+        List<CustomTab> customTabs = getCustomTabs(analysisResults, aiInsights);
+        for (int i = 0; i < customTabs.size(); i++) {
+            String link = customTabLink(customTabs.get(i).getIframeLink());
+            report.addTabItem(customTabId(i), customTabs.get(i).getLabel(), "index.html#" + customTabId(i), "custom",
+                    customTabSubtitle(link), link);
+        }
+        ReportNavigation.Group explorers = navigation.addGroup("Explorers");
+        explorers.addTabItem("files", "File Explorer", "index.html#files", "files",
+                "Search, filter and sort all files by size, history and contributors.");
+        explorers.addTabItem("units", "Unit Explorer*", "index.html#units", "units",
+                "Search, filter and sort the units (functions, methods) by size and complexity.");
+        explorers.addTabItem("commits-explorer", "Commit Explorer", "index.html#commits-explorer", "commits",
+                "Browse the commits and see which files each one changed.");
+        explorers.addTabItem("ai-cost", "AI Cost Estimator*", "index.html#ai-cost", "cost",
+                "*An educational tool, not an exact estimate: how AI coding costs build up, and where your levers to control them are.");
+        ReportNavigation.Group analyses = navigation.addGroup("Analyses");
+        analyses.addTabItem("quality", "Analysis Overview", "index.html#quality", "analyses",
+                "A short summary of every analysis, with links to the full reports.");
+        for (String[] entry : getReportsList(analysisResults, sokratesConfigFolder)) {
+            if (StringUtils.isNotBlank(entry[0])) {
+                analyses.addItem(entry[0], entry[1], entry[0], NAVIGATION_ICONS.get(entry[0]));
+            }
+        }
+        if (aiInsights != null) {
+            aiInsights.addNavigation(navigation);
+        }
+        ReportNavigation.Group index = navigation.addGroup("Index");
+        index.addTabItem("visuals", "Visuals", "index.html#visuals", "visuals",
+                "Interactive visualizations of files, components, contributors and dependencies.");
+        index.addTabItem("data", "Data", "index.html#data", "data",
+                "The raw analysis data behind the reports, to download or reuse.");
+        return navigation;
+    }
+
     private static List<String[]> getReportsList(CodeAnalysisResults analysisResults, File sokratesConfigFolder) {
+        ReportAvailability availability = new ReportAvailability(analysisResults, sokratesConfigFolder);
         List<String[]> list = new ArrayList<>();
-
-        CodeConfiguration config = analysisResults.getCodeConfiguration();
-        boolean mainExists = analysisResults.getMainAspectAnalysisResults().getFilesCount() > 0;
-        boolean showHistoryReport = mainExists && config.getFileHistoryAnalysis().filesHistoryImportPathExists(sokratesConfigFolder);
-        boolean showDuplication = mainExists && !analysisResults.skipDuplicationAnalysis();
-        boolean showDependencies = mainExists && !config.getAnalysis().isSkipDependencies();
-        boolean showTrends = mainExists && config.getTrendAnalysis().getReferenceAnalyses(sokratesConfigFolder).size() > 0;
-        boolean showConcerns = mainExists && config.countAllConcernsDefinitions() > 1;
-        boolean showControls = mainExists && config.getGoalsAndControls().size() > 0;
-        boolean showUnits = mainExists && analysisResults.getUnitsAnalysisResults().getTotalNumberOfUnits() > 0;
-
-        File findingsFile = CodeConfigurationUtils.getDefaultSokratesFindingsFile(sokratesConfigFolder);
-
-        boolean showFindings = false;
-
-        if (findingsFile.exists()) {
-            showFindings = FileUtils.sizeOf(findingsFile) > 10;
-        }
-
-        list.add(new String[]{"SourceCodeOverview.html", "Source Code Overview", "codebase"});
-        if (mainExists) {
-            list.add(new String[]{"Components.html", "Components", "code_organization"});
-            if (showDependencies) {
-                list.add(new String[]{"ComponentsAndDependencies.html", "Component Dependencies*", "dependencies"});
-            }
-            if (showHistoryReport) {
-                list.add(new String[]{"FileTemporalDependencies.html", "Temporal Dependencies", "temporal_dependency"});
+        for (ReportEntry entry : REPORT_ENTRIES) {
+            if (entry.when.test(availability)) {
+                list.add(new String[]{entry.file, entry.label, entry.icon});
             }
         }
-
-        if (showDuplication) {
-            list.add(new String[]{"Duplication.html", "Duplication", "duplication"});
-        }
-
-        if (mainExists) {
-            list.add(new String[]{"FileSize.html", "File Size", "file_size"});
-        }
-        if (showHistoryReport) {
-            list.add(new String[]{"FileAge.html", "File Age & Freshness", "file_history"});
-            list.add(new String[]{"FileChangeFrequency.html", "File Change Frequency", "change"});
-            list.add(new String[]{"Commits.html", "Commits", "commits"});
-            list.add(new String[]{"Contributors.html", "Contributors", "contributors"});
-        }
-        if (showUnits) {
-            list.add(new String[]{"UnitSize.html", "Unit Size*", "unit_size"});
-            list.add(new String[]{"ConditionalComplexity.html", "Conditional Complexity*", "conditional"});
-        }
-        if (showConcerns) {
-            list.add(new String[]{"FeaturesOfInterest.html", "Features of Interest", "cross_cutting_concerns"});
-        }
-        list.add(new String[]{"Metrics.html", "All Metrics", "metrics"});
-        if (showTrends) {
-            list.add(new String[]{"Trend.html", "Trend", "trend"});
-        }
-        if (showControls) {
-            list.add(new String[]{"Controls.html", "Goals & Controls", "goal"});
-        }
-
-        if (showFindings) {
-            list.add(new String[]{"Notes.html", "Notes & Findings", "notes"});
-        }
-
-        if (!mainExists) {
-            list.add(new String[]{"", showDependencies ? "Components and Dependencies" : "Components", "dependencies"});
-        }
-        if (!showDuplication) {
-            list.add(new String[]{"", "Duplication", "duplication"});
-        }
-        if (!mainExists) {
-            list.add(new String[]{"", "File Size", "file_size"});
-        }
-        if (!showHistoryReport) {
-            list.add(new String[]{"", "File Age & Freshness", "file_history"});
-            list.add(new String[]{"", "File Change Frequency", "change"});
-            list.add(new String[]{"", "Temporal Dependencies", "temporal_dependency"});
-            list.add(new String[]{"", "Contributors", "contributors"});
-        }
-        if (!showUnits) {
-            list.add(new String[]{"", "Unit Size", "unit_size"});
-            list.add(new String[]{"", "Conditional Complexity", "conditional"});
-        }
-        if (!showDependencies) {
-            list.add(new String[]{"ComponentsAndDependencies.html", "Component Dependencies*", "dependencies"});
-        }
-        if (!showConcerns) {
-            list.add(new String[]{"", "Features of Interest", "cross_cutting_concerns"});
-        }
-        if (!showTrends) {
-            list.add(new String[]{"", "Trend", "trend"});
-        }
-        if (!showControls) {
-            list.add(new String[]{"", "Goals & Controls", "goal"});
-        }
-
-        if (!showFindings) {
-            list.add(new String[]{"", "Notes & Findings", "notes"});
-        }
-
         return list;
     }
 

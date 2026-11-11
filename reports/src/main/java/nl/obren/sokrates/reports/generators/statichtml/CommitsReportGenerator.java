@@ -11,8 +11,7 @@ import nl.obren.sokrates.sourcecode.analysis.results.ContributorsAnalysisResults
 import nl.obren.sokrates.sourcecode.analysis.results.HistoryPerExtension;
 import nl.obren.sokrates.sourcecode.contributors.ContributionTimeSlot;
 import nl.obren.sokrates.sourcecode.filehistory.DateUtils;
-import nl.obren.sokrates.sourcecode.githistory.ContributorPerExtensionStats;
-import org.apache.commons.lang3.tuple.Pair;
+import nl.obren.sokrates.sourcecode.threshold.Thresholds;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -24,19 +23,9 @@ public class CommitsReportGenerator {
     private final CodeAnalysisResults codeAnalysisResults;
     private File reportsFolder;
     private RichTextReport report;
-    private Map<String, List<Pair<String, ContributorPerExtensionStats>>> emailStatsMap = new HashMap<>();
 
     public CommitsReportGenerator(CodeAnalysisResults codeAnalysisResults) {
         this.codeAnalysisResults = codeAnalysisResults;
-        codeAnalysisResults.getContributorsAnalysisResults().getCommitsPerExtensions().forEach(commitsPerExtension -> {
-            commitsPerExtension.getContributorPerExtensionStats().forEach(contributorPerExtensionStats -> {
-                String email = contributorPerExtensionStats.getContributor();
-                if (!emailStatsMap.containsKey(email)) {
-                    emailStatsMap.put(email, new ArrayList<>());
-                }
-                emailStatsMap.get(email).add(Pair.of(commitsPerExtension.getExtension(), contributorPerExtensionStats));
-            });
-        });
     }
 
     public void addContributorsAnalysisToReport(File reportsFolder, RichTextReport report) {
@@ -49,7 +38,7 @@ public class CommitsReportGenerator {
             index[0] += 1;
         });
 
-        report.addParagraph("An overview of commit trends.", "margin-top: 12px; color: grey");
+        report.setDescription("An overview of commit trends.");
 
         report.startTabGroup();
         report.addTab("visuals", "Overview", true);
@@ -73,38 +62,98 @@ public class CommitsReportGenerator {
 
         addZoomableCircleLinks(report);
 
+        // Scope selector (one tab per present scope, then "All" last) above the per
+        // Year/Month/Week/Day diagrams. A scope tab appears only when the analysis carried that
+        // scope's time slots (older analyses have none, so only "All" shows). Main is the
+        // default-visible tab (first entry); "All" goes last.
+        java.util.LinkedHashMap<String, Runnable> scopePanels = new java.util.LinkedHashMap<>();
+        ContributorsReportUtils.SCOPE_LABELS.forEach((scope, label) -> {
+            List<ContributionTimeSlot> perYear = analysis.getContributorsPerYearByScope().get(scope);
+            if (perYear != null && !perYear.isEmpty()) {
+                ContributorsReportUtils.ActivitySummary summary = ContributorsReportUtils.buildActivitySummary(analysis, scope,
+                        ContributorsReportUtils.ACTIVITY_WINDOW_DAYS, ContributorsReportUtils.ACTIVITY_WINDOW_DAYS.length);
+                scopePanels.put(label, () -> addActivityDiagrams(report, analysis, summary,
+                        perYear,
+                        analysis.getContributorsPerMonthByScope().getOrDefault(scope, new java.util.ArrayList<>()),
+                        analysis.getContributorsPerWeekByScope().getOrDefault(scope, new java.util.ArrayList<>()),
+                        analysis.getContributorsPerDayByScope().getOrDefault(scope, new java.util.ArrayList<>())));
+            }
+        });
+        ContributorsReportUtils.ActivitySummary allSummary = ContributorsReportUtils.buildActivitySummary(analysis, null,
+                ContributorsReportUtils.ACTIVITY_WINDOW_DAYS, ContributorsReportUtils.ACTIVITY_WINDOW_DAYS.length);
+        scopePanels.put("All", () -> addActivityDiagrams(report, analysis, allSummary,
+                analysis.getContributorsPerYear(), analysis.getContributorsPerMonth(),
+                analysis.getContributorsPerWeek(), analysis.getContributorsPerDay()));
+        ContributorsReportUtils.addScopeToggle(report, "commits_activity_scope", scopePanels);
+
+        report.endTabContentSection();
+    }
+
+    // Renders the Per Year / Month / Week / Day activity diagrams for one scope's time-slot lists (all
+    // flat, as on the Commits report). The per-repository Overview Activity tab reuses the static pieces
+    // below to show Per Year inline and Per Month/Week/Day inside a details block.
+    private void addActivityDiagrams(RichTextReport report, ContributorsAnalysisResults analysis,
+                                     ContributorsReportUtils.ActivitySummary summary,
+                                     List<ContributionTimeSlot> perYear, List<ContributionTimeSlot> perMonth,
+                                     List<ContributionTimeSlot> perWeek, List<ContributionTimeSlot> perDay) {
+        addPerYearDiagram(report, analysis, perYear, summary);
+        addPerMonthWeekDayDiagrams(report, analysis, perMonth, perWeek, perDay);
+    }
+
+    public static void addPerYearDiagram(RichTextReport report, ContributorsAnalysisResults analysis,
+                                         List<ContributionTimeSlot> perYear,
+                                         ContributorsReportUtils.ActivitySummary summary) {
         report.addLevel2Header("Per Year", "margin-bottom: 0;");
         report.addParagraph("Latest commit date: " + analysis.getLatestCommitDate(), "color: grey; font-size: 80%; margin-top: 0;");
-        ContributorsReportUtils.addContributorsPerTimeSlot(report, analysis.getContributorsPerYear(), 20, true, true, 4, false);
+        ContributorsReportUtils.addContributorsPerTimeSlot(report, perYear, 20, true, true, 4, false, summary);
+    }
+
+    public static void addPerMonthWeekDayDiagrams(RichTextReport report, ContributorsAnalysisResults analysis,
+                                                  List<ContributionTimeSlot> perMonth, List<ContributionTimeSlot> perWeek,
+                                                  List<ContributionTimeSlot> perDay) {
+        // No summary here: the window totals/columns are only shown on the Per Year chart.
         report.addLevel2Header("Per Month", "margin-bottom: 0;");
         report.addParagraph("Latest commit date: " + analysis.getLatestCommitDate(), "color: grey; font-size: 80%; margin-top: 0;");
-        List<ContributionTimeSlot> contributorsPerMonth = getContributionMonths(analysis, 60);
-        ContributorsReportUtils.addContributorsPerTimeSlot(report, contributorsPerMonth, 60, true, true, 2, false);
+        addPerMonthDiagram(report, analysis, perMonth);
         report.addLevel2Header("Per Week", "margin-bottom: 0;");
         report.addParagraph("Latest commit date: " + analysis.getLatestCommitDate(), "color: grey; font-size: 80%; margin-top: 0;");
-        int pastWeeks = 104;
-        List<ContributionTimeSlot> contributorsPerWeek = getContributionWeeks(analysis, pastWeeks);
-        ContributorsReportUtils.addContributorsPerTimeSlot(report, contributorsPerWeek, pastWeeks, true, true, 1, false);
+        addPerWeekDiagram(report, analysis, perWeek);
         report.addLevel2Header("Per Day", "margin-bottom: 0;");
         report.addParagraph("Latest commit date: " + analysis.getLatestCommitDate(), "color: grey; font-size: 80%; margin-top: 0;");
-        int pastDays = 365;
-        List<ContributionTimeSlot> contributorsPerDay = getContributionDays(analysis, pastDays);
-        ContributorsReportUtils.addContributorsPerTimeSlot(report, contributorsPerDay, pastDays, true, true, 1, false);
-        report.endTabContentSection();
+        addPerDayDiagram(report, analysis, perDay);
+    }
+
+    public static final int PAST_MONTHS = 60;
+    public static final int PAST_WEEKS = 104;
+    public static final int PAST_DAYS = 365;
+
+    /** The per-month activity chart (past {@link #PAST_MONTHS} months), without a heading. */
+    public static void addPerMonthDiagram(RichTextReport report, ContributorsAnalysisResults analysis, List<ContributionTimeSlot> perMonth) {
+        ContributorsReportUtils.addContributorsPerTimeSlot(report, getContributionMonths(analysis, perMonth, PAST_MONTHS), PAST_MONTHS, true, true, 2, false);
+    }
+
+    /** The per-week activity chart (past {@link #PAST_WEEKS} weeks), without a heading. */
+    public static void addPerWeekDiagram(RichTextReport report, ContributorsAnalysisResults analysis, List<ContributionTimeSlot> perWeek) {
+        ContributorsReportUtils.addContributorsPerTimeSlot(report, getContributionWeeks(analysis, perWeek, PAST_WEEKS), PAST_WEEKS, true, true, 1, false);
+    }
+
+    /** The per-day activity chart (past {@link #PAST_DAYS} days), without a heading. */
+    public static void addPerDayDiagram(RichTextReport report, ContributorsAnalysisResults analysis, List<ContributionTimeSlot> perDay) {
+        ContributorsReportUtils.addContributorsPerTimeSlot(report, getContributionDays(analysis, perDay, PAST_DAYS), PAST_DAYS, true, true, 1, false);
     }
 
     private void addZoomableCircleLinks(RichTextReport report) {
         report.startDiv("");
         report.addHtmlContent("Zoomable circles (commit counts per file): ");
-        report.addNewTabLink("30 days", "visuals/zoomable_circles_commits_30_main.html");
+        report.addNewTabLink("30 days", "visuals/zoomable_circles.html#commits_30_main");
         report.addHtmlContent(" | ");
-        report.addNewTabLink("90 days", "visuals/zoomable_circles_commits_90_main.html");
+        report.addNewTabLink("90 days", "visuals/zoomable_circles.html#commits_90_main");
         report.addHtmlContent(" | ");
-        report.addNewTabLink("6 months", "visuals/zoomable_circles_commits_180_main.html");
+        report.addNewTabLink("6 months", "visuals/zoomable_circles.html#commits_180_main");
         report.addHtmlContent(" | ");
-        report.addNewTabLink("past year", "visuals/zoomable_circles_commits_365_main.html");
+        report.addNewTabLink("past year", "visuals/zoomable_circles.html#commits_365_main");
 //        report.addHtmlContent(" | ");
-//        report.addNewTabLink("all time", "visuals/zoomable_circles_commits_main.html");
+//        report.addNewTabLink("all time", "visuals/zoomable_circles.html#commits_main");
         report.addContentInDiv("Files with only one commit are shown as grey.", "color: grey; font-size: 80%");
         report.endDiv();
     }
@@ -113,7 +162,7 @@ public class CommitsReportGenerator {
         report.startTabContentSection("data", false);
         report.startUnorderedList();
         report.startListItem();
-        report.addNewTabLink("Contributors' details...", "../data/text/contributors.txt");
+        report.addHtmlContent("<a href=\"#\" onclick=\"return downloadDataFile('text/contributors.txt')\">" + "Contributors' details..." + "</a>");
         report.endListItem();
         report.endUnorderedList();
         report.endTabContentSection();
@@ -180,7 +229,10 @@ public class CommitsReportGenerator {
     }
 
     private List<ContributionTimeSlot> getContributionWeeks(ContributorsAnalysisResults analysis, int pastWeeks) {
-        List<ContributionTimeSlot> activeWeeks = analysis.getContributorsPerWeek();
+        return getContributionWeeks(analysis, analysis.getContributorsPerWeek(), pastWeeks);
+    }
+
+    private static List<ContributionTimeSlot> getContributionWeeks(ContributorsAnalysisResults analysis, List<ContributionTimeSlot> activeWeeks, int pastWeeks) {
         Map<String, ContributionTimeSlot> map = new HashMap<>();
         activeWeeks.forEach(week -> map.put(week.getTimeSlot(), week));
 
@@ -191,14 +243,17 @@ public class CommitsReportGenerator {
             if (contributionTimeSlot != null) {
                 contributorsPerWeek.add(contributionTimeSlot);
             } else {
-                contributorsPerWeek.add(new ContributionTimeSlot(pastDate));
+                contributorsPerWeek.add(new ContributionTimeSlot(pastDate, Thresholds.defaultCommitFilesCountThresholds()));
             }
         });
         return contributorsPerWeek;
     }
 
     private List<ContributionTimeSlot> getContributionMonths(ContributorsAnalysisResults analysis, int pastMonths) {
-        List<ContributionTimeSlot> activeMonth = analysis.getContributorsPerMonth();
+        return getContributionMonths(analysis, analysis.getContributorsPerMonth(), pastMonths);
+    }
+
+    private static List<ContributionTimeSlot> getContributionMonths(ContributorsAnalysisResults analysis, List<ContributionTimeSlot> activeMonth, int pastMonths) {
         Map<String, ContributionTimeSlot> map = new HashMap<>();
         activeMonth.forEach(month -> map.put(month.getTimeSlot(), month));
 
@@ -209,14 +264,17 @@ public class CommitsReportGenerator {
             if (contributionTimeSlot != null) {
                 contributorsPerMonth.add(contributionTimeSlot);
             } else {
-                contributorsPerMonth.add(new ContributionTimeSlot(pastDate));
+                contributorsPerMonth.add(new ContributionTimeSlot(pastDate, Thresholds.defaultCommitFilesCountThresholds()));
             }
         });
         return contributorsPerMonth;
     }
 
     private List<ContributionTimeSlot> getContributionDays(ContributorsAnalysisResults analysis, int pastDays) {
-        List<ContributionTimeSlot> activeDays = analysis.getContributorsPerDay();
+        return getContributionDays(analysis, analysis.getContributorsPerDay(), pastDays);
+    }
+
+    private static List<ContributionTimeSlot> getContributionDays(ContributorsAnalysisResults analysis, List<ContributionTimeSlot> activeDays, int pastDays) {
         Map<String, ContributionTimeSlot> map = new HashMap<>();
         activeDays.forEach(activeDay -> map.put(activeDay.getTimeSlot(), activeDay));
 
@@ -227,7 +285,7 @@ public class CommitsReportGenerator {
             if (contributionTimeSlot != null) {
                 contributorsPerDay.add(contributionTimeSlot);
             } else {
-                contributorsPerDay.add(new ContributionTimeSlot(pastDate));
+                contributorsPerDay.add(new ContributionTimeSlot(pastDate, Thresholds.defaultCommitFilesCountThresholds()));
             }
         });
         return contributorsPerDay;

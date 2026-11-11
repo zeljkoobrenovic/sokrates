@@ -8,12 +8,13 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import nl.obren.sokrates.sourcecode.IgnoredFilesGroup;
 import nl.obren.sokrates.sourcecode.Metadata;
 import nl.obren.sokrates.sourcecode.SourceFile;
+import nl.obren.sokrates.sourcecode.SymbolicLink;
 import nl.obren.sokrates.sourcecode.core.AnalysisConfig;
 import nl.obren.sokrates.sourcecode.core.CodeConfiguration;
 import nl.obren.sokrates.sourcecode.core.FoundTag;
-import nl.obren.sokrates.sourcecode.core.TagRule;
 import nl.obren.sokrates.sourcecode.dependencies.Dependency;
 import nl.obren.sokrates.sourcecode.metrics.MetricsList;
+import nl.obren.sokrates.sourcecode.analysis.scores.MaintainabilityScores;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -52,6 +53,7 @@ public class CodeAnalysisResults {
 
     private DuplicationAnalysisResults duplicationAnalysisResults = new DuplicationAnalysisResults();
     private ContributorsAnalysisResults contributorsAnalysisResults = new ContributorsAnalysisResults();
+    private MaintainabilityScores maintainabilityScores;
 
     private int numberOfExcludedFiles;
     private Map<String, Integer> excludedExtensions;
@@ -60,6 +62,11 @@ public class CodeAnalysisResults {
     private List<SourceFile> filesExcludedByExtension;
     @JsonIgnore
     private Map<String, IgnoredFilesGroup> ignoredFilesGroups;
+    // Not serialized, like the two fields above: the reports read it from this object in the same
+    // run that produced it, and a list of every link in a big checkout would only bloat
+    // analysisResults.json for the landscape, which does not use it.
+    @JsonIgnore
+    private List<SymbolicLink> skippedSymbolicLinks = new ArrayList<>();
 
     public Metadata getMetadata() {
         return metadata;
@@ -76,7 +83,6 @@ public class CodeAnalysisResults {
     public void setMetricsList(MetricsList metricsList) {
         this.metricsList = metricsList;
     }
-
 
     @JsonIgnore
     public StringBuffer getTextSummary() {
@@ -278,12 +284,31 @@ public class CodeAnalysisResults {
         return ignoredFilesGroups;
     }
 
+    @JsonIgnore
+    public void setSkippedSymbolicLinks(List<SymbolicLink> skippedSymbolicLinks) {
+        this.skippedSymbolicLinks = skippedSymbolicLinks;
+    }
+
+    @JsonIgnore
+    public List<SymbolicLink> getSkippedSymbolicLinks() {
+        return skippedSymbolicLinks;
+    }
+
     public ContributorsAnalysisResults getContributorsAnalysisResults() {
         return contributorsAnalysisResults;
     }
 
     public void setContributorsAnalysisResults(ContributorsAnalysisResults contributorsAnalysisResults) {
         this.contributorsAnalysisResults = contributorsAnalysisResults;
+    }
+
+    /** The Human and AI maintainability scores, or null (disabled, no main code, or an older analysis). */
+    public MaintainabilityScores getMaintainabilityScores() {
+        return maintainabilityScores;
+    }
+
+    public void setMaintainabilityScores(MaintainabilityScores maintainabilityScores) {
+        this.maintainabilityScores = maintainabilityScores;
     }
 
     public List<FoundTag> getFoundTags() {

@@ -13,7 +13,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class DuplicationInstance {
-    private static final int MAX_NUMBER_OF_SAMPLES_FOR_DISPLAY = 10;
+    public static final int MAX_NUMBER_OF_SAMPLES_FOR_DISPLAY = 10;
     private String displayContent = "";
     private List<DuplicatedFileBlock> duplicatedFileBlocks = new ArrayList<>();
     private int blockSize;
@@ -119,8 +119,10 @@ public class DuplicationInstance {
         return stringBuilder.toString();
     }
 
+    // Plain-text file names (the HTML report builds its own, escaped, linked version in
+    // DuplicationReportGenerator.getFilesDisplayHtml).
     @JsonIgnore
-    public String getFilesDisplayString(boolean linkToFiles) {
+    public String getFilesDisplayString() {
         StringBuilder stringBuilder = new StringBuilder();
         int i[] = {0};
         duplicatedFileBlocks.forEach(block -> {
@@ -131,17 +133,7 @@ public class DuplicationInstance {
                 if (!stringBuilder.toString().isEmpty()) {
                     stringBuilder.append("\n");
                 }
-                String fileName = block.getSourceFile().getFile().getName();
-                String name = StringUtils.abbreviate(fileName, 40);
-                if (linkToFiles) {
-                    stringBuilder.append("<a href='");
-                    stringBuilder.append("../src/main/" + block.getSourceFile().getRelativePath() + ".html");
-                    stringBuilder.append("' target='_blank'>");
-                    stringBuilder.append(name);
-                    stringBuilder.append("</a>");
-                } else {
-                    stringBuilder.append("<span title='" + fileName + "'>" + name + "</span>");
-                }
+                stringBuilder.append(StringUtils.abbreviate(block.getSourceFile().getFile().getName(), 40));
             }
             i[0]++;
         });

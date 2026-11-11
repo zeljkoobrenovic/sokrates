@@ -8,12 +8,10 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import nl.obren.sokrates.sourcecode.ExtensionGroupExtractor;
 import nl.obren.sokrates.sourcecode.SourceFile;
 import nl.obren.sokrates.sourcecode.SourceFileFilter;
-import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import java.io.File;
 import java.util.*;
 
 public class SourceCodeAspectUtils {
@@ -69,9 +67,7 @@ public class SourceCodeAspectUtils {
             }
             aspectName = StringUtils.defaultIfBlank(aspectName, "ROOT");
             NamedSourceCodeAspect aspect = new NamedSourceCodeAspect(aspectName);
-            String pathPattern = srcRoot + "/" + path + "/" + ".*";
-            pathPattern = pathPattern.replace("//", "/");
-            aspect.getSourceFileFilters().add(new SourceFileFilter(pathPattern, ""));
+            aspect.getSourceFileFilters().add(new SourceFileFilter(folderPathPattern(path), ""));
 
             paths.forEach(otherPath -> {
                 if (!path.equals(otherPath)) {
@@ -88,23 +84,27 @@ public class SourceCodeAspectUtils {
     private static void addExclusiveFilterIfNeeded(String path, String otherPath, String srcRoot, NamedSourceCodeAspect
             aspect) {
         if (otherPath.startsWith(path)) {
-            String otherPathPattern = srcRoot + "/" + otherPath + "/" + ".*";
-            SourceFileFilter otherSourceFileFilter = new SourceFileFilter(otherPathPattern, "");
+            SourceFileFilter otherSourceFileFilter = new SourceFileFilter(folderPathPattern(otherPath), "");
             otherSourceFileFilter.setException(true);
             aspect.getSourceFileFilters().add(otherSourceFileFilter);
         }
     }
 
-    public static List<String> getUniquePaths(List<SourceFile> sourceFiles, int depth) {
-        List<String> paths = new ArrayList<>();
-        sourceFiles.forEach(sourceFile -> {
-            String componentName = getFolderBasedComponentName(sourceFile, depth);
+    /**
+     * The filter of a folder-based component: filters match the path below the source root with a leading
+     * separator ({@link SourceFileFilter#matchingPath}), so the pattern starts at the folder — the source
+     * root (an unescaped, possibly absolute path) is no longer part of it.
+     */
+    static String folderPathPattern(String folderPath) {
+        return ("/" + folderPath + "/.*").replace("//", "/");
+    }
 
-            if (!paths.contains(componentName)) {
-                paths.add(componentName);
-            }
-        });
-        return paths;
+    public static List<String> getUniquePaths(List<SourceFile> sourceFiles, int depth) {
+        // LinkedHashSet preserves first-seen order (as the previous list did) with O(1) dedup
+        // instead of an O(n) contains() scan per file.
+        Set<String> paths = new LinkedHashSet<>();
+        sourceFiles.forEach(sourceFile -> paths.add(getFolderBasedComponentName(sourceFile, depth)));
+        return new ArrayList<>(paths);
     }
 
     public static String getFolderBasedComponentName(SourceFile sourceFile, int depth) {
@@ -154,6 +154,13 @@ public class SourceCodeAspectUtils {
         return commonPrefix;
     }
 
+    // Strips the legacy "  *." decoration older analyses wrote into per-extension metric names
+    // (e.g. "  *.java" -> "java"), so data produced before and after that change compares equal.
+    public static String extensionName(String perExtensionName) {
+        return perExtensionName == null ? "" : perExtensionName.replace("*.", "").trim().toLowerCase();
+    }
+
+    // One aspect per (lower-cased) file extension, named by the bare extension ("java", "ts"), sorted by LOC desc.
     @JsonIgnore
     public static List<NamedSourceCodeAspect> getAspectsPerExtensions(NamedSourceCodeAspect aspect) {
         Map<String, NamedSourceCodeAspect> map = new HashMap<>();
@@ -162,7 +169,7 @@ public class SourceCodeAspectUtils {
             String extension = ExtensionGroupExtractor.getExtension(sourceFile.getFile().getPath()).toLowerCase();
             NamedSourceCodeAspect extensionAspect = map.get(extension);
             if (extensionAspect == null) {
-                extensionAspect = new NamedSourceCodeAspect("  *." + extension);
+                extensionAspect = new NamedSourceCodeAspect(extension);
                 map.put(extension, extensionAspect);
             }
             extensionAspect.getSourceFiles().add(sourceFile);

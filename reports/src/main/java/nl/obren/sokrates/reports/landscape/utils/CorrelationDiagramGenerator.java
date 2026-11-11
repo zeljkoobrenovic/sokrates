@@ -1,6 +1,7 @@
 package nl.obren.sokrates.reports.landscape.utils;
 
 import nl.obren.sokrates.reports.core.RichTextReport;
+import nl.obren.sokrates.reports.utils.HtmlEscapeUtils;
 import nl.obren.sokrates.reports.utils.ToStringFunction;
 import org.apache.commons.math3.stat.descriptive.DescriptiveStatistics;
 
@@ -17,10 +18,18 @@ public class CorrelationDiagramGenerator<T> {
     private int r = 9;
     private int margin = 5;
     private int maxNumberOfPointsOnDiagram = 2000;
+    // When true, each correlation diagram is wrapped in a collapsible <details> block whose
+    // <summary> is the title (e.g. "Recent Contributors vs. Commits (30 days): 6 points") instead
+    // of an always-visible header (used by the landscape Repositories tab's Correlations section).
+    private boolean collapsible = false;
 
     public CorrelationDiagramGenerator(RichTextReport report, List<T> items) {
         this.report = report;
         this.items = items;
+    }
+
+    public void setCollapsible(boolean collapsible) {
+        this.collapsible = collapsible;
     }
 
     public void addCorrelations(String title, String xLabel, String yLabel, ToDoubleFunction<T> xValueFunction, ToDoubleFunction<T> yValueFunction, ToStringFunction<T> nameFunction) {
@@ -34,23 +43,53 @@ public class CorrelationDiagramGenerator<T> {
                 yStats.addValue(yValue);
             }
         });
-        report.startDiv("display: inline-block; vertical-align: top; margin-right: 40px;");
-        report.addLevel2Header(title + ": <span style='color: grey;'>" + xStats.getN() + " points</span>");
+        String titleWithCount = title + ": <span style='color: grey;'>" + xStats.getN() + " points</span>";
+        if (collapsible) {
+            report.startDetailsBlock(titleWithCount);
+        } else {
+            report.startDiv("display: inline-block; vertical-align: top; margin-right: 40px;");
+            report.addLevel2Header(titleWithCount);
+        }
         if (xStats.getN() == 0) {
             report.addParagraph("No data for \"" + xLabel + "\" vs. \"" + yLabel + "\".");
-            report.endDiv();
+            endCorrelationBlock();
             return;
         }
         report.startTable("");
 
         report.startTableRow();
         report.startTableCellColSpan(2, "border: none");
+        addScatterPlot(xLabel, yLabel, xValueFunction, yValueFunction, nameFunction, xStats, yStats);
+        report.endTableCell();
+        report.addTableCell(yStats.getMax() + "", "padding: 0; padding-top: 10px; font-size: 70%; border: none; vertical-align: top");
+        report.addTableCell("<div style='font-size: 130%; margin-bottom: 4px; font-weight: bold'>" + yLabel + "</div>"
+                + "&nbsp;&nbsp;min: " + yStats.getMin()
+                + "<br>&nbsp;&nbsp;average: " + Math.round(yStats.getMean() * 100) / 100.0
+                + "<br>&nbsp;&nbsp;25th percentile: " + yStats.getPercentile(25)
+                + "<br>&nbsp;&nbsp;median: " + yStats.getPercentile(50)
+                + "<br>&nbsp;&nbsp;75th percentile: " + yStats.getPercentile(75)
+                + "<br>&nbsp;&nbsp;max: " + yStats.getMax(), "font-size: 70%; border: none;");
+        report.endTableRow();
 
+        addXAxisRows(xLabel, xStats);
+
+        report.endTable();
+        endCorrelationBlock();
+    }
+
+    /** The SVG: the frame, one translucent point per item (at most maxNumberOfPointsOnDiagram, one per pixel location) and the distribution lines. */
+    private void addScatterPlot(String xLabel, String yLabel, ToDoubleFunction<T> xValueFunction, ToDoubleFunction<T> yValueFunction, ToStringFunction<T> nameFunction,
+                                DescriptiveStatistics xStats, DescriptiveStatistics yStats) {
         report.startDiv("width: 600px; text-align: center; ");
         report.addHtmlContent("<svg width=\"" + width + "\" height=\"" + height + "\">");
         report.addHtmlContent(" <rect width=\"" + width + "\" height=\"" + height + "\" style=\"fill:rgb(200,200,200);stroke-width:1;stroke:rgb(100,100,100)\" />");
         Map<String, String> sameLocationMap = new HashMap<>();
         int count[] = {1};
+        // Hoisted out of the loop: DescriptiveStatistics#getMax() copies its entire backing array
+        // and recomputes the statistic on every call, so calling it once per item turned this into
+        // an O(n^2) operation (huge CPU + garbage-collector pressure) on large histories.
+        double xMax = xStats.getMax();
+        double yMax = yStats.getMax();
         items.forEach(item -> {
             if (count[0] > maxNumberOfPointsOnDiagram) {
                 return;
@@ -58,15 +97,16 @@ public class CorrelationDiagramGenerator<T> {
             double xValue = xValueFunction.applyAsDouble(item);
             double yValue = yValueFunction.applyAsDouble(item);
             if (xValue > 0 && yValue > 0) {
-                double x = getX(xStats.getMax(), xValue);
-                double y = getY(yStats.getMax(), yValue);
+                double x = getX(xMax, xValue);
+                double y = getY(yMax, yValue);
                 String key = (int) x + "::" + (int) y;
                 if (sameLocationMap.containsKey(key)) {
                     return;
                 }
                 sameLocationMap.put(key, key);
-                report.addHtmlContent(" <circle cx=\"" + (int) x + "\" cy=\"" + (int) y + "\" r=\"" + r + "\" fill=\"black\" fill-opacity=\"0.2\">");
-                report.addHtmlContent(" <title>" + nameFunction.toString(item)
+                report.addHtmlContent(" <circle cx=\"" + (int) x + "\" cy=\"" + (int) y + "\" r=\"" + r + "\" fill=\"currentColor\" fill-opacity=\"0.25\">");
+                // The point label is a file path or a contributor identity — repository-controlled.
+                report.addHtmlContent(" <title>" + HtmlEscapeUtils.escape(nameFunction.toString(item))
                         + "\n  x: " + (int) xValue + " " + xLabel
                         + "\n  y: " + (int) yValue + " " + yLabel + "</title>");
                 report.addHtmlContent(" </circle>");
@@ -79,18 +119,10 @@ public class CorrelationDiagramGenerator<T> {
         report.addHtmlContent("</svg>");
 
         report.endDiv();
-        report.endTableCell();
-        report.addTableCell(yStats.getMax() + "", "padding: 0; padding-top: 10px; font-size: 70%; border: none; vertical-align: top");
-        report.addTableCell("<div style='font-size: 130%; margin-bottom: 4px; font-weight: bold'>" + yLabel + "</div>"
-                + "&nbsp;&nbsp;min: " + yStats.getMin()
-                + "<br>&nbsp;&nbsp;average: " + Math.round(yStats.getMean() * 100) / 100.0
-                + "<br>&nbsp;&nbsp;25th percentile: " + yStats.getPercentile(25)
-                + "<br>&nbsp;&nbsp;median: " + yStats.getPercentile(50)
-                + "<br>&nbsp;&nbsp;75th percentile: " + yStats.getPercentile(75)
-                + "<br>&nbsp;&nbsp;max: " + yStats.getMax(), "font-size: 70%; border: none;");
+    }
 
-        report.endTableRow();
-
+    /** The x axis: the 0 and max ticks, then the label with the x statistics. */
+    private void addXAxisRows(String xLabel, DescriptiveStatistics xStats) {
         report.startTableRow();
         report.addTableCell("0", "padding-left: 21px; text-align: left; font-size: 70%; border: none; height: 6px;");
         report.addTableCell(xStats.getMax() + "", "padding-right: 22px; text-align: right; font-size: 70%; border: none; height: 6px;");
@@ -108,9 +140,14 @@ public class CorrelationDiagramGenerator<T> {
                 , "text-align: center; border: none; font-size: 70%; height: 6px; margin-bottom: 26px;");
         report.endTableCell();
         report.endTableRow();
+    }
 
-        report.endTable();
-        report.endDiv();
+    private void endCorrelationBlock() {
+        if (collapsible) {
+            report.endDetailsBlock();
+        } else {
+            report.endDiv();
+        }
     }
 
     private void renderDistributionLines(DescriptiveStatistics xStats, DescriptiveStatistics yStats) {
@@ -141,10 +178,10 @@ public class CorrelationDiagramGenerator<T> {
         report.addHtmlContent(" <line x1='" + (int) x1P75 + "' y1='0' x2='" + (int) x1P75 + "' y2='" + height + "' stroke='grey' stroke-opacity='0.5'/>");
         report.addHtmlContent(" <line x1='0' y1='" + (int) y1P75 + "' x2='" + width + "' y2='" + (int) y1P75 + "' stroke='grey' stroke-opacity='0.5'/>");
 
-        report.addHtmlContent(" <line x1='" + (int) x1MinZero + "' y1='0' x2='" + (int) x1MinZero + "' y2='" + height + "' stroke='black' stroke-opacity='0.5'/>");
-        report.addHtmlContent(" <line x1='0' y1='" + (int) y1Min + "' x2='" + width + "' y2='" + (int) y1Min + "' stroke='black' stroke-opacity='0.5'/>");
-        report.addHtmlContent(" <line x1='" + (int) x1Max + "' y1='0' x2='" + (int) x1Max + "' y2='" + height + "' stroke='black' stroke-opacity='0.5'/>");
-        report.addHtmlContent(" <line x1='0' y1='" + (int) y1Max + "' x2='" + width + "' y2='" + (int) y1Max + "' stroke='black' stroke-opacity='0.5'/>");
+        report.addHtmlContent(" <line x1='" + (int) x1MinZero + "' y1='0' x2='" + (int) x1MinZero + "' y2='" + height + "' stroke='currentColor' stroke-opacity='0.5'/>");
+        report.addHtmlContent(" <line x1='0' y1='" + (int) y1Min + "' x2='" + width + "' y2='" + (int) y1Min + "' stroke='currentColor' stroke-opacity='0.5'/>");
+        report.addHtmlContent(" <line x1='" + (int) x1Max + "' y1='0' x2='" + (int) x1Max + "' y2='" + height + "' stroke='currentColor' stroke-opacity='0.5'/>");
+        report.addHtmlContent(" <line x1='0' y1='" + (int) y1Max + "' x2='" + width + "' y2='" + (int) y1Max + "' stroke='currentColor' stroke-opacity='0.5'/>");
 
         report.addHtmlContent(" <line x1='" + (int) x1Outlier1 + "' y1='0' x2='" + (int) x1Outlier1 + "' y2='" + height + "' stroke='red' stroke-opacity='0.5'/>");
         report.addHtmlContent(" <line x1='" + (int) x1Outlier2 + "' y1='0' x2='" + (int) x1Outlier2 + "' y2='" + height + "' stroke='red' stroke-opacity='0.5'/>");

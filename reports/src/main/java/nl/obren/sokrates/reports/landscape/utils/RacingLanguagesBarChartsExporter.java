@@ -3,6 +3,7 @@ package nl.obren.sokrates.reports.landscape.utils;
 import nl.obren.sokrates.common.renderingutils.RacingChartItem;
 import nl.obren.sokrates.common.renderingutils.VisualizationTemplate;
 import nl.obren.sokrates.sourcecode.analysis.results.HistoryPerExtension;
+import nl.obren.sokrates.sourcecode.filehistory.DateUtils;
 import nl.obren.sokrates.sourcecode.landscape.analysis.LandscapeAnalysisResults;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -18,7 +19,8 @@ public class RacingLanguagesBarChartsExporter {
     private LandscapeAnalysisResults landscapeAnalysisResults;
     private List<HistoryPerExtension> yearlyCommitHistoryPerExtension;
     private List<String> extensions;
-    private int currentYear = Calendar.getInstance().get(Calendar.YEAR);
+    // Analysis year (honours the configurable analysis date), consistent with the other reports.
+    private int currentYear = DateUtils.getAnalysisYear();
     private int startYear = currentYear;
     private Map<String, HistoryPerExtension> yearExtensionMap = new HashMap<>();
     private List<RacingChartItem> commits = new ArrayList<>();

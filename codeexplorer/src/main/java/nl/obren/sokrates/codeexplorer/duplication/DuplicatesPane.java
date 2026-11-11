@@ -163,7 +163,7 @@ public class DuplicatesPane extends BorderPane {
 
     private TableColumn<DuplicationInstance, String> getFilesColumn() {
         TableColumn<DuplicationInstance, String> column = new TableColumn<>("Files");
-        column.setCellValueFactory(p -> new SimpleStringProperty(p.getValue().getFilesDisplayString(false)));
+        column.setCellValueFactory(p -> new SimpleStringProperty(p.getValue().getFilesDisplayString()));
         return column;
     }
 

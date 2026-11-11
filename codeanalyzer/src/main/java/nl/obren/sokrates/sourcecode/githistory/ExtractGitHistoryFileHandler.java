@@ -5,8 +5,10 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import java.io.*;
-import java.nio.charset.StandardCharsets;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileReader;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -30,10 +32,22 @@ public class ExtractGitHistoryFileHandler {
 
         FileUtils.writeLines(new File(splitFolder, gitHistoryFile.getName()), splitContent);
 
+        // Copy the optional commit-messages sidecar along: it is keyed by sha, so the (superset)
+        // map stays valid for the split history; older extractions simply have no sidecar.
+        copySidecar(folder, splitFolder, GitHistoryUtils.GIT_COMMITS_FILE_NAME);
+        copySidecar(folder, splitFolder, GitHistoryUtils.GIT_COMMIT_TRAILERS_FILE_NAME);
+
         LOG.info("Extracted git history to " + new File(splitFolder, gitHistoryFile.getName()).getPath());
     }
 
-    public  List<String> extractSubHistory(List<String> originalLines, String prefix) {
+    private void copySidecar(File folder, File splitFolder, String fileName) throws IOException {
+        File sidecar = new File(folder, fileName);
+        if (sidecar.exists()) {
+            FileUtils.copyFile(sidecar, new File(splitFolder, fileName));
+        }
+    }
+
+    public List<String> extractSubHistory(List<String> originalLines, String prefix) {
         List<String> lines = new ArrayList<>();
 
         originalLines.forEach(line -> {

@@ -34,7 +34,11 @@ public class AnalysisConfig {
     private int maxLineLength = 1000;
 
     // A maximal number of days in source code history used to calculate temporal file dependencies
-    private int maxTemporalDependenciesDepthDays = 180;
+    private int maxTemporalDependenciesDepthDays = 365;
+
+    // Commits touching more main files than this are left out of temporal file dependencies (a commit with N files
+    // yields N*(N-1)/2 file pairs, and such commits are mostly mass edits such as reformatting); 0 or less = no limit
+    private int maxFilesPerCommitForTemporalDependencies = 100;
 
     // Repositories with more than a given number of lines of main code will skip duplication analyses even if skipDuplication flag is false
     private int locDuplicationThreshold = 10000000;
@@ -65,8 +69,22 @@ public class AnalysisConfig {
 
     // Thresholds for risk profiles used in unit conditional complexity analyses
     private Thresholds conditionalComplexityThresholds = Thresholds.defaultConditionalComplexityThresholds();
-    // Thresholds for risk profiles used in unit conditional complexity analyses
-    private Thresholds fileConditionalComplexityThresholds = Thresholds.defaultConditionalComplexityThresholds();
+    // Thresholds for risk profiles used in the file complexity analysis (sum of the McCabe indexes of a
+    // file's units). Replaces "fileConditionalComplexityThresholds", which nothing read and which init
+    // wrote with the unit bands; that key is now ignored when a configuration is loaded.
+    private Thresholds fileComplexityThresholds = Thresholds.defaultFileComplexityThresholds();
+
+    // The File Size report's "Large Files That Change Often" section: window, list size, tokens per line
+    private FileReadsForChangesConfig fileReadsForChanges = new FileReadsForChangesConfig();
+
+    // The Human and AI maintainability scores (Highlights tiles, Maintainability Scores section, landscape columns)
+    private MaintainabilityScoresConfig maintainabilityScores = new MaintainabilityScoresConfig();
+
+    // Configured starting values of the estimate pages' assumptions (applied only when enabled)
+    private EstimateAssumptionsConfig estimateAssumptions = new EstimateAssumptionsConfig();
+
+    // Thresholds for risk profiles used in commit analysis
+    private Thresholds commitFilesCountThresholds = Thresholds.defaultCommitFilesCountThresholds();
 
     // An optional HTML code fragment to be included in a header section of generated HTML reports (e.g. Google Analytics snippet)
     private String customHtmlReportHeaderFragment = "";
@@ -220,12 +238,47 @@ public class AnalysisConfig {
         this.conditionalComplexityThresholds = conditionalComplexityThresholds;
     }
 
-    public Thresholds getFileConditionalComplexityThresholds() {
-        return fileConditionalComplexityThresholds;
+    public Thresholds getFileComplexityThresholds() {
+        return fileComplexityThresholds;
     }
 
-    public void setFileConditionalComplexityThresholds(Thresholds fileConditionalComplexityThresholds) {
-        this.fileConditionalComplexityThresholds = fileConditionalComplexityThresholds;
+    public void setFileComplexityThresholds(Thresholds fileComplexityThresholds) {
+        this.fileComplexityThresholds = fileComplexityThresholds;
+    }
+
+    public FileReadsForChangesConfig getFileReadsForChanges() {
+        return fileReadsForChanges;
+    }
+
+    // An explicit null ("fileReadsForChanges": null) falls back to the defaults.
+    public void setFileReadsForChanges(FileReadsForChangesConfig fileReadsForChanges) {
+        this.fileReadsForChanges = fileReadsForChanges != null ? fileReadsForChanges : new FileReadsForChangesConfig();
+    }
+
+    public MaintainabilityScoresConfig getMaintainabilityScores() {
+        return maintainabilityScores;
+    }
+
+    // An explicit null ("maintainabilityScores": null) falls back to the defaults.
+    public void setMaintainabilityScores(MaintainabilityScoresConfig maintainabilityScores) {
+        this.maintainabilityScores = maintainabilityScores != null ? maintainabilityScores : new MaintainabilityScoresConfig();
+    }
+
+    public EstimateAssumptionsConfig getEstimateAssumptions() {
+        return estimateAssumptions;
+    }
+
+    // An explicit null ("estimateAssumptions": null) falls back to the defaults.
+    public void setEstimateAssumptions(EstimateAssumptionsConfig estimateAssumptions) {
+        this.estimateAssumptions = estimateAssumptions != null ? estimateAssumptions : new EstimateAssumptionsConfig();
+    }
+
+    public Thresholds getCommitFilesCountThresholds() {
+        return commitFilesCountThresholds;
+    }
+
+    public void setCommitFilesCountThresholds(Thresholds commitFilesCountThresholds) {
+        this.commitFilesCountThresholds = commitFilesCountThresholds;
     }
 
     public String getCustomHtmlReportHeaderFragment() {
@@ -250,6 +303,14 @@ public class AnalysisConfig {
 
     public void setMaxTemporalDependenciesDepthDays(int maxTemporalDependenciesDepthDays) {
         this.maxTemporalDependenciesDepthDays = maxTemporalDependenciesDepthDays;
+    }
+
+    public int getMaxFilesPerCommitForTemporalDependencies() {
+        return maxFilesPerCommitForTemporalDependencies;
+    }
+
+    public void setMaxFilesPerCommitForTemporalDependencies(int maxFilesPerCommitForTemporalDependencies) {
+        this.maxFilesPerCommitForTemporalDependencies = maxFilesPerCommitForTemporalDependencies;
     }
 
     public boolean isAnalyzeConcernOverlaps() {

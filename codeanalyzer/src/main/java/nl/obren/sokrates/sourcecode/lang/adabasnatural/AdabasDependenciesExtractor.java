@@ -8,7 +8,6 @@ import nl.obren.sokrates.sourcecode.SourceFile;
 import nl.obren.sokrates.sourcecode.dependencies.DependencyAnchor;
 import nl.obren.sokrates.sourcecode.dependencies.HeuristicDependenciesExtractor;
 
-import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -51,6 +50,5 @@ public class AdabasDependenciesExtractor extends HeuristicDependenciesExtractor 
 
         return dependencyAnchor;
     }
-
 
 }

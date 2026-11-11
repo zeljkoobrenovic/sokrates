@@ -17,6 +17,10 @@ public class LandscapeConfiguration {
     // Basic info about the landscape (name, description, logo, links)
     private Metadata metadata = new Metadata();
 
+    // Optional virtual landscapes: define sub-landscapes by repository-name patterns instead of
+    // by moving report folders. Empty by default, so existing landscapes are unaffected.
+    private VirtualLandscapesConfig virtualLandscapes = new VirtualLandscapesConfig();
+
     // The relative path of the analysis (contains sub-folders with repository analysis results)
     private String analysisRoot = ".";
 
@@ -56,6 +60,9 @@ public class LandscapeConfiguration {
     // If true, the repositories report will show the status of controls of each repository
     private boolean showRepositoryControls = true;
 
+    // If true, the repositories report shows the Human / AI maintainability score columns (the data is exported either way)
+    private boolean showMaintainabilityScores = true;
+
     // A maximal number of repositories shown in the short repository pages (embedded in the index page)
     private int repositoriesShortListLimit = 100;
 
@@ -92,9 +99,6 @@ public class LandscapeConfiguration {
 
     // An optional list of string transformation used to transform contributor IDs (e.g. to remove domain from email)
     private List<OperationStatement> transformContributorEmails = new ArrayList<>();
-
-    // If true, the list with extensions will be displayed in the first "Overview" tab. If false, the list with extensions will be displayed in the first "Repositories" tab.
-    private boolean showExtensionsOnFirstTab = true;
 
     // If true, the contributors and commits trend will be displayed in the first "Overview" tab in addition to it being shown in the "Contributors" tab.
     private boolean showContributorsTrendsOnFirstTab = true;
@@ -138,6 +142,14 @@ public class LandscapeConfiguration {
 
     public void setMetadata(Metadata metadata) {
         this.metadata = metadata;
+    }
+
+    public VirtualLandscapesConfig getVirtualLandscapes() {
+        return virtualLandscapes;
+    }
+
+    public void setVirtualLandscapes(VirtualLandscapesConfig virtualLandscapes) {
+        this.virtualLandscapes = virtualLandscapes;
     }
 
     public String getAnalysisRoot() {
@@ -214,14 +226,6 @@ public class LandscapeConfiguration {
 
     public void setRepositoryThresholdContributors(int repositoryThresholdContributors) {
         this.repositoryThresholdContributors = repositoryThresholdContributors;
-    }
-
-    public boolean isShowExtensionsOnFirstTab() {
-        return showExtensionsOnFirstTab;
-    }
-
-    public void setShowExtensionsOnFirstTab(boolean showExtensionsOnFirstTab) {
-        this.showExtensionsOnFirstTab = showExtensionsOnFirstTab;
     }
 
     public boolean isShowContributorsTrendsOnFirstTab() {
@@ -318,6 +322,14 @@ public class LandscapeConfiguration {
 
     public void setShowRepositoryControls(boolean showRepositoryControls) {
         this.showRepositoryControls = showRepositoryControls;
+    }
+
+    public boolean isShowMaintainabilityScores() {
+        return showMaintainabilityScores;
+    }
+
+    public void setShowMaintainabilityScores(boolean showMaintainabilityScores) {
+        this.showMaintainabilityScores = showMaintainabilityScores;
     }
 
     public int getRepositoriesListLimit() {

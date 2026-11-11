@@ -45,6 +45,9 @@ public class DuplicationAggregator {
         List<AspectDuplication> duplications = new ArrayList<>();
         Map<String, AspectDuplication> map = new HashMap<>();
 
+        // Cleaned-lines totals per component, computed in one pass instead of re-scanning all files per component.
+        Map<String, Integer> cleanedLinesPerComponent = DuplicationUtils.getTotalNumberOfCleanedLinesPerLogicalComponent(sourceFiles);
+
         duplicates.forEach(sourceFileDuplication -> {
             sourceFileDuplication.getSourceFile().getLogicalComponents().forEach(aspect -> {
                 String displayName = aspect.getName();
@@ -63,16 +66,16 @@ public class DuplicationAggregator {
         });
 
         map.keySet().forEach(component -> {
-            map.get(component).setCleanedLinesOfCode(DuplicationUtils.getTotalNumberOfCleanedLinesForLogicalComponent(sourceFiles, component));
+            map.get(component).setCleanedLinesOfCode(cleanedLinesPerComponent.getOrDefault(component.toLowerCase(), 0));
         });
 
-        addLogicalComponentsWithoutDuplicates(logicalDecompositions, sourceFiles, duplications, map);
+        addLogicalComponentsWithoutDuplicates(logicalDecompositions, cleanedLinesPerComponent, duplications, map);
 
 
         return duplications;
     }
 
-    private static void addLogicalComponentsWithoutDuplicates(List<LogicalDecomposition> logicalDecompositions, List<SourceFile> sourceFiles, List<AspectDuplication> duplications, Map<String,
+    private static void addLogicalComponentsWithoutDuplicates(List<LogicalDecomposition> logicalDecompositions, Map<String, Integer> cleanedLinesPerComponent, List<AspectDuplication> duplications, Map<String,
             AspectDuplication> map) {
         logicalDecompositions.forEach(logicalDecomposition -> {
             logicalDecomposition.getComponents().forEach(logicalComponent -> {
@@ -81,7 +84,7 @@ public class DuplicationAggregator {
                     AspectDuplication aspectDuplication = new AspectDuplication();
                     aspectDuplication.setAspect(logicalComponent);
                     aspectDuplication.setDuplicatedLinesOfCode(0);
-                    aspectDuplication.setCleanedLinesOfCode(DuplicationUtils.getTotalNumberOfCleanedLinesForLogicalComponent(sourceFiles, displayName));
+                    aspectDuplication.setCleanedLinesOfCode(cleanedLinesPerComponent.getOrDefault(displayName.toLowerCase(), 0));
                     duplications.add(aspectDuplication);
                 }
             });

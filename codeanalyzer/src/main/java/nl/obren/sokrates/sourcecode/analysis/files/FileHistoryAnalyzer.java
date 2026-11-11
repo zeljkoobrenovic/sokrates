@@ -9,6 +9,7 @@ import nl.obren.sokrates.sourcecode.analysis.Analyzer;
 import nl.obren.sokrates.sourcecode.analysis.results.CodeAnalysisResults;
 import nl.obren.sokrates.sourcecode.analysis.results.FileAgeDistributionPerLogicalDecomposition;
 import nl.obren.sokrates.sourcecode.analysis.results.FilesHistoryAnalysisResults;
+import nl.obren.sokrates.sourcecode.analysis.results.TemporalDependenciesWindow;
 import nl.obren.sokrates.sourcecode.aspects.LogicalDecomposition;
 import nl.obren.sokrates.sourcecode.core.CodeConfiguration;
 import nl.obren.sokrates.sourcecode.filehistory.*;
@@ -21,7 +22,6 @@ import org.apache.commons.logging.LogFactory;
 
 import java.io.File;
 import java.util.*;
-import java.util.stream.Stream;
 
 import static nl.obren.sokrates.sourcecode.stats.SourceFileAgeDistribution.Types.FIRST_MODIFIED;
 import static nl.obren.sokrates.sourcecode.stats.SourceFileAgeDistribution.Types.LAST_MODIFIED;
@@ -55,19 +55,24 @@ public class FileHistoryAnalyzer extends Analyzer {
                 LOG.info("Analyzing file age...");
                 analyzeFilesAge();
                 int maxDays = codeConfiguration.getAnalysis().getMaxTemporalDependenciesDepthDays();
-                if (maxDays > 180) {
+                // Named up front: a window that is not listed here produces an empty result for that
+                // reason alone, and only the absence of its "Analyzing..." line would otherwise say so.
+                LOG.info("Co-change windows at maxTemporalDependenciesDepthDays=" + maxDays + ": "
+                        + TemporalDependenciesWindow.analyzedWindows(analysisResults, maxDays)
+                        + " (the others are not analyzed)");
+                if (TemporalDependenciesWindow.ALL_TIME.isAnalyzed(maxDays)) {
                     LOG.info("Analyzing files changed together (all time=" + maxDays + " days)...");
                     analyzeFilesChangedTogether(history);
                 }
-                if (maxDays >= 30) {
+                if (TemporalDependenciesWindow.PAST_30_DAYS.isAnalyzed(maxDays)) {
                     LOG.info("Analyzing files changed together in past 30 days...");
                     analyzeFilesChangedTogether30Days(history);
                 }
-                if (maxDays >= 90) {
+                if (TemporalDependenciesWindow.PAST_90_DAYS.isAnalyzed(maxDays)) {
                     LOG.info("Analyzing files changed together in past 90 days...");
                     analyzeFilesChangedTogether90Days(history);
                 }
-                if (maxDays >= 180) {
+                if (TemporalDependenciesWindow.PAST_180_DAYS.isAnalyzed(maxDays)) {
                     LOG.info("Analyzing files changed together in past 180 days...");
                     analyzeFilesChangedTogether180Days(history);
                 }
@@ -122,25 +127,29 @@ public class FileHistoryAnalyzer extends Analyzer {
     }
 
     private void analyzeFilesChangedTogether(List<FileModificationHistory> history) {
-        FilePairsChangedTogether filePairsChangedTogether = new FilePairsChangedTogether(codeConfiguration.getAnalysis().getMaxTemporalDependenciesDepthDays());
+        FilePairsChangedTogether filePairsChangedTogether = new FilePairsChangedTogether(codeConfiguration.getAnalysis().getMaxTemporalDependenciesDepthDays(),
+                codeConfiguration.getAnalysis().getMaxFilesPerCommitForTemporalDependencies());
         filePairsChangedTogether.populate(codeConfiguration.getMain(), history);
         analysisResults.setFilePairsChangedTogether(filePairsChangedTogether.getFilePairsList());
     }
 
     private void analyzeFilesChangedTogether30Days(List<FileModificationHistory> history) {
-        FilePairsChangedTogether filePairsChangedTogether = new FilePairsChangedTogether(30);
+        FilePairsChangedTogether filePairsChangedTogether = new FilePairsChangedTogether(30,
+                codeConfiguration.getAnalysis().getMaxFilesPerCommitForTemporalDependencies());
         filePairsChangedTogether.populate(codeConfiguration.getMain(), history);
         analysisResults.setFilePairsChangedTogether30Days(filePairsChangedTogether.getFilePairsList());
     }
 
     private void analyzeFilesChangedTogether90Days(List<FileModificationHistory> history) {
-        FilePairsChangedTogether filePairsChangedTogether = new FilePairsChangedTogether(90);
+        FilePairsChangedTogether filePairsChangedTogether = new FilePairsChangedTogether(90,
+                codeConfiguration.getAnalysis().getMaxFilesPerCommitForTemporalDependencies());
         filePairsChangedTogether.populate(codeConfiguration.getMain(), history);
         analysisResults.setFilePairsChangedTogether90Days(filePairsChangedTogether.getFilePairsList());
     }
 
     private void analyzeFilesChangedTogether180Days(List<FileModificationHistory> history) {
-        FilePairsChangedTogether filePairsChangedTogether = new FilePairsChangedTogether(180);
+        FilePairsChangedTogether filePairsChangedTogether = new FilePairsChangedTogether(180,
+                codeConfiguration.getAnalysis().getMaxFilesPerCommitForTemporalDependencies());
         filePairsChangedTogether.populate(codeConfiguration.getMain(), history);
         analysisResults.setFilePairsChangedTogether180Days(filePairsChangedTogether.getFilePairsList());
     }
@@ -189,6 +198,7 @@ public class FileHistoryAnalyzer extends Analyzer {
         addMostRecentlyChangedFiles(allFiles, analysisResults, maxTopListSize);
         addMostPreviouslyChangedFiles(allFiles, analysisResults, maxTopListSize);
         addMostChangedFiles(allFiles, analysisResults, maxTopListSize);
+        addFilesWithMostChurn(allFiles, analysisResults, maxTopListSize);
         addFilesWithMostContributors(allFiles, analysisResults, maxTopListSize);
         addFilesWithLeastContributors(allFiles, analysisResults, maxTopListSize);
 
@@ -222,10 +232,35 @@ public class FileHistoryAnalyzer extends Analyzer {
     }
 
     private void enrichFilesWithAge(List<FileModificationHistory> ages) {
-        codeConfiguration.getMain().getSourceFiles().forEach(sourceFile -> {
-            Optional<FileModificationHistory> any = ages.stream().filter(f -> f.getPath().equalsIgnoreCase(sourceFile.getRelativePath())).findAny();
-            if (any.isPresent()) {
-                sourceFile.setFileModificationHistory(any.get());
+        // Index the history by path once (lowercased, case-insensitive match) so enrichment is O(1)
+        // per file instead of scanning the whole history per file - important now that every scope
+        // (not just main) is enriched. On a path collision keep the first (matches the old findAny()).
+        Map<String, FileModificationHistory> historyByPath = new HashMap<>();
+        ages.forEach(h -> historyByPath.putIfAbsent(h.getPath().toLowerCase(), h));
+
+        // Attach history to files in EVERY scope (main, test, generated, build & deployment, other),
+        // so the files explorer shows commits/age/freshness/contributors for all files - the git
+        // history covers them all, not just main.
+        enrichAspectFilesWithAge(codeConfiguration.getMain(), historyByPath);
+        enrichAspectFilesWithAge(codeConfiguration.getTest(), historyByPath);
+        enrichAspectFilesWithAge(codeConfiguration.getGenerated(), historyByPath);
+        enrichAspectFilesWithAge(codeConfiguration.getBuildAndDeployment(), historyByPath);
+        enrichAspectFilesWithAge(codeConfiguration.getOther(), historyByPath);
+    }
+
+    private void enrichAspectFilesWithAge(nl.obren.sokrates.sourcecode.aspects.NamedSourceCodeAspect aspect,
+                                          Map<String, FileModificationHistory> historyByPath) {
+        if (aspect == null || aspect.getSourceFiles() == null) {
+            return;
+        }
+        aspect.getSourceFiles().forEach(sourceFile -> {
+            // Don't overwrite history already attached (main files are enriched first); a file can
+            // appear in more than one aspect's source list.
+            if (sourceFile.getFileModificationHistory() == null) {
+                FileModificationHistory history = historyByPath.get(sourceFile.getRelativePath().toLowerCase());
+                if (history != null) {
+                    sourceFile.setFileModificationHistory(history);
+                }
             }
         });
     }
@@ -254,99 +289,104 @@ public class FileHistoryAnalyzer extends Analyzer {
                 .description("Number of files " + overallDistribution.getVeryHighRiskLabel() + " days old");
     }
 
-    private void addOldestFiles(List<SourceFile> sourceFiles, FilesHistoryAnalysisResults filesHistoryAnalysisResults, int sampleSize) {
+    // Sort key helpers - each computed once per file by topFiles(), not on every comparison.
+    private static int daysSinceFirstUpdate(SourceFile o) {
+        return o.getFileModificationHistory() == null ? 0 : o.getFileModificationHistory().daysSinceFirstUpdate();
+    }
+
+    private static int daysSinceLatestUpdate(SourceFile o) {
+        return o.getFileModificationHistory() == null ? 0 : o.getFileModificationHistory().daysSinceLatestUpdate();
+    }
+
+    private static int changeCount(SourceFile o) {
+        return o.getFileModificationHistory() == null ? 0 : o.getFileModificationHistory().getDates().size();
+    }
+
+    private static int churn(SourceFile o) {
+        return o.getFileModificationHistory() == null ? 0 : o.getFileModificationHistory().getChurn();
+    }
+
+    /**
+     * Sorts a copy of {@code sourceFiles} by {@code comparator} and adds the first {@code sampleSize}
+     * to {@code target}. The original two-pass sort (sort by tiebreaker, then stable-sort by the
+     * primary key) is expressed here as a single composed comparator, and the per-file keys are read
+     * via cheap accessors (countContributors() is itself memoized), so each key is computed about
+     * once per file rather than O(n log n) times.
+     */
+    private void topFiles(List<SourceFile> sourceFiles, Comparator<SourceFile> comparator, int sampleSize, List<SourceFile> target) {
         List<SourceFile> files = new ArrayList<>(sourceFiles);
-        Collections.sort(files, (o1, o2) -> Integer.compare(o2.getLinesOfCode(), o1.getLinesOfCode()));
-        Collections.sort(files, (o1, o2) ->
-                (o2.getFileModificationHistory() == null ? 0 : o2.getFileModificationHistory().daysSinceFirstUpdate()) -
-                        (o1.getFileModificationHistory() == null ? 0 : o1.getFileModificationHistory().daysSinceFirstUpdate()));
-        int index[] = {0};
-        files.forEach(sourceFile -> {
-            if (index[0]++ >= sampleSize) {
-                return;
-            }
-            filesHistoryAnalysisResults.getOldestFiles().add(sourceFile);
-        });
+        files.sort(comparator);
+        addTop(files, sampleSize, target);
+    }
+
+    private void addTop(List<SourceFile> sortedFiles, int sampleSize, List<SourceFile> target) {
+        for (int i = 0; i < sortedFiles.size() && i < sampleSize; i++) {
+            target.add(sortedFiles.get(i));
+        }
+    }
+
+    private void addOldestFiles(List<SourceFile> sourceFiles, FilesHistoryAnalysisResults filesHistoryAnalysisResults, int sampleSize) {
+        topFiles(sourceFiles,
+                Comparator.comparingInt(FileHistoryAnalyzer::daysSinceFirstUpdate).reversed()
+                        .thenComparing(Comparator.comparingInt(SourceFile::getLinesOfCode).reversed()),
+                sampleSize, filesHistoryAnalysisResults.getOldestFiles());
     }
 
     private void addYoungestFiles(List<SourceFile> sourceFiles, FilesHistoryAnalysisResults filesHistoryAnalysisResults, int sampleSize) {
-        List<SourceFile> files = new ArrayList<>(sourceFiles);
-        Collections.sort(files, (o1, o2) -> Integer.compare(o2.getLinesOfCode(), o1.getLinesOfCode()));
-        Collections.sort(files, Comparator.comparingInt(o -> (o.getFileModificationHistory() == null ? 0 : o.getFileModificationHistory().daysSinceFirstUpdate())));
-        int index[] = {0};
-        files.forEach(sourceFile -> {
-            if (index[0]++ >= sampleSize) {
-                return;
-            }
-            filesHistoryAnalysisResults.getYoungestFiles().add(sourceFile);
-        });
+        topFiles(sourceFiles,
+                Comparator.comparingInt(FileHistoryAnalyzer::daysSinceFirstUpdate)
+                        .thenComparing(Comparator.comparingInt(SourceFile::getLinesOfCode).reversed()),
+                sampleSize, filesHistoryAnalysisResults.getYoungestFiles());
     }
 
     private void addMostRecentlyChangedFiles(List<SourceFile> sourceFiles, FilesHistoryAnalysisResults filesHistoryAnalysisResults, int sampleSize) {
-        List<SourceFile> files = new ArrayList<>(sourceFiles);
-        Collections.sort(files, (o1, o2) -> Integer.compare(o2.getLinesOfCode(), o1.getLinesOfCode()));
-        Collections.sort(files, Comparator.comparingInt(o -> (o.getFileModificationHistory() == null ? 0 : o.getFileModificationHistory().daysSinceLatestUpdate())));
-        int index[] = {0};
-        files.forEach(sourceFile -> {
-            if (index[0]++ >= sampleSize) {
-                return;
-            }
-            filesHistoryAnalysisResults.getMostRecentlyChangedFiles().add(sourceFile);
-        });
+        topFiles(sourceFiles,
+                Comparator.comparingInt(FileHistoryAnalyzer::daysSinceLatestUpdate)
+                        .thenComparing(Comparator.comparingInt(SourceFile::getLinesOfCode).reversed()),
+                sampleSize, filesHistoryAnalysisResults.getMostRecentlyChangedFiles());
     }
 
     private void addMostPreviouslyChangedFiles(List<SourceFile> sourceFiles, FilesHistoryAnalysisResults filesHistoryAnalysisResults, int sampleSize) {
+        // Kept as sort-then-reverse to exactly preserve the original ordering: Collections.reverse
+        // also flips the relative order of tied elements, which a single composed comparator would
+        // not reproduce. Keys are cheap here (no countContributors).
         List<SourceFile> files = new ArrayList<>(sourceFiles);
-        Collections.sort(files, (o1, o2) -> Integer.compare(o2.getLinesOfCode(), o1.getLinesOfCode()));
-        Collections.sort(files, Comparator.comparingInt(o -> (o.getFileModificationHistory() == null ? 0 : o.getFileModificationHistory().daysSinceLatestUpdate())));
+        files.sort(Comparator.comparingInt(SourceFile::getLinesOfCode).reversed());
+        files.sort(Comparator.comparingInt(FileHistoryAnalyzer::daysSinceLatestUpdate));
         Collections.reverse(files);
-        int index[] = {0};
-        files.forEach(sourceFile -> {
-            if (index[0]++ >= sampleSize) {
-                return;
-            }
-            filesHistoryAnalysisResults.getMostPreviouslyChangedFiles().add(sourceFile);
-        });
+        addTop(files, sampleSize, filesHistoryAnalysisResults.getMostPreviouslyChangedFiles());
     }
 
     private void addMostChangedFiles(List<SourceFile> sourceFiles, FilesHistoryAnalysisResults filesHistoryAnalysisResults, int sampleSize) {
         List<SourceFile> files = new ArrayList<>(sourceFiles);
-        Collections.sort(files, (o1, o2) -> Integer.compare(o2.getLinesOfCode(), o1.getLinesOfCode()));
-        Collections.sort(files, Comparator.comparingInt(o -> (o.getFileModificationHistory() == null ? 0 : o.getFileModificationHistory().getDates().size())));
+        files.sort(Comparator.comparingInt(SourceFile::getLinesOfCode).reversed());
+        files.sort(Comparator.comparingInt(FileHistoryAnalyzer::changeCount));
         Collections.reverse(files);
-        int index[] = {0};
-        files.forEach(sourceFile -> {
-            if (index[0]++ >= sampleSize) {
-                return;
-            }
-            filesHistoryAnalysisResults.getMostChangedFiles().add(sourceFile);
-        });
+        addTop(files, sampleSize, filesHistoryAnalysisResults.getMostChangedFiles());
+    }
+
+    private void addFilesWithMostChurn(List<SourceFile> sourceFiles, FilesHistoryAnalysisResults filesHistoryAnalysisResults, int sampleSize) {
+        List<SourceFile> files = new ArrayList<>(sourceFiles);
+        files.sort(Comparator.comparingInt(SourceFile::getLinesOfCode).reversed());
+        files.sort(Comparator.comparingInt(FileHistoryAnalyzer::churn));
+        Collections.reverse(files);
+        addTop(files, sampleSize, filesHistoryAnalysisResults.getFilesWithMostChurn());
     }
 
     private void addFilesWithMostContributors(List<SourceFile> sourceFiles, FilesHistoryAnalysisResults filesHistoryAnalysisResults, int sampleSize) {
-        List<SourceFile> files = new ArrayList<>(sourceFiles);
-        Collections.sort(files, Comparator.comparingInt(o -> (o.getFileModificationHistory() == null ? 0 : -o.getFileModificationHistory().getDates().size())));
-        Collections.sort(files, (o1, o2) -> getCountContributors(o2) - getCountContributors(o1));
-        int index[] = {0};
-        files.forEach(sourceFile -> {
-            if (index[0]++ >= sampleSize) {
-                return;
-            }
-            filesHistoryAnalysisResults.getFilesWithMostContributors().add(sourceFile);
-        });
+        // Original: sort by change count desc, then stable-sort by contributor count desc.
+        topFiles(sourceFiles,
+                Comparator.comparingInt(this::getCountContributors).reversed()
+                        .thenComparing(Comparator.comparingInt(FileHistoryAnalyzer::changeCount).reversed()),
+                sampleSize, filesHistoryAnalysisResults.getFilesWithMostContributors());
     }
 
     private void addFilesWithLeastContributors(List<SourceFile> sourceFiles, FilesHistoryAnalysisResults filesHistoryAnalysisResults, int sampleSize) {
-        List<SourceFile> files = new ArrayList<>(sourceFiles);
-        Collections.sort(files, Comparator.comparingInt(o -> -o.getLinesOfCode()));
-        Collections.sort(files, Comparator.comparingInt(this::getCountContributors));
-        int index[] = {0};
-        files.forEach(sourceFile -> {
-            if (index[0]++ >= sampleSize) {
-                return;
-            }
-            filesHistoryAnalysisResults.getFilesWithLeastContributors().add(sourceFile);
-        });
+        // Original: sort by LOC desc, then stable-sort by contributor count asc.
+        topFiles(sourceFiles,
+                Comparator.comparingInt(this::getCountContributors)
+                        .thenComparing(Comparator.comparingInt(SourceFile::getLinesOfCode).reversed()),
+                sampleSize, filesHistoryAnalysisResults.getFilesWithLeastContributors());
     }
 
     private int getCountContributors(SourceFile sourceFile) {

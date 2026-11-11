@@ -68,9 +68,8 @@ public class SourceCodeCleanerUtils {
         List<String> lines = SourceCodeCleanerUtils.splitInLines(content);
         for (String line : lines) {
             line = replaceTabs(line).trim();
-            while (line.contains("  ")) {
-                line = line.replace("  ", " ");
-            }
+            // Collapse runs of spaces in a single pass instead of repeatedly rescanning the line.
+            line = line.replaceAll(" {2,}", " ");
             cleanedContent.append(line.trim());
             cleanedContent.append("\n");
         }

@@ -1,0 +1,760 @@
+# Sokrates Configuration Manual
+
+Sokrates is driven almost entirely by two JSON configuration files. Most behaviour is
+controlled by editing these files.
+
+| File | Purpose | Created by |
+| --- | --- | --- |
+| `_sokrates/config.json` | **Repository analysis** — how a single code base is scoped, analysed, decomposed, tagged, and what goals/controls apply. | `sokrates init` |
+| `_sokrates_landscape/config.json` | **Landscape** — how many repository analyses are aggregated into a portfolio report. | `sokrates updateLandscape` |
+| `analysis_conventions.json` | **Custom scoping conventions** (optional) — reusable rules fed into `init` to control how files are classified, which extensions are scanned, and the defaults baked into the generated `_sokrates/config.json`. | `sokrates createConventionsFile` / `exportStandardConventions` |
+
+Both files are read with a tolerant JSON parser: **unknown keys are ignored**, and any key
+you omit falls back to its default. You can therefore keep your config minimal and add only
+the keys you want to change. All keys are camelCase and match the field names exactly.
+
+The typical flow is:
+
+```bash
+sokrates init -srcRoot <path>        # create _sokrates/config.json
+# edit _sokrates/config.json
+sokrates generateReports             # analyse + emit HTML reports
+
+# then, in a folder containing many analysed repositories:
+sokrates updateLandscape             # create/update _sokrates_landscape/config.json + report
+```
+
+---
+
+# Part 1 — Repository analysis: `_sokrates/config.json`
+
+Created in the `_sokrates` folder by `sokrates init`. Defines a single repository's analysis.
+Backed by `CodeConfiguration` (`codeanalyzer/.../sourcecode/core/CodeConfiguration.java`).
+
+## Top-level keys
+
+| Key | Type | Default | Meaning |
+| --- | --- | --- | --- |
+| `metadata` | object | `{}` | Name, description, tooltip, logo and links shown on the report. |
+| `summary` | string[] | `[]` | Bullet-point key findings shown on the report index. |
+| `srcRoot` | string | `".."` | Relative path from the config file to the source code root. |
+| `extensions` | string[] | detected | File extensions to analyse (others are skipped). |
+| `ignore` | filter[] | `[]` | Path/content rules for files to exclude entirely. |
+| `main` / `test` / `generated` / `buildAndDeployment` / `other` | aspect | generated | The five **scope aspects** that classify every file. |
+| `logicalDecompositions` | object[] | one `primary` | How `main` files are grouped into components for dependency analysis. |
+| `concernGroups` | object[] | one `general` (TODOs) | Cross-cutting "features of interest" matched by path/content. |
+| `goalsAndControls` | object[] | one default goal | Metric thresholds (traffic lights) tied to goals. |
+| `trendAnalysis` | object | see below | Saving/comparing historical snapshots. |
+| `fileHistoryAnalysis` | object | see below | Git-history (contributors) analysis options. |
+| `analysis` | object | see below | Thresholds and switches controlling the analysis itself. |
+| `tagRules` | object[] | default tags | Tag the repository by file-path patterns. |
+| `customTabs` | object[] | `[]` | Optional extra tabs on the report index, each showing an iframe. |
+
+### `metadata`
+
+```json
+"metadata": {
+  "name": "My Service",
+  "description": "Payments service",
+  "tooltip": "",
+  "logoLink": "",
+  "links": [ { "label": "Repo", "href": "https://github.com/org/my-service" } ]
+}
+```
+
+### Scope aspects (`main`, `test`, `generated`, `buildAndDeployment`, `other`)
+
+Every file is classified into exactly one scope. Each aspect is a named set of files defined
+by `sourceFileFilters` (regex on path and/or content) or an explicit `files` list:
+
+```json
+"test": {
+  "name": "test",
+  "sourceFileFilters": [
+    { "pathPattern": ".*/test/.*", "contentPattern": "", "exception": false, "note": "" }
+  ],
+  "files": []
+}
+```
+
+A **`SourceFileFilter`** has: `pathPattern` (regex on the file's path below the source root, with a
+leading `/` — `/src/app/service.py` — so the folders above the repository never take part),
+`contentPattern` (regex on a line of code), `exception` (`true` flips it into an *exclude* rule), and
+an optional `note`.
+The same filter shape is reused throughout the config (`ignore`, decomposition filters, concerns).
+
+### `logicalDecompositions`
+
+Groups `main` files into components and renders their dependencies. The default decomposition
+`primary` groups by the first folder level:
+
+```json
+"logicalDecompositions": [
+  {
+    "name": "primary",
+    "scope": "main",
+    "componentsFolderDepth": 1,         // group by Nth folder level
+    "components": [],                   // or define components explicitly via filters
+    "includeRemainingFiles": true,
+    "dependenciesFinder": { "useBuiltInDependencyFinders": true, "rules": [], "metaRules": [] },
+    "renderingOptions": { "orientation": "TB", "maxNumberOfDependencies": 100 }
+  }
+]
+```
+
+Use `components` (each a named aspect with filters) to define components explicitly, or
+`metaComponents` to derive component names from path/content. `dependenciesFinder.rules` add
+explicit regex-based dependency links beyond the language built-ins.
+
+### `concernGroups`
+
+Concerns ("features of interest") classify files that match a pattern, independent of scope.
+The default group flags TODOs/FIXMEs:
+
+```json
+"concernGroups": [
+  { "name": "general",
+    "concerns": [
+      { "name": "TODOs", "sourceFileFilters": [ { "contentPattern": ".*(TODO|FIXME)( |:|\\t).*" } ] }
+    ] }
+]
+```
+
+### `goalsAndControls`
+
+A goal groups one or more **controls**: each control names a Sokrates `metric` and a
+`desiredRange` (`min`, `max`, `tolerance` — numeric strings); the report shows a green/yellow/red
+light per control. The default goal keeps size/duplication/file-size/complexity in check:
+
+```json
+"goalsAndControls": [
+  { "goal": "Keep the system simple and easy to change",
+    "controls": [
+      { "metric": "LINES_OF_CODE_MAIN", "desiredRange": { "min": "0", "max": "200000", "tolerance": "20000" } },
+      { "metric": "DUPLICATION_PERCENTAGE", "desiredRange": { "min": "0", "max": "5", "tolerance": "1" } }
+    ] }
+]
+```
+
+### `analysis`
+
+Switches and risk thresholds for the analysis itself. Common keys:
+
+| Key | Default | Meaning |
+| --- | --- | --- |
+| `skipDuplication` | `false` | Skip duplication analysis. |
+| `skipDependencies` | `false` | Skip component dependency analysis. |
+| `saveSourceFiles` / `saveCodeFragments` | `true` | Save copies/snippets linked from reports. |
+| `maxFileSizeBytes` / `maxLines` / `maxLineLength` | `1000000` / `10000` / `1000` | Skip files exceeding these. |
+| `locDuplicationThreshold` | `10000000` | Skip duplication when main LOC exceeds this. |
+| `minDuplicationBlockLoc` | `6` | Minimum duplicated block size (lines). |
+| `maxTemporalDependenciesDepthDays` | `365` | Days of git history used to compute temporal (changed-together) file dependencies. Four windows are computed - 30, 90 and 180 days, plus one covering the configured depth - but only those the depth reaches: 90 needs `>= 90`, 180 needs `>= 180`, and the configured-depth window needs `> 180` (below that it would only repeat the 180-day one). Each computed window gets a tab in the temporal dependencies report and a pair of `data/text/temporal_dependencies*.txt` exports; a window that was not computed - including when there is no git history at all - gets neither, so a missing export means "not analysed" while a header-only one means "analysed, nothing found". |
+| `maxFilesPerCommitForTemporalDependencies` | `100` | Commits that touch more main files than this are left out of the temporal (changed-together) file dependencies, in every window. A commit with N files yields N×(N−1)/2 file pairs, so a single mass edit (reformatting, a license header, a rename of a package) can create millions of pairs and gigabytes of memory while saying little about coupling. Only main files within the window count. `0` or less turns the limit off (the behaviour before 2026-10-05). |
+| `maxTopListSize` | `50` | Size of the "top N" sample lists (longest/most-changed files, longest/most-complex units, etc.). |
+| `fileSizeThresholds` | `{low:100, medium:200, high:500, veryHigh:1000}` | Risk bands for file size (LOC). |
+| `unitSizeThresholds` | `{low:10, medium:20, high:50, veryHigh:100}` | Risk bands for unit size. |
+| `conditionalComplexityThresholds` | `{low:5, medium:10, high:25, veryHigh:50}` | Risk bands for unit complexity. |
+| `fileComplexityThresholds` | `{low:25, medium:50, high:125, veryHigh:250}` | Risk bands for file complexity (the sum of the McCabe indexes of a file's units; five times the unit bands). Replaces the never-used `fileConditionalComplexityThresholds`, which is ignored. |
+| `fileAgeThresholds` / `fileUpdateFrequencyThresholds` | (see source) | Risk bands for history metrics. |
+| `fileReadsForChanges` | `{enabled:true, windowDays:365, maxFiles:20, largeFileLines:2000, tokensPerLineMin:7, tokensPerLineMax:14}` | The File Size report's "Large Files That Change Often" section: the `maxFiles` main files read most for the changes of the last `windowDays` days (lines × commits; `0` or less = the whole history), with the tokens to read them shown as a range of lines × `tokensPerLineMin` to `tokensPerLineMax`. On Highlights, the "Large-file changes" tile shows the share of those changes that touched a file over `largeFileLines` lines, and a "Large files that change often" list (up to 5 files) appears only when there are such files. `enabled: false` hides the section, the tile and the list. A min above the max is swapped, and values below 1 become 1. |
+| `maintainabilityScores` | `{enabled:true, show:true, humanWeights:{}, aiWeights:{}, useCustomFramework:false, customFramework:{…}}` | The **Human** and **AI ease of change*** (the maintainability scores, shown as "ease of change": how easily the code can be understood and changed, 0–10; other things equal, less code is easier and cheaper to change; graded A ≥ 8, B ≥ 6.5, C ≥ 5, D ≥ 3.5, E below): Highlights tiles, the "Maintainability scores" breakdown under them, the metrics `MAINTAINABILITY_SCORE_HUMAN`, `MAINTAINABILITY_SCORE_AI` and `AI_CONTEXT_LINES_PER_CHANGE` (usable in `goalsAndControls`, e.g. a fitness function "AI score at least 6"), and two columns in the landscape's Repositories › Metrics. Both scores weigh the same sub-scores, each 0–10 from fixed anchor points: `volume` (main LOC), `duplication`, `unitSize`, `unitComplexity`, `fileSize`, `fileComplexity` (share of code above the configured *high* thresholds), `fileReadBudget` (shown as "Files beyond read budget": share of main code in files of more than 2,000 physical lines — comments and blanks included, as an agent reads them — i.e. longer than an agent gets from one file read; counted for files over 500 LOC), `testCode` (shown as "Tests presence": test/main LOC — no tests 1, 5% 5, 10% 3, 30% 5, 50% or more 10; not coverage, which reading the code cannot tell), `changeEntropy` (mean Shannon entropy of a past-year commit's main files over components), `contextPerChange` (what a past-year commit makes one read: per touched main file its current LOC, at most 200 — a window around the place, not the file) and `knowledge` (people who make half of the past-year commits). Default weights human / AI: volume 1 / 0.75, duplication 1 / 1.5, unitSize 1.5 / 0, unitComplexity 2 / 1, fileSize 0.75 / 0, fileReadBudget 0 / 0.75, fileComplexity 1 / 0.75, testCode 0.75 / 1.5, changeEntropy 1 / 1.5, contextPerChange 0.5 / 2, knowledge 1.5 / 0. Unit size and the 500-LOC file size are out of the AI score because a controlled experiment (the same tasks, run repeatedly by an agent on a codebase and on a twin with every file under 500 LOC and every unit under 50 lines) measured no difference in what the agent spent: it finds the place by search and reads a window, whatever the length of the file; files beyond one read are the exception and count as `fileReadBudget`. Set `aiWeights: {"unitSize": 1, "fileSize": 1.75}` to score them as before. `humanWeights` / `aiWeights` override them per key (`0` leaves a sub-score out). A sub-score whose analysis did not run is left out, and the score says so: its **coverage** ("measured on 9 of 10 sub-scores (not measured: Duplication)") is on the Highlights card, replaces the tile caption and marks the At a Glance block and the landscape ("9/10", a hollow dashed dot on the Scores* chart) whenever a sub-score that counts (weight > 0) is missing; compare such scores with care. The total is the weighted geometric mean with a soft weakest-link cap: of what it rises above the weakest code sub-score + 4, only half counts ("held down by" names that sub-score). `show: false` hides them in the report (At a Glance, Highlights) but still computes them into the data (`analysisResults.json`, the metrics, the landscape export); `enabled: false` computes nothing. **Your own score framework**: with the explicit switch `useCustomFramework: true`, `customFramework` replaces the built-in sub-scores, weights (`humanWeights`/`aiWeights` are then ignored), cap and grades: `subScores` = a list of `{key, label, metric, description, anchors, humanWeight, aiWeight, whyHuman, whyAi}` — `key` a built-in sub-score (above; `anchors` optional, replacing its built-in ones) or, with `metric`, your own key scoring any metric of the analysis by id (e.g. `LINES_OF_CODE_TEST`, `NUMBER_OF_FILES_MAIN`, a features-of-interest metric; see the Metrics report — not the controls' or the scores' own), which then needs `anchors`; `anchors` = `[measure, score 0–10]` pairs, interpolated linearly, flat beyond the ends; weights default to `1` (`0` = not in that score); `label` (default: the built-in label or the key) and `description` (text after a metric's value; default: the metric id) are what the report shows; `whyHuman` / `whyAi` explain why the sub-score matters for people / for AI agents, shown when its row on Highlights is opened (default: the built-in text of a built-in key, none for a metric). Only the listed sub-scores count, in that order; one that cannot be measured (its analysis did not run, an unknown key or metric, invalid anchors, a duplicate key) is left out with a log warning, and with none left there are no scores. `weakestLinkMargin` (default 4; negative = no cap), `capStrength` (the share of the excess above the weakest + margin that the cap removes, 0–1, default 0.5; 1 = a hard cap), `capExcludes` (sub-score keys that never cap, default `["knowledge"]`) and `gradeThresholds` (lowest totals for A, B, C, D, descending, default `[8, 6.5, 5, 3.5]`) set the rules. The report and the landscape note the custom framework; compare only repositories scored the same way. Example: `"useCustomFramework": true, "customFramework": {"weakestLinkMargin": 3, "subScores": [{"key": "duplication", "aiWeight": 2}, {"key": "unitComplexity", "label": "Complex logic", "humanWeight": 2}, {"key": "testLines", "metric": "LINES_OF_CODE_TEST", "description": "lines of test code", "anchors": [[0, 0], [50000, 10]]}]}` |
+| `estimateAssumptions` | `{enabled:false, ruleOfThumb:{…}, aiCostEstimator:{}}` | Starting values of the estimate pages' assumptions, used **only when `enabled` is `true`** (else the pages keep their built-in defaults). `ruleOfThumb` (At a Glance "Rule-of-thumb estimates"; a field left out keeps its default): `linesOfCodePerManYear` (10000), `costPerManYear` (100000), `currency` ("€", up to 4 characters), `maintenancePercentage` (15). `aiCostEstimator`: assumption id → a number, `[min, max]` for a range (a number sets both ends) or text — ids `p-in`, `p-out`, `p-cw`, `p-cr` (prices per 1M tokens), `currency`, `reference`, `window`, `max-file` (single values); `steps`, `steps-file`, `debug`, `base`, `tpl`, `amp`, `tool`, `reason`, `edit`, `miss`, `carry` and the Naive Rebuild `r-redo`, `r-test`, `r-other`, `r-lines`, `r-files`, `r-read`, `r-fixes`, `r-fix-lines`, `r-fix-read`, `r-refactor` (ranges); `r-level` = `low`, `medium`, `high` or `very-high` (sets `r-redo` unless that is given too). Unknown ids or wrong value kinds are skipped (browser console warning). Viewers can still change the values in the page; the page notes that its starting values come from the configuration, and remembers edits per configuration. Repository reports only; landscapes use the built-in defaults. Example: `"estimateAssumptions": {"enabled": true, "ruleOfThumb": {"costPerManYear": 120000, "currency": "$"}, "aiCostEstimator": {"p-in": 2.5, "steps": [5, 15], "r-level": "medium"}}` |
+
+Each `*Thresholds` is an object `{ "low", "medium", "high", "veryHigh" }`.
+
+#### `analyzerOverrides`
+
+By default the language analyzer is chosen by file extension. `analyzerOverrides` forces a
+different analyzer for files matching given filters — useful when one extension covers several
+dialects, so the extension alone does not identify the language.
+
+```json
+"analyzerOverrides": [
+  {
+    "analyzer": "tsql",
+    "filters": [
+      { "pathPattern": ".*/db/procedures/.*[.]sql", "note": "MS T-SQL, not generic SQL" }
+    ]
+  },
+  {
+    "analyzer": "plsql",
+    "filters": [
+      { "pathPattern": ".*/db/packages/.*[.]sql", "note": "Oracle PL/SQL, not generic SQL" }
+    ]
+  }
+]
+```
+
+`.sql` is the case this option exists for: T-SQL, PL/SQL and generic SQL share it, and the
+extension alone cannot say which dialect a file is.
+
+- **`analyzer`** is the *extension key* the analyzer is registered under in
+  `LanguageAnalyzerFactory` — `"tsql"`, `"plsql"`, `"cs"`, `"java"`, … — not a class name. A key that is
+  not registered is not reported as an error, and the matched files fall through to the generic
+  `DefaultLanguageAnalyzer` rather than to the analyzer their extension would have chosen. A typo
+  here therefore leaves the files analysed *less* well than no override at all, so check the key
+  against `LanguageAnalyzerFactory` when a language's metrics look unexpectedly flat.
+- **`filters`** are ordinary source-file filters (`pathPattern`, `contentPattern`, `exception`,
+  `note`). A file is overridden when at least one filter matches it and no `exception` filter
+  matches it, whatever their order in the list.
+- **`pathPattern` must match the *whole* path** (the path below the source root, with a leading
+  `/`), so prefix it with `.*` — `.*[.]sql` matches, `[.]sql` does not. Both `/` and `\`
+  separators are tried, so one pattern works on either platform.
+- **`contentPattern` must likewise match a whole *line***, not appear somewhere in one. To route
+  by a keyword anywhere in the file, wrap it: `".*\\bPACKAGE BODY\\b.*"`.
+
+In the example above, `.sql` files under `db/packages/` are analysed as PL/SQL while every other
+`.sql` file still uses the generic SQL analyzer. This is the preferred way to handle dialect
+specific files that carry a generic extension: it lives in configuration, survives re-exports,
+and does not require renaming source files.
+
+The same applies to `"tsql"`, for Microsoft T-SQL. It is picked automatically only for the `.tsql`
+extension, because `.sql` is shared with every other dialect and guessing from the extension would
+be wrong as often as right. Server-side code exported from SQL Server arrives as `.sql`, so an
+override is how it is routed:
+
+```json
+"analyzerOverrides": [
+  {
+    "analyzer": "tsql",
+    "filters": [
+      { "pathPattern": ".*/db/procedures/.*[.]sql", "note": "MS T-SQL, not generic SQL" }
+    ]
+  }
+]
+```
+
+### `fileHistoryAnalysis`
+
+Drives contributor/commit analysis from an exported git history:
+
+```json
+"fileHistoryAnalysis": {
+  "importPath": "../_git_history.json",
+  "bots": [".*\\[bot\\].*", ".*[-]bot[@].*"],
+  "ignoreContributors": [],
+  "anonymizeContributors": false,
+  "transformContributorEmails": [ { "op": "replace", "params": ["[@].*", ""] } ],
+  "coAuthors": {
+    "enabled": true,
+    "trailerKeys": ["Co-authored-by", "Assisted-by", "Generated-by", "Message-Signature"],
+    "aiAgents": [
+      { "name": "Claude Code", "patterns": [".*noreply@anthropic\\.com.*", ".*generated with \\[claude code\\].*", ".*claude.*"] },
+      { "name": "GitHub Copilot", "patterns": [".*copilot.*"] },
+      { "name": "Cursor", "patterns": [".*cursoragent.*", ".*@cursor\\.com.*"] },
+      { "name": "OpenAI Codex", "patterns": [".*codex.*"] },
+      { "name": "Aider", "patterns": [".*aider.*"] },
+      { "name": "Gemini", "patterns": [".*gemini.*"] },
+      { "name": "Devin", "patterns": [".*devin-ai.*"] },
+      { "name": "Jules", "patterns": [".*google-labs-jules.*"] }
+    ]
+  }
+}
+```
+
+`transformContributorEmails` applies string operations (`replace`, `extract`, `remove`,
+`trim`, `lowercase`, …) to normalise contributor identities.
+
+The same operations power `nameOperations` in meta rules (`metaConcerns`, `metaComponents`,
+`metaRules`). `extract` keeps the first match of each regex; **if the regex has a capturing group,
+only group 1 is kept** (e.g. `".*target_os = \"([a-z]+)\".*"` on `#[cfg(target_os = "linux")]` yields
+`linux`, not the whole line), otherwise the whole match. A non-matching regex yields an empty string.
+
+#### `coAuthors` — co-authorship from commit trailers
+
+`extractGitHistory` writes an optional sidecar, `git-commit-trailers.txt`, next to `git-history.txt`
+with every commit message **trailer** (`<sha> <Key>: <value>`, e.g.
+`Co-Authored-By: Claude <noreply@anthropic.com>`) plus two pseudo-trailers: `Committer: Name <email>`
+when the committer differs from the author, and `Message-Signature: <line>` for tool signature lines in
+the message body that are not trailers — e.g. `🤖 Generated with [Claude Code](https://claude.ai/code)`,
+which older Claude Code versions wrote without a `Co-authored-by` (captured by a generic
+"generated/made/created/… with/by/using …" line-start heuristic). AI coding agents (Claude Code, GitHub Copilot, Cursor,
+Codex, Aider, …) sign their commits this way. `coAuthors` decides, at analysis time, how those
+trailers become co-author information:
+
+| Key | Type | Default | Description |
+|---|---|---|---|
+| `enabled` | bool | `true` | Set to `false` to switch co-author / AI agent analysis off entirely: the sidecar is not read, commits carry no co-authors, and the commits explorer column and the Overview "AI co-authored commits" row are not shown. |
+| `trailerKeys` | string[] | `["Co-authored-by", "Assisted-by", "Generated-by", "Message-Signature"]` | Trailer keys (case-insensitive) whose value names a co-author. Other trailers (`Signed-off-by`, `Committer`, …) are ignored. A `Message-Signature` value only ever resolves to an AI agent — when no `aiAgents` pattern matches it is dropped, never turned into a person. |
+| `aiAgents` | object[] | the list above | Named AI agents. Each `{ "name", "patterns" }` entry's regexes are matched entirely and case-insensitively against the whole trailer value (`Name <email>`) **and** against the email alone; the first matching agent's `name` is attributed. A co-author matching none of them but matching `bots` is attributed to the pseudo-agent `bot`. |
+
+A co-author that is not an agent is a **person**: its email is normalised exactly like commit
+authors — dropped when it matches `ignoreContributors`, anonymised when `anonymizeContributors` is
+on, run through `transformContributorEmails`, and remapped by `config-people.json` — so a person's
+co-authored and authored commits collapse to one identity. Co-authors are deduplicated per commit.
+Setting `trailerKeys`/`aiAgents` **replaces** the defaults (they are not merged). The feature is inert
+for histories extracted by older versions (no sidecar) — re-run `extractGitHistory` to get the data.
+
+### `trendAnalysis`
+
+```json
+"trendAnalysis": { "referenceAnalysesFolder": "history", "saveHistory": false, "frequency": "weekly", "maxReferencePointsForAnalysis": 20 }
+```
+
+### `tagRules`
+
+Tag the repository by file-path patterns (used to recognise technologies):
+
+```json
+"tagRules": [ { "tag": "Docker", "color": "", "pathPatterns": [".*Dockerfile.*"], "excludePathPatterns": [] } ]
+```
+
+### `customTabs`
+
+Optional extra tabs added to the end of the repository report's tab strip (after **Data**). Each
+tab's whole content is an iframe. Both fields are required — entries with a blank `label` or
+`iframeLink` are skipped.
+
+```json
+"customTabs": [
+  { "label": "Architecture Docs", "iframeLink": "https://wiki.example.com/repo/architecture" },
+  { "label": "Dashboards", "iframeLink": "../custom/dashboards.html" }
+]
+```
+
+`iframeLink` can be absolute or relative; relative links resolve from the report's `html/` folder
+(where `index.html` lives). Labels are unique: the CLI command
+`sokrates addCustomTab -label "Architecture Docs" -iframeLink <url> [-confFile <path>]` adds a tab,
+or overwrites the existing tab with the same label (compared trimmed, case-insensitively). The page must allow embedding in an iframe (no `X-Frame-Options: DENY`).
+
+---
+
+# Part 2 — Landscape: `_sokrates_landscape/config.json`
+
+Created/updated by `sokrates updateLandscape` in a folder that contains one or more analysed
+repositories (each with a `data/analysisResults.json`). Backed by `LandscapeConfiguration`
+(`codeanalyzer/.../sourcecode/landscape/LandscapeConfiguration.java`).
+
+`updateLandscape` discovers the repositories (and any folder sub-landscapes) and stores that
+discovered index in a companion **`info.json`**; the discovered lists are *not* written into
+`config.json`, so you only ever edit the human-authored settings below.
+
+## Top-level keys
+
+| Key | Type | Default | Meaning |
+| --- | --- | --- | --- |
+| `metadata` | object | `{}` | Landscape name, description, logo, links. |
+| `virtualLandscapes` | object | empty | Define sub-landscapes by repository-name patterns (see below). |
+| `analysisRoot` | string | `"."` | Relative path to the folder holding the repository analyses. |
+| `repositoryReportsUrlPrefix` | string | `"../"` | Prefix used to link from the landscape to repository reports. |
+| `parentUrl` | string | `""` | Optional: clicking the landscape title navigates here. |
+| `breadcrumbs` | link[] | `[]` | Breadcrumb links reflecting the hierarchy. |
+| `extensionThresholdLoc` | int | `0` | Min main LOC for an extension to be listed. |
+| `repositoryThresholdLocMain` | int | `0` | Min main LOC for a repository to be included. |
+| `repositoryThresholdContributors` | int | `1` | Min unique contributors for a repository to be included. |
+| `contributorThresholdCommits` | int | `1` | Min commits for a contributor to be counted. |
+| `ignoreRepositoriesLastUpdatedBefore` | string | `""` | `YYYY-MM-DD`; exclude repositories not updated after this date. |
+| `commitsMaxYears` | int | `10` | Years of commit history to display. |
+| `significantContributorMinCommitDaysPerYear` | int | `10` | Commit-days/year to count as a "significant" contributor. |
+| `anonymizeContributors` | boolean | `false` | Replace contributor identities with anonymous IDs. |
+| `showRepositoryControls` | boolean | `true` | Show goal/control status per repository. |
+| `showMaintainabilityScores` | boolean | `true` | Show the Human / AI maintainability score columns in Repositories › Metrics. The scores stay in the exported data either way. |
+| `repositoriesShortListLimit` | int | `100` | Rows in the short repository preview. |
+| `repositoriesListLimit` | int | `1000` | Rows in the full repository list. |
+| `repositoriesHistoryLimit` | int | `30` | Years of per-repository history shown. |
+| `contributorsListLimit` | int | `1000` | Rows in the contributor list. |
+| `contributorLinkTemplate` | string | `""` | Template for an external contributor page; `${contributorid}` is substituted. |
+| `contributorAvatarLinkTemplate` | string | `""` | Template for a contributor avatar image; `${contributorid}` is substituted. |
+| `ignoreContributors` | string[] | `[]` | Regex patterns of contributors to drop. |
+| `bots` | string[] | bot defaults | Regex patterns identifying bot accounts. |
+| `tagContributors` | object[] | `[]` | Tag contributors by email patterns (e.g. `extern`). |
+| `ignoreExtensions` | string[] | `[]` | Extensions to ignore landscape-wide. |
+| `includeOnlyOneRepositoryWithSameName` | boolean | `true` | Deduplicate repositories sharing a name. |
+| `mergeExtensions` | object[] | `[]` | Merge a secondary extension into a primary one. |
+| `transformContributorEmails` | object[] | `[]` | Normalise contributor identities (same op format as repo config). |
+| `showContributorsTrendsOnFirstTab` | boolean | `true` | Show contributor/commit trends on the At a Glance tab (formerly Overview). |
+| `maxSublandscapeDepth` | int | `0` | Max sub-landscape nesting depth shown (`0` = all). |
+| `iFramesAtStart` / `iFrames` | object[] | `[]` | Embedded web frames at the start/end of the At a Glance tab (formerly Overview). |
+| `iFramesRepositoriesAtStart` / `iFramesRepositories` | object[] | `[]` | …of the Repositories tab. |
+| `iFramesContributorsAtStart` / `iFramesContributors` | object[] | `[]` | …of the Contributors tab. |
+| `customTabs` | object[] | `[]` | Extra tabs, each holding a list of embedded frames. |
+| `customHtmlReportHeaderFragment` | string | `""` | Raw HTML injected into the report `<head>` (e.g. analytics). |
+
+> Note: `subLandscapes` and `repositories` are populated automatically (kept in `info.json`),
+> not edited by hand.
+
+### `tagContributors`, `mergeExtensions`, `transformContributorEmails`
+
+```json
+"tagContributors": [ { "name": "extern", "patterns": [".*([-]|_)(ext|extern[0-9]*)@.*"] } ],
+"mergeExtensions": [ { "primary": "tf", "secondary": "tfvars" } ],
+"transformContributorEmails": [ { "op": "replace", "params": ["[@].*", ""] } ]
+```
+
+### Embedded frames and custom tabs
+
+An iFrame entry is a `WebFrameLink`: `{ "title", "src", "style", "scrolling", "moreInfoLink" }`.
+A `customTab` is `{ "name", "iFrames": [ … ] }`.
+
+### `virtualLandscapes`
+
+Virtual landscapes let you define sub-landscapes **by repository-name regex patterns**, without
+moving report folders. Each defined landscape gets a full landscape report under
+`_sokrates_landscape/landscapes/<name>/_sokrates_landscape/`, and a **Remainder** landscape
+collects repositories matched by none. They appear in the parent's "Sub-landscapes" tab, and the
+sub-landscape zoomable-circles/sunburst visuals group repositories into one circle per virtual
+landscape (plus Remainder) rather than by folder path. A repository may belong to several virtual
+landscapes. The feature is inert when `landscapes` is empty, and coexists with folder-based
+sub-landscapes.
+
+```json
+"virtualLandscapes": {
+  "remainderLandscapeMetadata": { "name": "Remainder" },
+  "landscapes": [
+    {
+      "metadata": { "name": "Datadog", "description": "Datadog-related code" },
+      "includeRepoNamePatterns": [".*datadog.*"],
+      "excludeRepoNamePatterns": []
+    }
+  ]
+}
+```
+
+A repository is a member when its name matches **any** include pattern and **no** exclude
+pattern.
+
+**Nesting (unlimited depth).** A virtual landscape may itself define `virtualLandscapes`, which
+partition *its own* repositories into nested virtual landscapes (each again with its own
+Remainder). Nested landscapes are generated under
+`…/landscapes/<parent>/_sokrates_landscape/landscapes/<child>/_sokrates_landscape/` and appear in
+their parent virtual landscape's own "Sub-landscapes" tab. There is no depth limit.
+
+```json
+"virtualLandscapes": {
+  "landscapes": [
+    {
+      "metadata": { "name": "Datadog" },
+      "includeRepoNamePatterns": [".*datadog.*"],
+      "virtualLandscapes": {
+        "landscapes": [
+          { "metadata": { "name": "Agents" }, "includeRepoNamePatterns": [".*agent.*"] }
+        ]
+      }
+    }
+  ]
+}
+```
+
+## Companion files in `_sokrates_landscape/`
+
+These optional files sit beside `config.json` and are created (empty) on first run. Edit them
+to enrich the landscape report; they are re-read on every `updateLandscape`.
+
+| File | Holds |
+| --- | --- |
+| `config-tags.json` | Repository tags — classify/group repositories (by name, extension, or path). |
+| `config-teams.json` | Teams — map contributors to teams by email patterns. |
+| `config-people.json` | People — per-contributor profiles (display name, avatar, links). |
+| `info.json` | **Auto-generated** index of discovered repositories and sub-landscapes — do not edit. |
+
+### `config-tags.json` — repository tags
+
+A JSON **array of tag groups**. Each group has a `name`, optional `description`/`color`, and a
+list of `repositoryTags`. A repository gets a tag if it matches the tag's rules; tags drive the
+"Tags" tab and the per-repository tag badges.
+
+A **tag group** (`TagGroup`): `name`, `description`, `color`, `repositoryTags[]`.
+
+A **repository tag** (`RepositoryTag`) matches a repository when any rule below matches (and no
+exclude rule does):
+
+| Key | Type | Meaning |
+| --- | --- | --- |
+| `tag` | string | The tag label shown in the report. |
+| `patterns` | string[] | Regex on the repository **name** to include. |
+| `excludePatterns` | string[] | Regex on the name to exclude. |
+| `mainExtensions` | string[] | Match when one of these is the repository's dominant extension. |
+| `anyExtensions` | string[] | Match when the repository contains any of these extensions. |
+| `excludeExtensions` | string[] | Exclude when any of these extensions is present. |
+| `pathPatterns` | string[] | Regex on file paths within the repository to include. |
+| `excludePathPatterns` | string[] | Regex on file paths to exclude. |
+| `imageLink` | string | Optional icon URL shown next to the tag. |
+
+```json
+[
+  {
+    "name": "Technology",
+    "description": "Primary technology",
+    "color": "#dddddd",
+    "repositoryTags": [
+      {
+        "tag": "Java",
+        "patterns": [],
+        "excludePatterns": [],
+        "mainExtensions": ["java"],
+        "anyExtensions": [],
+        "excludeExtensions": [],
+        "pathPatterns": [],
+        "excludePathPatterns": [],
+        "imageLink": "https://.../java.png"
+      },
+      {
+        "tag": "Terraform",
+        "anyExtensions": ["tf"]
+      }
+    ]
+  }
+]
+```
+
+### `config-teams.json` — teams
+
+A JSON **object** with a `teams` array. Each `TeamConfig` maps contributors to a team by
+matching their email against regex `emailPatterns` **or** their userName against `userNamePatterns`.
+Teams get their own report (a `teams.html` landscape alongside `contributors.html`).
+
+Team matching runs **after** `config-people.json` transformations, so the email and userName tested
+are the people-config-canonical values (the person's canonical `email` / display `userName`), falling
+back to the original commit email/userName when no person config applied.
+
+| Key | Type | Meaning |
+| --- | --- | --- |
+| `name` | string | Team name. |
+| `description` | string | Optional description. |
+| `emailPatterns` | string[] | Regex patterns matched against contributor emails. |
+| `userNamePatterns` | string[] | Regex patterns matched against contributor userNames. A contributor joins the team when their email matches any `emailPattern` **OR** their userName matches any `userNamePattern`. |
+
+```json
+{
+  "teams": [
+    { "name": "Payments", "description": "", "emailPatterns": [".*@payments\\.example\\.com"] },
+    { "name": "Platform",  "description": "", "emailPatterns": ["alice@example\\.com", "bob@example\\.com"] },
+    { "name": "Data",      "description": "", "emailPatterns": [], "userNamePatterns": ["Ahmed Hached", "data-team-.*"] }
+  ]
+}
+```
+
+### `config-people.json` — people
+
+A JSON **object** with a `people` array. Each `PersonConfig` enriches a contributor (identified
+by `emailPatterns`) with a canonical identity (`email`), an optional display name (`userName`),
+an avatar image, and profile links shown on their individual contributor report.
+
+| Key | Type | Meaning |
+| --- | --- | --- |
+| `email` | string | Canonical identity — replaces the matched contributor email/id (used as the contributor key after `emailPatterns` matching). |
+| `userName` | string | Display name; when set, overrides the contributor's commit-derived userName in the reports. Default `""`. |
+| `name` | string | Legacy alias for `userName` (older configs used `name` as the display name); still read into `userName` when `userName` is absent. Prefer `userName`. |
+| `image` | string | Avatar image URL (overrides `contributorAvatarLinkTemplate`). |
+| `links` | link[] | Profile links (`{ "label", "href" }`) shown on the contributor page. |
+| `link` | string | Legacy single link (prefer `links`). |
+| `emailPatterns` | string[] | Regex patterns matched against the contributor's email. |
+| `userNamePatterns` | string[] | Regex patterns matched against the contributor's commit userName. A contributor is assigned to this person when their email matches any `emailPattern` **OR** their commit userName matches any `userNamePattern`. Useful when the same person commits under emails that share no common pattern but a consistent display name (or vice versa). |
+
+```json
+{
+  "people": [
+    {
+      "userName": "Guido van Rossum",
+      "email": "guido@*",
+      "image": "https://.../guido.png",
+      "links": [ { "label": "GitHub", "href": "https://github.com/gvanrossum" } ],
+      "emailPatterns": ["guido[@]python.org", "guido[@]dropbox.com", "guido[@]google.com"],
+      "userNamePatterns": ["Guido van Rossum", "gvanrossum"]
+    }
+  ]
+}
+```
+
+> **Bootstrapping by display name.** `sokrates updateLandscapePeopleConfigByUserName` scans every
+> repository's contributors and groups all emails that committed under the same `userName` into one
+> entry: every email becomes an `emailPatterns` regex (so the person matches all their addresses),
+> while the `email` field holds a single address — the **latest-used** email — and is filled only when
+> it is currently blank. It is **purely additive**: an entry with an existing `userName` gets only its
+> new patterns appended, and an `email` that is already set is **never overwritten**; nothing is
+> removed — so it is safe to re-run and to mix with hand-edited entries.
+>
+> `sokrates updatePeopleConfigByUserName` is the **single-repository** version: it reads only the repo's
+> `git-history.txt` (so run it after `extractGitHistory`, without needing `generateReports`) and writes
+> `_sokrates/config-people.json` using the same format and the same additive grouping. The
+> contributor-detection rules (`ignoreContributors`, `bots`, `transformContributorEmails`,
+> `anonymizeContributors`) are taken from the repo's own `_sokrates/config.json`.
+
+> The same `bots`, `ignoreContributors`, `anonymizeContributors`, and `transformContributorEmails`
+> options on the landscape `config.json` (Part 2) also shape how contributors are detected and
+> normalised before teams/people matching is applied.
+
+## Folder layout
+
+```text
+analysis-root/
+├── _sokrates_landscape/
+│   ├── config.json            # landscape settings (this manual, Part 2)
+│   ├── config-tags.json       # optional repository tags
+│   ├── config-teams.json      # optional teams
+│   ├── config-people.json     # optional people profiles
+│   ├── info.json              # auto-generated repository/sub-landscape index
+│   ├── index.html             # generated landscape report
+│   ├── landscapes/            # generated virtual landscapes (if configured)
+│   ├── contributors/          # generated per-contributor reports
+│   ├── data/                  # generated JSON exports
+│   └── visuals/               # generated charts
+├── repo-a/data/analysisResults.json   # a repository analysis (from `generateReports`)
+├── repo-b/data/analysisResults.json
+└── team-x/_sokrates_landscape/         # a folder-based sub-landscape (optional)
+```
+
+---
+
+# Part 3 — Custom scoping conventions: `analysis_conventions.json`
+
+`_sokrates/config.json` (Part 1) is produced by `sokrates init`, which scans your source tree
+and applies a large set of **standard conventions** — rules that decide which file extensions
+are source code, and which files are tests, generated, build-and-deployment, "other", or
+ignored. Those standard conventions are baked into Sokrates (`ScopingConventions.java`) and
+are based on GitHub's [linguist](https://github.com/github/linguist) heuristics.
+
+A **conventions file** lets you override or extend that classification step *before* the
+`config.json` is written, and to set the defaults baked into the generated config. It is
+optional: omit it and `init` uses only the standard conventions. Pass it with `-conventionsFile`:
+
+```bash
+sokrates init -srcRoot <path> -conventionsFile analysis_conventions.json
+```
+
+Backed by `CustomScopingConventions` (`codeanalyzer/.../sourcecode/scoping/custom/`).
+
+## When to use it vs. editing `config.json`
+
+| | `analysis_conventions.json` | `_sokrates/config.json` |
+| --- | --- | --- |
+| Applied | at `init` time, before the config is generated | at `generateReports` time |
+| Scope | **reusable** across many repositories (a portfolio standard) | a single repository |
+| Granularity | matched against the files actually present, then materialised into the config | the literal, already-resolved rules |
+
+Use a conventions file when you have a house style you want every repository's `init` to
+follow (e.g. always treat `*.gen.go` as generated, always ignore a vendored folder, always
+flag a set of concerns). For a one-off tweak to a single repository, edit its `config.json`
+directly. The two compose: custom conventions are *added on top of* the standard ones unless
+you opt out (see `ignoreStandardScopingConventions` below).
+
+## Creating one
+
+```bash
+sokrates createConventionsFile      # writes an empty analysis_conventions.json (all defaults)
+sokrates exportStandardConventions  # writes standard_analysis_conventions.json (the full
+                                    #   built-in standard rules, as a starting point to edit)
+```
+
+`createConventionsFile` is the usual starting point — you add only the keys you want. Use
+`exportStandardConventions` when you want to see (and selectively change) the complete set of
+built-in rules.
+
+## How conventions are applied at `init`
+
+`ScopeCreator.createScopeFromConventions(...)` builds the config in this order:
+
+1. **Extensions** — the source tree is scanned and each extension is kept or dropped by
+   `extensions.onlyInclude` / `extensions.alwaysExclude` (below), falling back to Sokrates's
+   list of known source-code extensions.
+2. **Standard scoping** — unless `ignoreStandardScopingConventions` is `true`, every standard
+   ignore/test/generated/build/other rule that matches a file actually present is added to the
+   corresponding aspect.
+3. **Custom scoping** — your custom `*FilesConventions` are matched against the present files
+   and appended to the same aspects (a rule already added by the standard pass is not
+   duplicated). Concerns, contributor/bot filters, tag rules, goals/controls, analysis and
+   file-history settings, logo, and component-folder depth are applied as described below.
+
+A convention only lands in the generated `config.json` if it **matches at least one file** in
+the scanned source tree — the output stays specific to that repository.
+
+## Keys
+
+| Key | Type | Default | Meaning |
+| --- | --- | --- | --- |
+| `extensions` | object | `{}` | Extension allow/deny list applied before scoping (see below). |
+| `ignoreStandardScopingConventions` | bool | `false` | If `true`, skip the built-in scoping rules entirely and use **only** the custom `*FilesConventions`. |
+| `removeStandardConcerns` | bool | `false` | If `true`, drop the default concern groups before adding custom `concerns`. |
+| `logoLink` | string | `""` | Logo URL written into the generated config's `metadata.logoLink`. |
+| `ignoredFilesConventions` | filter[] | `[]` | Custom rules that classify files as **ignored** (excluded entirely). |
+| `testFilesConventions` | filter[] | `[]` | Custom rules that classify files into the **test** scope. |
+| `generatedFilesConventions` | filter[] | `[]` | Custom rules that classify files into the **generated** scope. |
+| `buildAndDeploymentFilesConventions` | filter[] | `[]` | Custom rules that classify files into the **buildAndDeployment** scope. |
+| `otherFilesConventions` | filter[] | `[]` | Custom rules that classify files into the **other** scope. |
+| `concerns` | concern[] | `[]` | Concerns appended to the first concern group (a `general` group is created if none exists). Same shape as a single concern in Part 1's `concernGroups`. |
+| `ignoreContributors` | string[] | `[]` | Regexes added to `fileHistoryAnalysis.ignoreContributors`. |
+| `bots` | string[] | `[]` | Regexes added to `fileHistoryAnalysis.bots`. |
+| `componentsFolderDepth` | int | `1` | Folder depth used to derive components in the primary logical decomposition. |
+| `minComponentsCount` | int | `0` | If `> 0`, overrides `componentsFolderDepth` by searching for a depth that yields at least this many components. |
+| `ignoreStandardControls` | bool | `false` | If `true`, clear the default goals/controls before adding custom `goalsAndControls`. |
+| `goalsAndControls` | object[] | `[]` | Custom goals/controls (same shape as Part 1's `goalsAndControls`), added to the config. |
+| `fileHistoryAnalysis` | object | defaults | Replaces the generated config's `fileHistoryAnalysis` block (same shape as Part 1). |
+| `analysis` | object | defaults | Replaces the generated config's `analysis` block (same shape as Part 1). |
+| `tagRules` | object[] | `[]` | If non-empty, **replaces** the default `tagRules` in the generated config. |
+
+Any file aspect rule with no files matching it is silently skipped, so unused conventions
+never bloat the generated config.
+
+### `extensions`
+
+Controls which file extensions are even considered, *before* any scoping happens:
+
+```json
+"extensions": {
+  "onlyInclude": ["java", "kt"],
+  "alwaysExclude": ["min.js", "map"]
+}
+```
+
+- `onlyInclude` — if non-empty, **only** these extensions are analysed; everything else is
+  dropped (and `alwaysExclude` is ignored). A whitelist.
+- `alwaysExclude` — extensions to drop. A blacklist, applied only when `onlyInclude` is empty.
+
+Comparison is case-insensitive. With both empty, Sokrates falls back to its built-in list of
+known source-code extensions.
+
+### Scoping convention lists (`*FilesConventions`)
+
+Each entry is a **`SourceFileFilter`** — the same shape used everywhere else in the config
+(`pathPattern`, `contentPattern`, optional `exception`, optional `note`). For conventions, a
+`contentPattern` may additionally be bounded by `maxLinesForContentSearch` (how many leading
+lines of the file to scan when matching content — useful for "generated" banner comments).
+
+```json
+"generatedFilesConventions": [
+  { "pathPattern": ".*[.]gen[.]go", "contentPattern": "", "note": "Codegen output" },
+  { "pathPattern": ".*[.]go", "contentPattern": "// Code generated .* DO NOT EDIT[.]", "note": "Go codegen banner" }
+],
+"ignoredFilesConventions": [
+  { "pathPattern": ".*/thirdparty/.*", "contentPattern": "", "note": "Vendored code" }
+],
+"testFilesConventions": [
+  { "pathPattern": ".*/it/.*", "contentPattern": "", "note": "Integration tests" }
+]
+```
+
+A file matches a convention when its path matches `pathPattern` **and** (if set) some line
+matches `contentPattern`. Leave `pathPattern` empty to match purely on content.
+
+### Full example
+
+```json
+{
+  "extensions": { "alwaysExclude": ["min.js"] },
+  "ignoreStandardScopingConventions": false,
+  "removeStandardConcerns": false,
+  "logoLink": "https://example.com/logo.png",
+  "testFilesConventions": [
+    { "pathPattern": ".*/it/.*", "contentPattern": "", "note": "Integration tests" }
+  ],
+  "generatedFilesConventions": [
+    { "pathPattern": ".*[.]gen[.]go", "contentPattern": "", "note": "Codegen output" }
+  ],
+  "ignoredFilesConventions": [
+    { "pathPattern": ".*/thirdparty/.*", "contentPattern": "", "note": "Vendored code" }
+  ],
+  "concerns": [
+    { "name": "TODOs", "sourceFileFilters": [ { "contentPattern": ".*(TODO|FIXME)( |:|\\t).*" } ] }
+  ],
+  "bots": [ ".*\\[bot\\].*" ],
+  "ignoreContributors": [ ".*-ci@example.com" ],
+  "componentsFolderDepth": 2,
+  "tagRules": [
+    { "tag": "backend", "pathPatterns": [".*/server/.*"] }
+  ]
+}
+```
+
+This file is reusable: point every repository's `sokrates init` at it
+(`-conventionsFile analysis_conventions.json`) to get a consistent classification across a
+whole portfolio.

@@ -18,11 +18,11 @@ public class HackHeuristicUnitsExtractor extends CStyleHeuristicUnitsExtractor {
     }
 
     private boolean isFunction(String line) {
-        String idRegex = "[a-zA-Z_$][a-zA-Z_$0-9]*";
+        String idRegex = "[\\p{L}_$][\\p{L}\\p{M}\\p{N}_$]*";
         return !line.contains(";")
                 && doesNotStartWithKeyword(line)
                 && (RegexUtils.matchesEntirely("[ ]*function[ ]*" + idRegex + "[(].*", line)
-                || RegexUtils.matchesEntirely("[ ]*[a-zA-Z_]+[ ]*function[ ]*" + idRegex + "[(].*", line));
+                || RegexUtils.matchesEntirely("[ ]*[\\p{L}_][\\p{L}\\p{M}_]*[ ]*function[ ]*" + idRegex + "[(].*", line));
     }
 
     public boolean doesNotStartWithKeyword(String line) {

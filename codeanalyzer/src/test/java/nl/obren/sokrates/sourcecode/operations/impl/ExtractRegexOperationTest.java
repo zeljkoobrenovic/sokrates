@@ -29,4 +29,22 @@ public class ExtractRegexOperationTest {
         Assert.assertEquals("lass", op5.exec(input));
         Assert.assertEquals("", op6.exec(input));
     }
+
+    @Test
+    public void execReturnsFirstCapturingGroupWhenPresent() {
+        String line = "        #[cfg(target_os = \"windows\")]";
+
+        // With a group: only the group's text, not the whole (indented) line.
+        Assert.assertEquals("windows", new ExtractRegexOperation(Arrays.asList(".*target_os = \"([a-z]+)\".*")).exec(line));
+        // Only group 1 is used, even with several groups.
+        Assert.assertEquals("target_os", new ExtractRegexOperation(Arrays.asList("(target_os) = \"([a-z]+)\"")).exec(line));
+        // Non-capturing groups don't count as a group: whole match is returned.
+        Assert.assertEquals("target_os = \"windows\"", new ExtractRegexOperation(Arrays.asList("(?:target_os) = \"[a-z]+\"")).exec(line));
+        // An optional group that did not participate yields "".
+        Assert.assertEquals("", new ExtractRegexOperation(Arrays.asList("target_os(XYZ)? = ")).exec(line));
+        // Chained: the group result feeds the next regex.
+        Assert.assertEquals("win", new ExtractRegexOperation(Arrays.asList("\"([a-z]+)\"", "^[a-z]{3}")).exec(line));
+        // Invalid regex yields "" rather than throwing.
+        Assert.assertEquals("", new ExtractRegexOperation(Arrays.asList("(unbalanced")).exec(line));
+    }
 }

@@ -4,6 +4,7 @@ import nl.obren.sokrates.common.utils.FormattingUtils;
 import nl.obren.sokrates.common.utils.ProcessingStopwatch;
 import nl.obren.sokrates.reports.core.RichTextReport;
 import nl.obren.sokrates.reports.landscape.utils.TagStats;
+import nl.obren.sokrates.reports.utils.HtmlEscapeUtils;
 import nl.obren.sokrates.reports.utils.DataImageUtils;
 import nl.obren.sokrates.sourcecode.analysis.results.CodeAnalysisResults;
 import nl.obren.sokrates.sourcecode.landscape.RepositoryTag;
@@ -60,7 +61,7 @@ public class LandscapeRepositoriesTagsMatrixReport {
             index[0] += 1;
 
             report.startDiv("border-radius: 9px; padding: 6px; margin-top: 16px; border: 1px solid lightgrey; background-color: " + tagGroup.getColor());
-            report.addHtmlContent(tagGroup.getName() + " (" + count[0] + ")");
+            report.addText(tagGroup.getName() + " (" + count[0] + ")");
             if (StringUtils.isNotBlank(tagGroup.getDescription())) {
                 report.addHtmlContent("<span style='color: grey;'>: " + tagGroup.getDescription() + "</span>");
             }
@@ -130,6 +131,21 @@ public class LandscapeRepositoriesTagsMatrixReport {
                 .filter(repository -> StringUtils.isBlank(root) || repository.getSokratesRepositoryLink().getAnalysisResultsPath().startsWith(root + "/"))
                 .collect(Collectors.toList());
         repositoriesAnalysisResults.sort((a, b) -> b.getAnalysisResults().getMainAspectAnalysisResults().getLinesOfCode() - a.getAnalysisResults().getMainAspectAnalysisResults().getLinesOfCode());
+        if (repositoriesAnalysisResults.isEmpty()) {
+            report.addTableCell("", "text-align: center");
+            return;
+        }
+        if (StringUtils.isNoneBlank(root)) {
+            report.startTableCell("background-color: " + stats.getTag().getGroup().getColor() + "; text-align: center; vertical-align: top");
+        } else {
+            report.startTableCell("text-align: center; border-right: 4px solid lightgrey; vertical-align: top");
+        }
+        addTagCellCard(report, repositoriesAnalysisResults, root);
+        report.endTableCell();
+    }
+
+    /** The collapsible card: the repository count, the tag's totals and the repositories (largest first, at most 100). */
+    private void addTagCellCard(RichTextReport report, List<RepositoryAnalysisResults> repositoriesAnalysisResults, String root) {
         int count = repositoriesAnalysisResults.size();
         int tagMainLoc = repositoriesAnalysisResults.stream()
                 .mapToInt(p -> p.getAnalysisResults().getMainAspectAnalysisResults().getLinesOfCode())
@@ -139,41 +155,31 @@ public class LandscapeRepositoriesTagsMatrixReport {
                 .mapToInt(p -> p.getAnalysisResults().getContributorsAnalysisResults().getCommitsCount30Days())
                 .sum();
         int recentContributorCount = getRecentContributorCount(repositoriesAnalysisResults);
-        if (count > 0) {
-            if (StringUtils.isNoneBlank(root)) {
-                report.startTableCell("background-color: " + stats.getTag().getGroup().getColor() + "; text-align: center; vertical-align: top");
-            } else {
-                report.startTableCell("text-align: center; border-right: 4px solid lightgrey; vertical-align: top");
-            }
-            String bgColor = StringUtils.isNoneBlank(root) ? "#f0f0f0" : "white";
-            int margin = renderLangIcons ? 7 : 2;
-            report.startDiv("box-shadow: 0 1px 2px 0 rgb(0 0 0 / 20%), 0 2px 5px 0 rgb(0 0 0 / 19%); margin: " + margin + "px; display: inline-block; border-radius: 4px; padding: 4px; background-color: " +
-                    bgColor);
-            report.startShowMoreBlock("<b>" + count + "</b>");
-            report.startDiv("background-color: " + bgColor + "; a margin-left: 5px; font-size: 80%; text-align: left");
-            report.addContentInDiv("<b>" + FormattingUtils.formatCount(tagMainLoc) + "</b> LOC (main)<br>"
-                            + "<b>" + FormattingUtils.formatCount(tagCommitsCount30Days) + "</b> commits (30d)<br>"
-                            + "<b>" + FormattingUtils.formatCount(recentContributorCount) + "</b> contributors (30d)",
-                    "border-top: 2px solid lightgrey; border-bottom: 2px solid lightgrey; padding: 2px");
-            int maxListSize = 100;
-            repositoriesAnalysisResults.stream().limit(maxListSize).forEach(repository -> {
-                CodeAnalysisResults repositoryAnalysisResults = repository.getAnalysisResults();
-                String repositoryReportUrl = getrepositoryReportUrl(repository);
-                report.addContentInDiv(
-                        "<a href='" + repositoryReportUrl + "' target='_blank' style='margin-left: 6px'>" + repositoryAnalysisResults.getMetadata().getName() + "</a> "
-                                + "<span color='lightgrey'>(<b>"
-                                + FormattingUtils.formatCount(repositoryAnalysisResults.getMainAspectAnalysisResults().getLinesOfCode(), "-") + "</b> LOC)</span>");
-            });
-            if (repositoriesAnalysisResults.size() > maxListSize) {
-                report.addContentInDiv("...", "margin-bottom: 10px; margin-left: 7px; font-size: 160%");
-            }
-            report.endDiv();
-            report.endShowMoreBlock();
-            report.endDiv();
-            report.endTableCell();
-        } else {
-            report.addTableCell("", "text-align: center");
+        String bgColor = StringUtils.isNoneBlank(root) ? "#f0f0f0" : "white";
+        int margin = renderLangIcons ? 7 : 2;
+        report.startDiv("box-shadow: 0 1px 2px 0 rgb(0 0 0 / 20%), 0 2px 5px 0 rgb(0 0 0 / 19%); margin: " + margin + "px; display: inline-block; border-radius: 4px; padding: 4px; background-color: " +
+                bgColor);
+        report.startDetailsBlockMinimalistic("<b>" + count + "</b>");
+        report.startDiv("background-color: " + bgColor + "; a margin-left: 5px; font-size: 80%; text-align: left");
+        report.addContentInDiv("<b>" + FormattingUtils.formatCount(tagMainLoc) + "</b> LOC (main)<br>"
+                        + "<b>" + FormattingUtils.formatCount(tagCommitsCount30Days) + "</b> commits (30d)<br>"
+                        + "<b>" + FormattingUtils.formatCount(recentContributorCount) + "</b> contributors (30d)",
+                "border-top: 2px solid lightgrey; border-bottom: 2px solid lightgrey; padding: 2px");
+        int maxListSize = 100;
+        repositoriesAnalysisResults.stream().limit(maxListSize).forEach(repository -> {
+            CodeAnalysisResults repositoryAnalysisResults = repository.getAnalysisResults();
+            String repositoryReportUrl = getrepositoryReportUrl(repository);
+            report.addContentInDiv(
+                    "<div style='white-space: nowrap; overflow: hidden'><a href='" + repositoryReportUrl + "' target='_blank' style='margin-left: 6px'>" + HtmlEscapeUtils.escape(repositoryAnalysisResults.getMetadata().getName()) + "</a> "
+                            + "<span color='lightgrey'>(<b>"
+                            + FormattingUtils.formatCount(repositoryAnalysisResults.getMainAspectAnalysisResults().getLinesOfCode(), "-") + "</b> LOC)</span></div>");
+        });
+        if (repositoriesAnalysisResults.size() > maxListSize) {
+            report.addContentInDiv("...", "margin-bottom: 10px; margin-left: 7px; font-size: 160%");
         }
+        report.endDiv();
+        report.endDetailsBlock();
+        report.endDiv();
     }
 
     private void addTagCell(RichTextReport report, String tagName, RepositoryTag tag, String color) {

@@ -11,8 +11,8 @@ import java.util.Map;
 
 public class BlocksExtractor {
     private Files files;
-    private Map<String, Block> uniqueBlocks = new HashMap<>();
-    private Map<String, Block> duplicateBlocks = new HashMap<>();
+    private Map<Block, Block> uniqueBlocks = new HashMap<>();
+    private Map<Block, Block> duplicateBlocks = new HashMap<>();
     private int minDuplicationBlockSize;
     private ProgressFeedback progressFeedback;
 
@@ -43,14 +43,14 @@ public class BlocksExtractor {
     }
 
     private void addBlockToMaps(Block block, FileInfoForDuplication fileInfoForDuplication) {
-        if (!uniqueBlocks.containsKey(block.getStringKey())) {
+        Block originalBlock = uniqueBlocks.get(block);
+        if (originalBlock == null) {
             if (!block.getFiles().contains(fileInfoForDuplication.getSourceFile())) {
                 block.getFiles().add(fileInfoForDuplication.getSourceFile());
             }
-            uniqueBlocks.put(block.getStringKey(), block);
+            uniqueBlocks.put(block, block);
         } else {
-            Block originalBlock = uniqueBlocks.get(block.getStringKey());
-            duplicateBlocks.put(block.getStringKey(), originalBlock);
+            duplicateBlocks.put(originalBlock, originalBlock);
             if (!originalBlock.getFiles().contains(fileInfoForDuplication.getSourceFile())) {
                 originalBlock.getFiles().add(fileInfoForDuplication.getSourceFile());
             }
@@ -65,19 +65,19 @@ public class BlocksExtractor {
         this.files = files;
     }
 
-    public Map<String, Block> getUniqueBlocks() {
+    public Map<Block, Block> getUniqueBlocks() {
         return uniqueBlocks;
     }
 
-    public void setUniqueBlocks(Map<String, Block> uniqueBlocks) {
+    public void setUniqueBlocks(Map<Block, Block> uniqueBlocks) {
         this.uniqueBlocks = uniqueBlocks;
     }
 
-    public Map<String, Block> getDuplicateBlocks() {
+    public Map<Block, Block> getDuplicateBlocks() {
         return duplicateBlocks;
     }
 
-    public void setDuplicateBlocks(Map<String, Block> duplicateBlocks) {
+    public void setDuplicateBlocks(Map<Block, Block> duplicateBlocks) {
         this.duplicateBlocks = duplicateBlocks;
     }
 

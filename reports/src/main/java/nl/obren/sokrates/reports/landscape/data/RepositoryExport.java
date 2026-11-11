@@ -1,14 +1,30 @@
 package nl.obren.sokrates.reports.landscape.data;
 
+import nl.obren.sokrates.reports.landscape.statichtml.LandscapeReportGenerator;
+import nl.obren.sokrates.reports.landscape.statichtml.repositories.TagMap;
 import nl.obren.sokrates.sourcecode.Metadata;
 import nl.obren.sokrates.sourcecode.analysis.results.AspectAnalysisResults;
 import nl.obren.sokrates.sourcecode.analysis.results.CodeAnalysisResults;
+import nl.obren.sokrates.sourcecode.analysis.results.ContributorsAnalysisResults;
+import nl.obren.sokrates.sourcecode.analysis.results.FilesHistoryAnalysisResults;
+import nl.obren.sokrates.sourcecode.analysis.scores.MaintainabilityScores;
+import nl.obren.sokrates.sourcecode.contributors.ContributionTimeSlot;
+import nl.obren.sokrates.sourcecode.contributors.Contributor;
+import nl.obren.sokrates.sourcecode.landscape.LandscapeConfiguration;
 import nl.obren.sokrates.sourcecode.landscape.SokratesRepositoryLink;
 import nl.obren.sokrates.sourcecode.landscape.analysis.RepositoryAnalysisResults;
-import nl.obren.sokrates.sourcecode.metrics.MetricsList;
+import nl.obren.sokrates.sourcecode.metrics.MetricRangeControl;
+import nl.obren.sokrates.sourcecode.metrics.NumericMetric;
+import org.apache.commons.lang3.StringUtils;
 
 import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 public class RepositoryExport {
     private final Metadata metadata;
@@ -16,47 +32,75 @@ public class RepositoryExport {
     private final int commitsCount30Days;
     private final int commitsCount90Days;
     private final int commitsCount;
+    // Total line churn (added + deleted) across the repository, in the recent windows and all time.
+    private final int churn30Days;
+    private final int churn90Days;
+    private final int churn;
 
     private List<String> contributors30Days;
     private List<String> contributors90Days;
     private List<String> contributors;
+    // Internal only (used to compute reportFolderUrl) — not exported (no getter), the template
+    // reads reportFolderUrl directly.
     private SokratesRepositoryLink sokratesRepositoryLink;
-    private MetricsList metrics;
-    private int mainFilesCount;
+    // Only lines-of-code per scope is rendered by repositories-report.html; the per-scope FILE
+    // counts were never read, so they aren't kept as fields (they bloated every repo row's JSON).
     private int mainLinesOfCode;
-    private int testFilesCount;
     private int testLinesOfCode;
-    private int generatedFilesCount;
     private int generatedLinesOfCode;
-    private int buildAndDeployFilesCount;
     private int buildAndDeployLinesOfCode;
-    private int otherFilesCount;
     private int otherLinesOfCode;
+    private String mainLang;
+    // Every language (file extension, lowercased) the repository contains any code in, across all
+    // scopes — lets the report filter with includesLang:<lang> even when it is not the main language.
+    private List<String> langs = new ArrayList<>();
+    // The same, split per scope (main/test/build/generated/other) — lets the report scope an
+    // includesLang: filter to specific scopes (e.g. includesLang:main:tf).
+    private Map<String, List<String>> langsByScope = new LinkedHashMap<>();
+
+    // Richer fields consumed by the client-rendered landscape repositories report (repositories.html).
+    private int commitsCount180Days;
+    private int ageInDays;
+    private int ageYears;
+    private String firstDate = "";
+    private int recentContributorsCount;
+    private int rookiesCount;
+    private String reportFolderUrl = "";
+    private List<RepositoryReportData.Tag> tags = new ArrayList<>();
+    private RepositoryReportData.History weeks;
+    private RepositoryReportData.History years;
+    private RepositoryReportData.Metrics repositoryMetrics;
+    // year -> contributor emails active that year; lets the report count DISTINCT
+    // contributors per year across repositories (counts cannot simply be summed).
+    private Map<String, List<String>> contributorYears = new LinkedHashMap<>();
 
     public RepositoryExport(RepositoryAnalysisResults repository) {
-        this.contributors30Days = contributors30Days;
+        this(repository, null, null, null);
+    }
+
+    /**
+     * @param repository       the analysed repository
+     * @param tagMap           custom tags map (may be null — then no tags are exported)
+     * @param configuration    landscape configuration (may be null — then thresholds/url-prefix/history defaults apply)
+     * @param latestCommitDate landscape-wide latest commit date used to window the history slots (may be null)
+     */
+    public RepositoryExport(RepositoryAnalysisResults repository, TagMap tagMap, LandscapeConfiguration configuration, String latestCommitDate) {
         CodeAnalysisResults analysis = repository.getAnalysisResults();
 
         metadata = analysis.getMetadata();
 
-        latestCommitDate = repository.getAnalysisResults().getContributorsAnalysisResults().getLatestCommitDate();
-        commitsCount = repository.getAnalysisResults().getContributorsAnalysisResults().getCommitsCount();
-        commitsCount30Days = repository.getAnalysisResults().getContributorsAnalysisResults().getCommitsCount30Days();
-        commitsCount90Days = repository.getAnalysisResults().getContributorsAnalysisResults().getCommitsCount90Days();
+        ContributorsAnalysisResults contributorsAnalysisResults = analysis.getContributorsAnalysisResults();
+        this.latestCommitDate = contributorsAnalysisResults.getLatestCommitDate();
+        commitsCount = contributorsAnalysisResults.getCommitsCount();
+        commitsCount30Days = contributorsAnalysisResults.getCommitsCount30Days();
+        commitsCount90Days = contributorsAnalysisResults.getCommitsCount90Days();
+        churn = contributorsAnalysisResults.getChurn();
+        churn30Days = contributorsAnalysisResults.getChurn30Days();
+        churn90Days = contributorsAnalysisResults.getChurn90Days();
+        commitsCount180Days = contributorsAnalysisResults.getCommitsCount180Days();
 
-        contributors30Days = new ArrayList<>();
-        contributors90Days = new ArrayList<>();
-        contributors = new ArrayList<>();
-
-        repository.getAnalysisResults().getContributorsAnalysisResults().getContributors().forEach(contributor -> {
-            if (contributor.getCommitsCount30Days() > 0) {
-                contributors30Days.add(contributor.getEmail());
-            }
-            if (contributor.getCommitsCount90Days() > 0) {
-                contributors90Days.add(contributor.getEmail());
-            }
-            contributors.add(contributor.getEmail());
-        });
+        collectContributors(contributorsAnalysisResults);
+        countRecentContributors(contributorsAnalysisResults, configuration);
 
         sokratesRepositoryLink = repository.getSokratesRepositoryLink();
 
@@ -66,64 +110,187 @@ public class RepositoryExport {
         AspectAnalysisResults generated = analysis.getGeneratedAspectAnalysisResults();
         AspectAnalysisResults other = analysis.getOtherAspectAnalysisResults();
 
-        mainFilesCount = main.getFilesCount();
         mainLinesOfCode = main.getLinesOfCode();
-
-        testFilesCount = test.getFilesCount();
         testLinesOfCode = test.getLinesOfCode();
-
-        generatedFilesCount = generated.getFilesCount();
         generatedLinesOfCode = generated.getLinesOfCode();
-
-        buildAndDeployFilesCount = build.getFilesCount();
         buildAndDeployLinesOfCode = build.getLinesOfCode();
+        otherLinesOfCode = other.getLinesOfCode();
 
-        otherFilesCount = other.getFilesCount();
-        generatedLinesOfCode = other.getLinesOfCode();
+        collectLanguages(main, test, build, generated, other);
+
+        FilesHistoryAnalysisResults filesHistory = analysis.getFilesHistoryAnalysisResults();
+        ageInDays = filesHistory.getAgeInDays();
+        ageYears = (int) Math.round(ageInDays / 365.0);
+        firstDate = filesHistory.getFirstDate() != null ? filesHistory.getFirstDate() : "";
+
+        if (configuration != null) {
+            reportFolderUrl = configuration.getRepositoryReportsUrlPrefix()
+                    + sokratesRepositoryLink.getHtmlReportsRoot() + "/";
+        }
+
+        addTags(tagMap, repository);
+
+        weeks = buildHistory(contributorsAnalysisResults.getContributorsPerWeek(), 52, latestCommitDate, true);
+        int historyYears = configuration != null ? configuration.getRepositoriesHistoryLimit() : 20;
+        years = buildHistory(contributorsAnalysisResults.getContributorsPerYear(), historyYears, latestCommitDate, false);
+
+        repositoryMetrics = buildMetrics(analysis, configuration);
     }
 
-    public SokratesRepositoryLink getSokratesRepositoryLink() {
-        return sokratesRepositoryLink;
+    /** The contributor emails (all, 30 days, 90 days) and the emails active per year. */
+    private void collectContributors(ContributorsAnalysisResults contributorsAnalysisResults) {
+        contributors30Days = new ArrayList<>();
+        contributors90Days = new ArrayList<>();
+        contributors = new ArrayList<>();
+
+        contributorsAnalysisResults.getContributors().forEach(contributor -> {
+            if (contributor.getCommitsCount30Days() > 0) {
+                contributors30Days.add(contributor.getEmail());
+            }
+            if (contributor.getCommitsCount90Days() > 0) {
+                contributors90Days.add(contributor.getEmail());
+            }
+            contributors.add(contributor.getEmail());
+            if (contributor.getActiveYears() != null) {
+                contributor.getActiveYears().forEach(year ->
+                        contributorYears.computeIfAbsent(year, k -> new ArrayList<>()).add(contributor.getEmail()));
+            }
+        });
     }
 
-    public MetricsList getMetrics() {
-        return metrics;
+    /**
+     * Recent / rookie contributor counts mirror LandscapeRepositoriesReport.addRepositoryRow:
+     * filter to contributors above the commit threshold, then by activity in the recent window.
+     */
+    private void countRecentContributors(ContributorsAnalysisResults contributorsAnalysisResults, LandscapeConfiguration configuration) {
+        int thresholdCommits = configuration != null ? configuration.getContributorThresholdCommits() : 1;
+        List<Contributor> thresholdContributors = contributorsAnalysisResults.getContributors().stream()
+                .filter(c -> c.getCommitsCount() >= thresholdCommits)
+                .collect(Collectors.toCollection(ArrayList::new));
+        recentContributorsCount = (int) thresholdContributors.stream()
+                .filter(c -> c.isActive(LandscapeReportGenerator.RECENT_THRESHOLD_DAYS)).count();
+        rookiesCount = (int) thresholdContributors.stream()
+                .filter(c -> c.isRookie(LandscapeReportGenerator.RECENT_THRESHOLD_DAYS)).count();
     }
 
-    public int getMainFilesCount() {
-        return mainFilesCount;
+    /** The main language (dominant main-aspect extension), the languages per scope and across all scopes. */
+    private void collectLanguages(AspectAnalysisResults main, AspectAnalysisResults test, AspectAnalysisResults build, AspectAnalysisResults generated, AspectAnalysisResults other) {
+        // The dominant main-aspect extension is the repository's main language.
+        // getLinesOfCodePerExtension() is sorted by LOC descending; names look like "  *.java".
+        List<NumericMetric> mainPerExtension = main.getLinesOfCodePerExtension();
+        if (mainPerExtension != null && !mainPerExtension.isEmpty()) {
+            mainLang = mainPerExtension.get(0).getName().replace("*.", "").trim().toLowerCase();
+        }
+
+        // Languages the repository contains any code in, per scope (deduplicated, ordered by LOC
+        // desc as getLinesOfCodePerExtension() already is). This lets the report scope an
+        // includesLang: filter to specific scopes (e.g. main only), so the repositories list can
+        // match what an Overview section that shows a single scope displays.
+        langsByScope.put("main", scopeLangs(main));
+        langsByScope.put("test", scopeLangs(test));
+        langsByScope.put("build", scopeLangs(build));
+        langsByScope.put("generated", scopeLangs(generated));
+        langsByScope.put("other", scopeLangs(other));
+
+        // Every language across all scopes (main first), for an unscoped includesLang: filter.
+        Set<String> seenLangs = new LinkedHashSet<>();
+        langsByScope.values().forEach(seenLangs::addAll);
+        langs = new ArrayList<>(seenLangs);
+    }
+
+    private void addTags(TagMap tagMap, RepositoryAnalysisResults repository) {
+        if (tagMap != null) {
+            tagMap.getRepositoryTags(repository).forEach(tag -> {
+                String color = tag.getGroup() != null && StringUtils.isNotBlank(tag.getGroup().getColor())
+                        ? tag.getGroup().getColor() : "#99badd";
+                tags.add(new RepositoryReportData.Tag(tag.getTag(), color));
+            });
+        }
+    }
+
+    // The languages (lowercased extensions, deduplicated, LOC-desc order) with any code in one
+    // aspect/scope. getLinesOfCodePerExtension() is already sorted by LOC descending.
+    private static List<String> scopeLangs(AspectAnalysisResults aspect) {
+        List<String> langs = new ArrayList<>();
+        if (aspect == null || aspect.getLinesOfCodePerExtension() == null) {
+            return langs;
+        }
+        aspect.getLinesOfCodePerExtension().forEach(metric -> {
+            if (metric.getValue() != null && metric.getValue().intValue() > 0) {
+                String lang = metric.getName().replace("*.", "").trim().toLowerCase();
+                if (!lang.isEmpty() && !langs.contains(lang)) {
+                    langs.add(lang);
+                }
+            }
+        });
+        return langs;
+    }
+
+    private static RepositoryReportData.History buildHistory(List<ContributionTimeSlot> slots, int limit, String latestCommitDate, boolean weekly) {
+        RepositoryReportData.History history = new RepositoryReportData.History();
+        if (latestCommitDate == null) {
+            return history;
+        }
+        List<ContributionTimeSlot> windowed = weekly
+                ? LandscapeReportGenerator.getContributionWeeks(slots, limit, latestCommitDate)
+                : LandscapeReportGenerator.getContributionYears(slots, limit, latestCommitDate);
+        windowed.sort(Comparator.comparing(ContributionTimeSlot::getTimeSlot).reversed());
+        if (windowed.size() > limit) {
+            windowed = windowed.subList(0, limit);
+        }
+        windowed.forEach(slot -> history.add(slot.getTimeSlot(), slot.getCommitsCount(), slot.getContributorsCount(),
+                slot.getLinesAdded(), slot.getLinesDeleted()));
+        return history;
+    }
+
+    private static RepositoryReportData.Metrics buildMetrics(CodeAnalysisResults analysis, LandscapeConfiguration configuration) {
+        RepositoryReportData.Metrics m = new RepositoryReportData.Metrics();
+        m.setSkipDuplication(analysis.skipDuplicationAnalysis());
+        m.setDuplicationPercentage(analysis.getDuplicationAnalysisResults().getOverallDuplication()
+                .getDuplicationPercentage().doubleValue());
+        m.setFileSize(new RepositoryReportData.RiskBands(analysis.getFilesAnalysisResults().getOverallFileSizeDistribution()));
+        m.setUnitSize(new RepositoryReportData.RiskBands(analysis.getUnitsAnalysisResults().getUnitSizeRiskDistribution()));
+        m.setConditionalComplexity(new RepositoryReportData.RiskBands(analysis.getUnitsAnalysisResults().getConditionalComplexityRiskDistribution()));
+        m.setNewness(new RepositoryReportData.RiskBands(analysis.getFilesHistoryAnalysisResults().getOverallFileFirstModifiedDistribution()));
+        m.setFreshness(new RepositoryReportData.RiskBands(analysis.getFilesHistoryAnalysisResults().getOverallFileLastModifiedDistribution()));
+        m.setUpdateFrequency(new RepositoryReportData.RiskBands(analysis.getFilesHistoryAnalysisResults().getOverallFileChangeDistribution()));
+        MaintainabilityScores scores = analysis.getMaintainabilityScores();
+        if (scores != null && scores.getHuman() != null && scores.getAi() != null) {
+            m.setHumanScore(new RepositoryReportData.Score(scores.getHuman(), scores.isCustomFramework()));
+            m.setAiScore(new RepositoryReportData.Score(scores.getAi(), scores.isCustomFramework()));
+            m.setContextLinesPerChange(scores.getContextLinesPerChange());
+        }
+
+        if (configuration != null && configuration.isShowRepositoryControls()) {
+            List<RepositoryReportData.Control> controls = new ArrayList<>();
+            analysis.getControlResults().getGoalsAnalysisResults().forEach(goals ->
+                    goals.getControlStatuses().forEach(status -> {
+                        MetricRangeControl control = status.getControl();
+                        String description = control.getDescription() + "\n"
+                                + control.getDesiredRange().getTextDescription() + "\n\n"
+                                + status.getMetric().getValue();
+                        controls.add(new RepositoryReportData.Control(status.getStatus(), description,
+                                "" + status.getMetric().getValue()));
+                    }));
+            m.setControls(controls);
+        }
+        return m;
     }
 
     public int getMainLinesOfCode() {
         return mainLinesOfCode;
     }
 
-    public int getTestFilesCount() {
-        return testFilesCount;
-    }
-
     public int getTestLinesOfCode() {
         return testLinesOfCode;
-    }
-
-    public int getGeneratedFilesCount() {
-        return generatedFilesCount;
     }
 
     public int getGeneratedLinesOfCode() {
         return generatedLinesOfCode;
     }
 
-    public int getBuildAndDeployFilesCount() {
-        return buildAndDeployFilesCount;
-    }
-
     public int getBuildAndDeployLinesOfCode() {
         return buildAndDeployLinesOfCode;
-    }
-
-    public int getOtherFilesCount() {
-        return otherFilesCount;
     }
 
     public int getOtherLinesOfCode() {
@@ -146,6 +313,18 @@ public class RepositoryExport {
         return commitsCount90Days;
     }
 
+    public int getChurn30Days() {
+        return churn30Days;
+    }
+
+    public int getChurn90Days() {
+        return churn90Days;
+    }
+
+    public int getChurn() {
+        return churn;
+    }
+
     public List<String> getContributors30Days() {
         return contributors30Days;
     }
@@ -160,6 +339,66 @@ public class RepositoryExport {
 
     public int getCommitsCount() {
         return commitsCount;
+    }
+
+    public String getMainLang() {
+        return mainLang;
+    }
+
+    public List<String> getLangs() {
+        return langs;
+    }
+
+    public Map<String, List<String>> getLangsByScope() {
+        return langsByScope;
+    }
+
+    public int getCommitsCount180Days() {
+        return commitsCount180Days;
+    }
+
+    public int getAgeInDays() {
+        return ageInDays;
+    }
+
+    public int getAgeYears() {
+        return ageYears;
+    }
+
+    public String getFirstDate() {
+        return firstDate;
+    }
+
+    public int getRecentContributorsCount() {
+        return recentContributorsCount;
+    }
+
+    public int getRookiesCount() {
+        return rookiesCount;
+    }
+
+    public String getReportFolderUrl() {
+        return reportFolderUrl;
+    }
+
+    public List<RepositoryReportData.Tag> getTags() {
+        return tags;
+    }
+
+    public RepositoryReportData.History getWeeks() {
+        return weeks;
+    }
+
+    public RepositoryReportData.History getYears() {
+        return years;
+    }
+
+    public RepositoryReportData.Metrics getRepositoryMetrics() {
+        return repositoryMetrics;
+    }
+
+    public Map<String, List<String>> getContributorYears() {
+        return contributorYears;
     }
 
 }

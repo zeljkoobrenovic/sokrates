@@ -4,9 +4,12 @@ import nl.obren.sokrates.sourcecode.SourceFile;
 import nl.obren.sokrates.sourcecode.analysis.results.CodeAnalysisResults;
 import nl.obren.sokrates.sourcecode.core.CodeConfiguration;
 import nl.obren.sokrates.sourcecode.duplication.DuplicatedFileBlock;
+import nl.obren.sokrates.sourcecode.duplication.DuplicationInstance;
 import org.junit.jupiter.api.Test;
 
 import java.io.File;
+import java.util.ArrayList;
+import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -16,46 +19,41 @@ class DuplicationAnalyzerTest {
     void analyze() {
     }
 
+    private DuplicationInstance instanceWithBlocks(int numberOfBlocks) {
+        DuplicationInstance instance = new DuplicationInstance();
+        for (int i = 0; i < numberOfBlocks; i++) {
+            DuplicatedFileBlock block = new DuplicatedFileBlock();
+            SourceFile sourceFile = new SourceFile(new File("file" + i + ".txt"));
+            sourceFile.setRelativePath("file" + i + ".txt");
+            block.setSourceFile(sourceFile);
+            instance.getDuplicatedFileBlocks().add(block);
+        }
+        return instance;
+    }
+
     @Test
-    void getPairKey() {
+    void addMostFrequentDuplicatesIsOrderedByFrequency() {
         CodeAnalysisResults analysisResults = new CodeAnalysisResults();
         analysisResults.setCodeConfiguration(new CodeConfiguration());
         DuplicationAnalyzer analyzer = new DuplicationAnalyzer(analysisResults);
 
-        DuplicatedFileBlock block1 = new DuplicatedFileBlock();
-        DuplicatedFileBlock block2 = new DuplicatedFileBlock();
-        DuplicatedFileBlock block1b = new DuplicatedFileBlock();
+        // Deliberately unsorted input; instances with >2 blocks must come out ordered by descending block count.
+        List<DuplicationInstance> duplicates = new ArrayList<>();
+        duplicates.add(instanceWithBlocks(3));
+        duplicates.add(instanceWithBlocks(7));
+        duplicates.add(instanceWithBlocks(2)); // filtered out (not > 2)
+        duplicates.add(instanceWithBlocks(5));
+        duplicates.add(instanceWithBlocks(2)); // filtered out
 
-        SourceFile sourceFile1 = new SourceFile(new File("path1.txt"));
-        sourceFile1.setRelativePath("path1.txt");
-        block1.setSourceFile(sourceFile1);
-        block1.setStartLine(1);
-        block1.setCleanedStartLine(1);
+        analyzer.addMostFrequentDuplicates(duplicates);
 
-        SourceFile sourceFile2 = new SourceFile(new File("path2.txt"));
-        sourceFile2.setRelativePath("path2.txt");
-        block2.setSourceFile(sourceFile2);
-        block2.setStartLine(11);
-        block2.setCleanedStartLine(11);
+        List<DuplicationInstance> mostFrequent = analysisResults.getDuplicationAnalysisResults().getMostFrequentDuplicates();
 
-        SourceFile sourceFile1b = new SourceFile(new File("path1.txt"));
-        sourceFile1b.setRelativePath("path1.txt");
-        block1b.setSourceFile(sourceFile1b);
-        block1b.setStartLine(20);
-        block1b.setCleanedStartLine(20);
-
-        assertEquals(analyzer.getPairKey(block1, block2, 0), "path1.txt:1::path2.txt:11");
-        assertEquals(analyzer.getPairKey(block1, block2, 1), "path1.txt:2::path2.txt:12");
-        assertEquals(analyzer.getPairKey(block1, block2, 10), "path1.txt:11::path2.txt:21");
-
-        assertEquals(analyzer.getPairKey(block2, block1, 0), "path1.txt:1::path2.txt:11");
-        assertEquals(analyzer.getPairKey(block2, block1, 1), "path1.txt:2::path2.txt:12");
-        assertEquals(analyzer.getPairKey(block2, block1, 10), "path1.txt:11::path2.txt:21");
-
-        assertEquals(analyzer.getPairKey(block1, block1b, 0), "path1.txt:1::path1.txt:20");
-        assertEquals(analyzer.getPairKey(block1, block1b, 10), "path1.txt:11::path1.txt:30");
-
-        assertEquals(analyzer.getPairKey(block1b, block1, 0), "path1.txt:1::path1.txt:20");
-        assertEquals(analyzer.getPairKey(block1b, block1, 10), "path1.txt:11::path1.txt:30");
+        // Only the three instances with > 2 blocks, ordered by descending block count.
+        assertEquals(3, mostFrequent.size());
+        assertEquals(7, mostFrequent.get(0).getDuplicatedFileBlocks().size());
+        assertEquals(5, mostFrequent.get(1).getDuplicatedFileBlocks().size());
+        assertEquals(3, mostFrequent.get(2).getDuplicatedFileBlocks().size());
     }
+
 }

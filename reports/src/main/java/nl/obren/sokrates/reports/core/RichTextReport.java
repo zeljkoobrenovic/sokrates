@@ -6,6 +6,7 @@ package nl.obren.sokrates.reports.core;
 
 import nl.obren.sokrates.common.analysis.Finding;
 import nl.obren.sokrates.common.renderingutils.RichTextRenderingUtils;
+import nl.obren.sokrates.reports.utils.HtmlEscapeUtils;
 import nl.obren.sokrates.sourcecode.Link;
 import org.apache.commons.lang3.StringUtils;
 
@@ -13,6 +14,15 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Builder for a server-rendered HTML report. String arguments are HTML by contract: they are
+ * concatenated into the page as they are. Repository-controlled strings (file, folder, unit and
+ * component names, git author names and emails) go through the text primitives ({@code addText},
+ * {@code addParagraphText}, {@code addListItemText}, {@code addTableCellText}, {@code addContentInDivText},
+ * {@code addTabText}, {@code startSubSectionText}), which escape them; the plain methods are for markup
+ * built on purpose. {@code RichTextReportSinkEscapingTest} enforces the classification for the report
+ * generators.
+ */
 public class RichTextReport {
     private List<RichTextFragment> richTextFragments = new ArrayList<>();
     private String id;
@@ -27,6 +37,8 @@ public class RichTextReport {
     private String parentUrl = "";
     private List<Link> breadcrumbs = new ArrayList<>();
     private boolean embedded = false;
+    private ReportNavigation navigation;
+    private String navigationActiveId = "";
 
     public RichTextReport() {
     }
@@ -140,14 +152,6 @@ public class RichTextReport {
         addHtmlContent("<p><i>\"" + quote + "\"</i> (" + source + ")</p>");
     }
 
-    public void addEmphasisedText(String text) {
-        addHtmlContent("<i>" + text + "</i>");
-    }
-
-    public void addStrongText(String text) {
-        addHtmlContent("<b>" + text + "</b>");
-    }
-
     public void addSvgFigure(String title, String svg) {
         RichTextFragment richTextFragment = new RichTextFragment(svg, RichTextFragment.Type.SVG);
         richTextFragment.setDescription(title);
@@ -201,6 +205,18 @@ public class RichTextReport {
 
     public void startTable(String style) {
         addHtmlContent("<table style=\"" + style + "\">");
+    }
+
+    /**
+     * A table of data rows (first row = header cells): in the browser it gets sorting, a row filter, CSV
+     * download and its own horizontal scroll (ReportComponents).
+     */
+    public void startDataTable() {
+        addHtmlContent("<table class=\"sk-data-table\">");
+    }
+
+    public void startDataTable(String style) {
+        addHtmlContent("<table class=\"sk-data-table\" style=\"" + style + "\">");
     }
 
     public void endTable() {
@@ -356,6 +372,18 @@ public class RichTextReport {
         this.addHtmlContent(html);
     }
 
+    public void startSubSectionNoMargins(String title, String subtitle) {
+        String html = "<div class='subSection'>";
+        if (StringUtils.isNotBlank(title) || StringUtils.isNotBlank(subtitle)) {
+            html += "<div class='subSectionHeader'>" +
+                    "    <span class='subSectionTitle'>" + title + "</span>" +
+                    (StringUtils.isNotBlank(subtitle) ? "    <div class='subSectionSubtitle'>" + subtitle + "</div>" : "") +
+                    "</div>";
+        }
+        html += "<div class='sectionBodyNoMargins'>";
+        this.addHtmlContent(html);
+    }
+
     public void startTocSection() {
         String title = "Table of Content";
         this.addHtmlContent("<div class='subSection' style='width: 400px;'>" +
@@ -369,6 +397,23 @@ public class RichTextReport {
 
     public void endSection() {
         addHtmlContent("</div></div>");
+    }
+
+    /**
+     * A section card that starts collapsed: the header is the toggle (a details/summary pair, so it
+     * opens without JavaScript and renders its Mermaid diagrams when opened). Title and subtitle are HTML.
+     */
+    public void startCollapsibleSection(String title, String subtitle) {
+        this.addHtmlContent("<details class='section sk-collapsible-section'>" +
+                "<summary class='sectionHeader'>" +
+                "    <span class='sectionTitle'>" + title + "</span>" +
+                (StringUtils.isNotBlank(subtitle) ? "    <div class='sectionSubtitle'>" + subtitle + "</div>" : "") +
+                "</summary>" +
+                "<div class='sectionBody'>");
+    }
+
+    public void endCollapsibleSection() {
+        addHtmlContent("</div></details>");
     }
 
     public void addParagraph(String text, String style) {
@@ -394,24 +439,33 @@ public class RichTextReport {
 
     }
 
-    public void addShowMoreBlock(String visibleContent, String hiddenContent, String linkLabel) {
-        addHtmlContent(RichTextRenderingUtils.getShowMoreParagraph(visibleContent, hiddenContent, linkLabel));
-    }
-
-    public void startShowMoreBlock(String visibleContent, String linkLabel) {
-        addHtmlContent(RichTextRenderingUtils.getStartShowMoreParagraph(visibleContent, linkLabel));
-    }
 
     public void startShowMoreBlockDisappear(String visibleContent, String linkLabel) {
         addHtmlContent(RichTextRenderingUtils.getStartShowMoreParagraphDisappear(visibleContent, linkLabel));
     }
 
-    public void startShowMoreBlock(String linkLabel) {
-        addHtmlContent(RichTextRenderingUtils.getStartShowMoreParagraph("", linkLabel));
+    public void endShowMoreBlockDisappear() {
+        addHtmlContent(RichTextRenderingUtils.getEndShowMoreDisapearParagraph());
     }
 
-    public void endShowMoreBlock() {
-        addHtmlContent(RichTextRenderingUtils.getEndShowMoreParagraph());
+    public void addDetailsBlock(String visibleContent, String hiddenContent, String linkLabel) {
+        addHtmlContent("<details><summary>" + linkLabel + "</summary><div style='height: 6px'></div>" + visibleContent + hiddenContent + "</details>");
+    }
+
+    public void startDetailsBlock(String visibleContent, String linkLabel) {
+        addHtmlContent("<details><summary>" + linkLabel + "</summary><div style='height: 6px'></div>" + visibleContent);
+    }
+
+    public void startDetailsBlock(String linkLabel) {
+        addHtmlContent("<details><summary>" + linkLabel + "</summary><div style='height: 6px'></div>");
+    }
+
+    public void startDetailsBlockMinimalistic(String linkLabel) {
+        addHtmlContent("<details style='margin: 0; padding: 4px'><summary style='margin: 2px;'>" + linkLabel + "</summary><div style='height: 6px'></div>");
+    }
+
+    public void endDetailsBlock() {
+        addHtmlContent("</details>");
     }
 
     public void addNewTabLink(String label, String href) {
@@ -465,7 +519,7 @@ public class RichTextReport {
         if (active) {
             styleClass += " active";
         }
-        addHtmlContent("    <button class='" + styleClass + "' onclick='openTab(event, \""
+        addHtmlContent("    <button class='" + styleClass + "' data-tab='" + id + "' onclick='openTab(event, \""
                 + id + "\")'>"
                 + label + "</button>");
     }
@@ -490,6 +544,20 @@ public class RichTextReport {
         addHtmlContent("</div>");
     }
 
+    public ReportNavigation getNavigation() {
+        return navigation;
+    }
+
+    public String getNavigationActiveId() {
+        return navigationActiveId;
+    }
+
+    /** The app-shell sidebar to render around this report, with the entry <code>activeId</code> marked as the current page. */
+    public void setNavigation(ReportNavigation navigation, String activeId) {
+        this.navigation = navigation;
+        this.navigationActiveId = activeId;
+    }
+
     public boolean isEmbedded() {
         return embedded;
     }
@@ -504,6 +572,44 @@ public class RichTextReport {
 
     public void setRenderLogo(boolean renderLogo) {
         this.renderLogo = renderLogo;
+    }
+
+    // --- text-taking primitives: the argument is text, escaped here; use these for repository-controlled strings ---
+
+    public void addText(String text) {
+        addHtmlContent(HtmlEscapeUtils.escape(text));
+    }
+
+    public void addParagraphText(String text) {
+        addParagraph(HtmlEscapeUtils.escape(text));
+    }
+
+    public void addListItemText(String text) {
+        addListItem(HtmlEscapeUtils.escape(text));
+    }
+
+    public void addTableCellText(String text) {
+        addTableCell(HtmlEscapeUtils.escape(text));
+    }
+
+    public void addTableCellText(String text, String style) {
+        addTableCell(HtmlEscapeUtils.escape(text), style);
+    }
+
+    public void addContentInDivText(String text) {
+        addContentInDiv(HtmlEscapeUtils.escape(text));
+    }
+
+    public void addContentInDivText(String text, String style) {
+        addContentInDiv(HtmlEscapeUtils.escape(text), style);
+    }
+
+    public void addTabText(String id, String label, boolean active) {
+        addTab(id, HtmlEscapeUtils.escape(label), active);
+    }
+
+    public void startSubSectionText(String title, String subtitle) {
+        startSubSection(HtmlEscapeUtils.escape(title), HtmlEscapeUtils.escape(subtitle));
     }
 
     public void addContentInSpan(String content, String style) {

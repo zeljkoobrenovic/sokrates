@@ -23,7 +23,10 @@ public class RubyHeuristicUnitsExtractor {
             String trimmedLine = line.trim();
             if (trimmedLine.startsWith("def ") && !trimmedLine.endsWith(" end") && !trimmedLine.endsWith(";end")) {
                 UnitInfo unit = getUnitInfo(sourceFile, line, trimmedLine);
-                unit.setStartLine(i);
+                // i is a 0-based index into the lines; unit line numbers are 1-based. The end line
+                // below needs no such adjustment: the loop that finds it leaves i one past the unit's
+                // last line, which is already the 1-based number of that line.
+                unit.setStartLine(i + 1);
 
                 String unitEnd = line.substring(0, line.indexOf("def ")) + "end";
                 int loc = 0;

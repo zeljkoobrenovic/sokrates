@@ -26,6 +26,7 @@ public class FindingsReportGenerator {
 
     public RichTextReport generateReport(CodeAnalysisResults codeAnalysisResults, RichTextReport report) {
         this.report = report;
+        report.setDescription("Free-form notes and findings recorded while exploring the source code.");
 
         addIntro();
 

@@ -14,6 +14,9 @@ public class LineIndexesExtractor {
     public static final int MAX_LINE_LENGTH = 500;
 
     private int totalLinesCount = 0;
+    // Per-extractor id counter: line ids only need to be unique within this extractor's maps,
+    // so the counter lives on the instance rather than in a shared static (keeps the engine reentrant).
+    private int idCounter = 0;
     private Map<String, LineInfo> uniqueLinesMap = new HashMap<>();
     private Map<Integer, LineInfo> uniqueLinesIdMap = new HashMap<>();
 
@@ -43,7 +46,7 @@ public class LineIndexesExtractor {
         LineInfo lineInfo = uniqueLinesMap.get(line);
 
         if (lineInfo == null) {
-            lineInfo = new LineInfo();
+            lineInfo = new LineInfo(idCounter++);
             uniqueLinesMap.put(line, lineInfo);
             uniqueLinesIdMap.put(lineInfo.getId(), lineInfo);
         } else {

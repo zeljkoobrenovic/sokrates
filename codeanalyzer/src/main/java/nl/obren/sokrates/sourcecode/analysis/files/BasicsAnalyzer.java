@@ -47,6 +47,7 @@ public class BasicsAnalyzer extends Analyzer {
 
         results.setFilesExcludedByExtension(sourceCodeFiles.getFilesExcludedByExtension());
         results.setIgnoredFilesGroups(sourceCodeFiles.getIgnoredFilesGroups());
+        results.setSkippedSymbolicLinks(sourceCodeFiles.getSkippedSymbolicLinks());
         results.setCodeConfiguration(codeConfiguration);
         results.setTotalNumberOfFilesInScope(sourceCodeFiles.getAllFiles().size());
 

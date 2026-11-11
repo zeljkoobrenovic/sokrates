@@ -26,6 +26,32 @@ public class SourceFileFilterTest {
     }
 
     @Test
+    public void testPathMatchesPatternWithForwardSlashes() {
+        // The pattern is also tried with "\" replaced by "/". Here the pattern is the regex a\.b
+        // (a, any character, b): only the pattern rewritten to a/.b matches the path a/1b.
+        assertTrue(new SourceFileFilter("a\\.b", "").pathMatches("a/1b"));
+        assertFalse(new SourceFileFilter("a\\.b", "").pathMatches("a/1c"));
+    }
+
+    @Test
+    public void testPathMatchesPathWithBackSlashes() {
+        // The path is also tried with "/" replaced by "\", so a pattern that excludes forward
+        // slashes still matches a path that contains them.
+        assertTrue(new SourceFileFilter("[^/]*[.]java", "").pathMatches("comp1/src/Test.java"));
+        assertFalse(new SourceFileFilter("[^/]*[.]java", "").pathMatches("comp1/src/Test.html"));
+    }
+
+    @Test
+    public void testPathMatchesPatternWithForwardSlashesAndPathWithBackSlashes() {
+        // The pattern rewritten to forward slashes is also tried against the path rewritten to
+        // backslashes. Here the pattern is the regex [^\/]ab (one character that is neither a backslash
+        // nor a slash, then ab): only the pattern rewritten to [^//]ab, against the path rewritten to
+        // \ab, matches - the path alone or the pattern alone still has a separator the class rejects.
+        assertTrue(new SourceFileFilter("[^\\\\/]ab", "").pathMatches("/ab"));
+        assertFalse(new SourceFileFilter("[^\\\\/]ab", "").pathMatches("/ac"));
+    }
+
+    @Test
     public void testToString() {
         assertEquals(new SourceFileFilter("a", "").toString(), "path like \"a\"");
         assertEquals(new SourceFileFilter("", "b").toString(), "content like \"b\"");

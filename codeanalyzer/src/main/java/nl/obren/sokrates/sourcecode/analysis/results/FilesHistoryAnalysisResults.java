@@ -55,6 +55,7 @@ public class FilesHistoryAnalysisResults {
     private List<SourceFile> mostRecentlyChangedFiles = new ArrayList<>();
     private List<SourceFile> mostPreviouslyChangedFiles = new ArrayList<>();
     private List<SourceFile> mostChangedFiles = new ArrayList<>();
+    private List<SourceFile> filesWithMostChurn = new ArrayList<>();
     private List<SourceFile> filesWithMostContributors = new ArrayList<>();
     private List<SourceFile> filesWithLeastContributors = new ArrayList<>();
     private String firstDate = "";
@@ -166,6 +167,14 @@ public class FilesHistoryAnalysisResults {
         this.mostChangedFiles = mostChangedFiles;
     }
 
+    public List<SourceFile> getFilesWithMostChurn() {
+        return filesWithMostChurn;
+    }
+
+    public void setFilesWithMostChurn(List<SourceFile> filesWithMostChurn) {
+        this.filesWithMostChurn = filesWithMostChurn;
+    }
+
     public SourceFileChangeDistribution getOverallFileChangeDistribution() {
         return overallFileChangeDistribution;
     }
@@ -251,6 +260,15 @@ public class FilesHistoryAnalysisResults {
         }).collect(Collectors.toCollection(ArrayList::new));
     }
 
+    /**
+     * True if any commit history was imported. When false, none of the co-change windows were
+     * analyzed, so their (empty) results say nothing about the code.
+     */
+    @JsonIgnore
+    public boolean hasHistory() {
+        return history.size() > 0;
+    }
+
     @JsonIgnore
     public List<FileModificationHistory> getHistory(int maxHistoryLength) {
         return history.stream().limit(maxHistoryLength).collect(Collectors.toList());
@@ -265,10 +283,20 @@ public class FilesHistoryAnalysisResults {
         if (historyPerExtensionPerYear != null) {
             return historyPerExtensionPerYear;
         }
+        return getHistoryPerExtensionPerYear(path -> true);
+    }
+
+    /**
+     * Commits and contributors per extension and year over the history of the files whose lowercased
+     * path passes the filter (e.g. one scope's paths, see ScopePaths). Needs the history of this run.
+     */
+    public List<HistoryPerExtension> getHistoryPerExtensionPerYear(java.util.function.Predicate<String> lowercasePathFilter) {
         Map<String, HistoryPerExtension> map = new HashMap<>();
         Map<String, Set<String>> contributorsPerExtensionAndYear = new HashMap<>();
         Map<String, Set<String>> commitsPerExtensionAndYear = new HashMap<>();
-        this.history.forEach(item -> {
+        this.history.stream()
+                .filter(item -> item.getPath() != null && lowercasePathFilter.test(item.getPath().toLowerCase()))
+                .forEach(item -> {
             String extension = ExtensionGroupExtractor.getExtension(item.getPath());
             item.getCommits().forEach(commit -> {
                 String date = commit.getDate();

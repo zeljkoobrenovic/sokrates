@@ -6,8 +6,6 @@ package nl.obren.sokrates.sourcecode.lang.yaml;
 
 import nl.obren.sokrates.sourcecode.SourceFile;
 import nl.obren.sokrates.sourcecode.cleaners.CleanedContent;
-import nl.obren.sokrates.sourcecode.lang.shell.ShellAnalyzer;
-import nl.obren.sokrates.sourcecode.lang.shell.ShellCodeSamples;
 import org.junit.Test;
 
 import java.io.File;

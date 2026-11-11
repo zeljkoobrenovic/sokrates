@@ -11,7 +11,6 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import java.util.List;
-import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
@@ -42,15 +41,13 @@ public class SourceFileFilter {
     }
 
     public static boolean matchesAnyLine(List<String> lines, String patternString) {
+        Pattern pattern = compilePatternQuietly(patternString);
+        if (pattern == null) {
+            return false;
+        }
         for (String text : lines) {
-            try {
-                Pattern pattern = Pattern.compile(patternString);
-                Matcher matcher = pattern.matcher(text);
-                if (matcher.matches()) {
-                    return true;
-                }
-            } catch (PatternSyntaxException e) {
-                LOG.debug(e);
+            if (pattern.matcher(text).matches()) {
+                return true;
             }
         }
 
@@ -62,22 +59,30 @@ public class SourceFileFilter {
             return 1;
         }
 
-        int count = 0;
-        try {
-            Pattern pattern = Pattern.compile(patternString);
-
-            for (String text : lines) {
-                Matcher matcher = pattern.matcher(text);
-                if (matcher.matches()) {
-                    count++;
-                }
-            }
-        } catch (PatternSyntaxException e) {
-            LOG.debug(e);
+        Pattern pattern = compilePatternQuietly(patternString);
+        if (pattern == null) {
+            return 0;
         }
 
+        int count = 0;
+        for (String text : lines) {
+            if (pattern.matcher(text).matches()) {
+                count++;
+            }
+        }
 
         return count;
+    }
+
+    // Compiles the pattern once (cached across calls), returning null on a bad pattern - so callers
+    // compile at most once per invocation instead of once per line, and reuse the shared cache.
+    private static Pattern compilePatternQuietly(String patternString) {
+        try {
+            return RegexUtils.getCompiledPattern(patternString);
+        } catch (PatternSyntaxException e) {
+            LOG.debug(e);
+            return null;
+        }
     }
 
     public String getPathPattern() {
@@ -113,22 +118,54 @@ public class SourceFileFilter {
     }
 
     public boolean matches(SourceFile sourceFile) {
-        return pathMatches(sourceFile.getFile().getPath()) &&
+        return pathMatches(matchingPath(sourceFile)) &&
                 (StringUtils.isBlank(contentPattern) || contentMatches(sourceFile.getLines()));
     }
 
-    public boolean pathMatches(String path) {
-        boolean pathMatches;
-        if (StringUtils.isNotBlank(pathPattern)) {
-            pathMatches = RegexUtils.matchesEntirely(pathPattern, path)
-                    || RegexUtils.matchesEntirely(pathPattern, path.replace("\\", "/"))
-                    || RegexUtils.matchesEntirely(pathPattern, path.replace("/", "\\"))
-                    || RegexUtils.matchesEntirely(pathPattern.replace("\\", "/"), path.replace("\\", "/"))
-                    || RegexUtils.matchesEntirely(pathPattern.replace("\\", "/"), path.replace("/", "\\"));
-        } else {
-            pathMatches = true;
+    /**
+     * The path a filter's pathPattern is matched against: the file's path below the source root with a
+     * leading separator ("/src/app/service.py"), so that the conventional patterns (".&#42;/[Tt]ests/.&#42;") keep
+     * matching while the folders above the repository never take part — before, the whole path as loaded
+     * was matched, and a repository checked out under a "tests" or "docs" folder had every file classified
+     * by those names whenever the source root was absolute (Docker's /code, or any absolute -srcRoot).
+     * A file that was never relativized (a test, the explorer) still matches on its full path.
+     */
+    public static String matchingPath(SourceFile sourceFile) {
+        String relativePath = sourceFile.getRelativePath();
+        if (StringUtils.isNotBlank(relativePath)) {
+            return "/" + relativePath;
         }
-        return pathMatches;
+        return sourceFile.getFile().getPath();
+    }
+
+    public boolean pathMatches(String path) {
+        if (StringUtils.isBlank(pathPattern)) {
+            return true;
+        }
+
+        // A filter written with one slash style must also match paths written with the other, so five
+        // (pattern, path) combinations are tried: the path as given, with "\" replaced by "/", and
+        // with "/" replaced by "\", each against the pattern as given and with "\" replaced by "/".
+        // A combination repeats another whenever the string it rewrites holds no such separator - for
+        // a path and a pattern that contain no backslash (the common case: every git path, and every
+        // path on Linux and macOS) the five collapse to at most two distinct pairs. Testing for the
+        // separator before rewriting evaluates each distinct pair once; which pairs are matched is
+        // unchanged.
+        if (RegexUtils.matchesEntirely(pathPattern, path)) {
+            return true;
+        }
+        if (path.contains("\\") && RegexUtils.matchesEntirely(pathPattern, path.replace("\\", "/"))) {
+            return true;
+        }
+        if (path.contains("/") && RegexUtils.matchesEntirely(pathPattern, path.replace("/", "\\"))) {
+            return true;
+        }
+        if (pathPattern.contains("\\")) {
+            String pathPatternWithForwardSlashes = pathPattern.replace("\\", "/");
+            return RegexUtils.matchesEntirely(pathPatternWithForwardSlashes, path.replace("\\", "/"))
+                    || RegexUtils.matchesEntirely(pathPatternWithForwardSlashes, path.replace("/", "\\"));
+        }
+        return false;
     }
 
     boolean contentMatches(List<String> lines) {

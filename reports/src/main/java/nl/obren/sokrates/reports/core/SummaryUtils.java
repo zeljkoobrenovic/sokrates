@@ -4,12 +4,13 @@
 
 package nl.obren.sokrates.reports.core;
 
+import nl.obren.sokrates.common.renderingutils.ReportTheme;
 import nl.obren.sokrates.common.renderingutils.RichTextRenderingUtils;
 import nl.obren.sokrates.common.renderingutils.charts.Palette;
 import nl.obren.sokrates.common.utils.FormattingUtils;
 import nl.obren.sokrates.reports.charts.SimpleOneBarChart;
-import nl.obren.sokrates.reports.utils.AnimalIcons;
 import nl.obren.sokrates.reports.utils.DataImageUtils;
+import nl.obren.sokrates.reports.utils.HtmlEscapeUtils;
 import nl.obren.sokrates.reports.utils.HtmlTemplateUtils;
 import nl.obren.sokrates.reports.utils.ReportUtils;
 import nl.obren.sokrates.sourcecode.analysis.results.AspectAnalysisResults;
@@ -37,11 +38,13 @@ import static nl.obren.sokrates.sourcecode.core.CodeConfigurationUtils.UNCLASSIF
 
 public class SummaryUtils {
     private static final int BAR_WIDTH = 260;
+    // The found tags (tagRules) are still analyzed and exported, just not shown in the summary for now.
+    private static final boolean SHOW_TAGS = false;
     private static final int BAR_HEIGHT = 20;
     private String reportRoot = "";
 
     public static String getIconSvg(String icon, int w, int h) {
-        String svg = HtmlTemplateUtils.getResource("/icons/" + icon + ".svg");
+        String svg = ReportTheme.adaptiveIcon(HtmlTemplateUtils.getResource("/icons/" + icon + ".svg"));
         svg = svg.replaceAll("height='.*?'", "height='" + w + "px'");
         svg = svg.replaceAll("width='.*?'", "width='" + h + "px'");
         return svg;
@@ -59,24 +62,19 @@ public class SummaryUtils {
         CodeConfiguration config = analysisResults.getCodeConfiguration();
 
         boolean mainExists = analysisResults.getMainAspectAnalysisResults().getFilesCount() > 0;
-        boolean showDuplication = mainExists && !analysisResults.skipDuplicationAnalysis();
         boolean showCommitReports = mainExists && analysisResults.getFilesHistoryAnalysisResults().getHistory(Integer.MAX_VALUE).size() > 0 && analysisResults.getContributorsAnalysisResults().getCommitsCount() > 0;
         boolean showControls = mainExists && config.getGoalsAndControls().size() > 0;
         boolean showUnits = mainExists && analysisResults.getUnitsAnalysisResults().getTotalNumberOfUnits() > 0;
 
         report.startDiv("width: 100%; overflow-x: auto; margin-top: -10px");
         report.startTable("border: none; min-width: 800px; width: 100%");
-        summarizeTags(analysisResults, report);
-        report.startTableRow();
-        report.addMultiColumnTableCell("Standard analyses:", 2, "border: none; padding-top: 0px");
-        report.endTableRow();
+        if (SHOW_TAGS) {
+            summarizeTags(analysisResults, report);
+        }
+        addSectionTitleRow(report, "Standard analyses:", 2, "border: none; padding-top: 0px");
         summarizeMainVolume(analysisResults, report);
         if (mainExists) {
-            if (showDuplication) {
-                summarizeDuplication(analysisResults, report);
-            }
-            summarizeFileSize(report, analysisResults);
-            summarizeComponents(analysisResults, report, false);
+            summarizeMainCode(analysisResults, report);
         }
         if (showCommitReports) {
             summarizeFileChangeHistory(analysisResults, report);
@@ -85,20 +83,37 @@ public class SummaryUtils {
         if (showControls) {
             summarizeGoals(analysisResults, report);
         }
-        if (mainExists) {
-            if (showUnits) {
-                report.startTableRow();
-                report.addMultiColumnTableCell("Experimental analyses (less reliable heuristic analyses):", 3, "border: none; padding-top: 12px");
-                report.endTableRow();
-                summarizeUnitSize(analysisResults, report);
-                summarizeUnitComplexity(analysisResults, report);
-                summarizeComponents(analysisResults, report, true);
-            }
+
+        report.addHtmlContent("<tr><td>&nbsp;</td></tr>");
+
+        addSectionTitleRow(report, "Experimental analyses (less reliable heuristic analyses):", 3, "border: none; padding-top: 12px");
+        if (showUnits) {
+            summarizeUnitSize(analysisResults, report);
+            summarizeUnitComplexity(analysisResults, report);
         }
-        summarizeFeaturesOfInterest(analysisResults, report);
+        summarizeComponents(analysisResults, report, true);
+
+        // summarizeFeaturesOfInterest(analysisResults, report);
+
         addSummaryFindings(analysisResults, report);
+
         report.endTable();
         report.endDiv();
+    }
+
+    private static void addSectionTitleRow(RichTextReport report, String title, int columns, String style) {
+        report.startTableRow();
+        report.addMultiColumnTableCell(title, columns, style);
+        report.endTableRow();
+    }
+
+    /** Duplication (unless skipped), file size and components of the main code. */
+    private void summarizeMainCode(CodeAnalysisResults analysisResults, RichTextReport report) {
+        if (!analysisResults.skipDuplicationAnalysis()) {
+            summarizeDuplication(analysisResults, report);
+        }
+        summarizeFileSize(report, analysisResults);
+        summarizeComponents(analysisResults, report, false);
     }
 
     private void summarizeFileSize(RichTextReport report, CodeAnalysisResults analysisResults) {
@@ -110,7 +125,7 @@ public class SummaryUtils {
                 int veryLongFilesLOC = distribution.getVeryHighRiskValue();
                 int shortFilesLOC = distribution.getLowRiskValue() + distribution.getNegligibleRiskValue();
 
-                String linkPrefix = "<a target='_blank' href='" + reportRoot + "FileSize.html'  title='file size details' style='vertical-align: top'>";
+                String linkPrefix = "<a href='" + reportRoot + "FileSize.html'  title='file size details' style='vertical-align: top'>";
                 report.startTableRow();
                 report.addTableCell(linkPrefix + getIconSvg("file_size") + "</a>", "border: none");
                 report.addTableCell(linkPrefix + getRiskProfileVisual(distribution) + "</a>", "border: none");
@@ -146,95 +161,15 @@ public class SummaryUtils {
             double percentage = totalLoc > 0 ? 100.0 * loc / totalLoc : 0;
             String formattedPercentage = FormattingUtils.getFormattedPercentage(percentage) + "%";
 
-            summary.append("<b>" + language + "</b> <span style='color:lightgrey'>(" + formattedPercentage + ")</span>");
+            summary.append("<b>" + HtmlEscapeUtils.escape(language) + "</b> <span style='color:lightgrey'>(" + formattedPercentage + ")</span>");
         });
         if (linesOfCodePerAspect.size() > 0) {
             summary.append("</span>");
         }
     }
 
-    public void summarizeAndCompare(CodeAnalysisResults analysisResults, CodeAnalysisResults refData, RichTextReport report) {
-        StringBuilder summary = new StringBuilder("");
-        summarizeMainCode(analysisResults, summary, null);
-
-        summary.append(addDiffDiv(analysisResults.getMainAspectAnalysisResults().getLinesOfCode(),
-                refData.getMainAspectAnalysisResults().getLinesOfCode()));
-        summary.append("<div style='margin-top: 24px;font-size:80%;margin-bottom:46px;opacity: 0.5;'>");
-        summarizeMainCode(refData, summary, null);
-        summary.append("</div>");
-
-        report.addParagraph(summary.toString());
-
-        report.addHorizontalLine();
-        report.addLineBreak();
-
-        report.startDiv("color:black");
-        summarizeDuplication(analysisResults, report);
-        report.endDiv();
-
-        report.addParagraph(addDiffDiv(analysisResults.getDuplicationAnalysisResults().getOverallDuplication().getDuplicationPercentage().doubleValue(),
-                refData.getDuplicationAnalysisResults().getOverallDuplication().getDuplicationPercentage().doubleValue()));
-        report.startDiv("margin-top: 24px;font-size:80%;margin-bottom:46px;opacity: 0.5;");
-        summarizeDuplication(refData, report);
-        report.endDiv();
-        report.addHorizontalLine();
-        report.addLineBreak();
-
-        report.startDiv("color:black");
-        summarizeFileSize(report, analysisResults);
-        report.endDiv();
-
-        report.startDiv("margin-top: 24px;font-size:80%;margin-bottom:46px;opacity: 0.5;;");
-        summarizeFileSize(report, refData);
-        report.endDiv();
-        report.addHorizontalLine();
-        report.addLineBreak();
-
-        report.startDiv("color:black");
-        summarizeUnitSize(analysisResults, report);
-        report.endDiv();
-
-        report.startDiv("margin-top: 24px;font-size:80%;margin-bottom:46px;opacity: 0.5;");
-        summarizeUnitSize(refData, report);
-        report.endDiv();
-        report.addHorizontalLine();
-        report.addLineBreak();
-
-        report.startDiv("color:black");
-        summarizeUnitComplexity(analysisResults, report);
-        report.endDiv();
-
-        report.startDiv("margin-top: 24px;font-size:80%;margin-bottom:46px;opacity: 0.5;");
-        summarizeUnitComplexity(refData, report);
-        report.endDiv();
-        report.addHorizontalLine();
-        report.addLineBreak();
-
-        // components
-        report.startDiv("color:black");
-        summarizeComponents(analysisResults, report, false);
-        report.endDiv();
-
-        report.startDiv("margin-top: 24px;font-size:80%;margin-bottom:46px;opacity: 0.5;");
-        summarizeComponents(refData, report, false);
-        report.endDiv();
-        report.addHorizontalLine();
-        report.addLineBreak();
-
-        // goals
-        report.startDiv("color: black");
-        summarizeGoals(analysisResults, report);
-        report.endDiv();
-
-        report.startDiv("margin-top: 24px;font-size:80%;margin-bottom:46px;opacity: 0.5;");
-        summarizeGoals(refData, report);
-        report.endDiv();
-        report.addHorizontalLine();
-        report.addLineBreak();
-    }
-
     private void summarizeMainVolume(CodeAnalysisResults analysisResults, RichTextReport report) {
-        String linkPrefix = "<a target='_blank' href='" + reportRoot + "SourceCodeOverview.html'  title='volume details' style='vertical-align: top'>";
+        String linkPrefix = "<a href='" + reportRoot + "SourceCodeOverview.html'  title='volume details' style='vertical-align: top'>";
         StringBuilder summary = new StringBuilder("");
         summarizeMainCode(analysisResults, summary, linkPrefix);
         report.addHtmlContent(summary.toString());
@@ -262,7 +197,7 @@ public class SummaryUtils {
         }
         summary.append("</td>");
         summary.append("<td style='max-width: 800px; overflow: hidden; border: none; vertical-align: top; padding-top: 11px;'>");
-        summary.append("<a target='_blank' href='visuals/zoomable_circles_main.html'>Main Code</a>");
+        summary.append("<a target='_blank' href='visuals/zoomable_circles.html#main'>Main Code</a>");
         summary.append(": " + RichTextRenderingUtils.renderNumberStrong(totalLoc) + " LOC (" + analysisResults.getMainAspectAnalysisResults().getFilesCount() + " files)");
         summarizeListOfLocAspects(summary, totalLoc, linesOfCodePerExtension);
         summary.append("<div style='font-size: 80%; color: grey; margin-top: 5px;'>");
@@ -278,7 +213,7 @@ public class SummaryUtils {
     private void addSecondaryCodeInfo(StringBuilder summary, AspectAnalysisResults aspectAnalysisResults, String label, String fileSuffix) {
         int loc = aspectAnalysisResults.getLinesOfCode();
         if (loc > 0) {
-            summary.append("<a target='_blank' href='visuals/zoomable_circles_" + fileSuffix + ".html'>" + label + "</a>");
+            summary.append("<a target='_blank' href='visuals/zoomable_circles.html#" + fileSuffix + "'>" + label + "</a>");
         } else {
             summary.append(label);
         }
@@ -295,10 +230,10 @@ public class SummaryUtils {
             if (image == null || !alreadyAddedImage.contains(image)) {
                 int loc = ext.getValue().intValue();
                 int fontSize = loc >= 1000 ? 18 : 13;
-                summary.append("<div style='width: 42px; text-align: center; display: inline-block; border-radius: 5px; background-color: #f0f0f0; padding: 8px; margin-right: 4px;'>"
+                summary.append("<div class='infoBlock' style='width: 42px; text-align: center; display: inline-block; padding: 8px; margin-right: 4px;'>"
                         + DataImageUtils.getLangDataImageDiv30(lang)
                         + "<div style='margin-top: 3px; font-size: " + fontSize + "px'>" + FormattingUtils.getSmallTextForNumber(loc) + "</div>"
-                        + "<div style='font-size: 10px; white-space: no-wrap; overflow: hidden; color: grey;'>" + lang.toLowerCase() + "</div>"
+                        + "<div class='infoBlockLabel' style='font-size: 10px; white-space: nowrap; overflow: hidden;'>" + HtmlEscapeUtils.escape(lang.toLowerCase()) + "</div>"
                         + "</div>");
                 if (image != null) {
                     alreadyAddedImage.add(image);
@@ -324,9 +259,9 @@ public class SummaryUtils {
         report.startTableRow();
         String linkPrefix;
         if (withStaticDependencies) {
-            linkPrefix = "<a target='_blank' href='" + reportRoot + "ComponentsAndDependencies.html'  title='compoennt dependencies'>";
+            linkPrefix = "<a href='" + reportRoot + "ComponentsAndDependencies.html'  title='compoennt dependencies'>";
         } else {
-            linkPrefix = "<a target='_blank' href='" + reportRoot + "Components.html'  title='logical decomposition details'>";
+            linkPrefix = "<a href='" + reportRoot + "Components.html'  title='logical decomposition details'>";
         }
         report.addTableCell(
                 linkPrefix + getIconSvg(withStaticDependencies ? "dependencies" : "code_organization") + "</a>",
@@ -373,7 +308,7 @@ public class SummaryUtils {
     }
 
     private void summarizeFileChangeHistory(CodeAnalysisResults analysisResults, RichTextReport report) {
-        String linkPrefix = "<a target='_blank' href='" + reportRoot + "FileAge.html'  title='file change history details' style='vertical-align: top'>";
+        String linkPrefix = "<a href='" + reportRoot + "FileAge.html'  title='file change history details' style='vertical-align: top'>";
         report.startTableRow();
         report.addTableCell(linkPrefix + getIconSvg("file_history") + "</a>", "border: none;  vertical-align: top");
 
@@ -407,7 +342,7 @@ public class SummaryUtils {
     }
 
     private void summarizeFileUpdateFrequency(CodeAnalysisResults analysisResults, RichTextReport report) {
-        String linkPrefix = "<a target='_blank' href='" + reportRoot + "FileChangeFrequency.html'  title='file change frequency details' style='vertical-align: top'>";
+        String linkPrefix = "<a href='" + reportRoot + "FileChurn.html'  title='file change frequency details' style='vertical-align: top'>";
 
         report.startTableRow();
         report.addTableCell(linkPrefix + getIconSvg("change") + "</a>", "border: none;  vertical-align: top");
@@ -426,7 +361,7 @@ public class SummaryUtils {
         Thresholds thresholds = analysisResults.getCodeConfiguration().getAnalysis().getFileUpdateFrequencyThresholds();
         report.addParagraph(FormattingUtils.getFormattedPercentage(fileChange.getVeryHighRiskPercentage() + fileChange.getHighRiskPercentage())
                 + "% of code updated more than " + thresholds.getHigh() + " times", "margin-bottom: 2px");
-        report.addParagraph("Also see <a target='_blank' href='FileTemporalDependencies.html'>temporal dependencies</a> for files frequently changed in same commits.", "font-size: 80%; color: grey;");
+        report.addParagraph("Also see <a href='FileTemporalDependencies.html'>temporal dependencies</a> for files frequently changed in same commits.", "font-size: 80%; color: grey;");
         report.endTableCell();
         report.addTableCell(linkPrefix + getDetailsIcon() + "</a>", "border: none;  vertical-align: top");
 
@@ -442,9 +377,8 @@ public class SummaryUtils {
                 : (upperCaseStatus.startsWith("IGNORE") ? "grey" : "orange");
     }
 
-
     private void summarizeGoals(CodeAnalysisResults analysisResults, RichTextReport report) {
-        String linkPrefix = "<a target='_blank' href='" + reportRoot + "Controls.html'  title='metrics &amp; goals details' style='vertical-align: top'>";
+        String linkPrefix = "<a href='" + reportRoot + "Controls.html'  title='metrics &amp; goals details' style='vertical-align: top'>";
 
         report.startTableRow();
         report.addTableCell(linkPrefix + getIconSvg("goal") + "</a>", "border: none");
@@ -493,7 +427,7 @@ public class SummaryUtils {
             return;
         }
 
-        String linkPrefix = "<a target='_blank' href='" + reportRoot + "FeaturesOfInterest.html'  title='metrics &amp; goals details' style='vertical-align: top'>";
+        String linkPrefix = "<a href='" + reportRoot + "FeaturesOfInterest.html'  title='metrics &amp; goals details' style='vertical-align: top'>";
         report.startTableRow();
         report.addTableCell("", "border: none; height: 8px");
         report.endTableRow();
@@ -504,21 +438,11 @@ public class SummaryUtils {
         report.addContentInDiv("Features of interest:", "font-size: 80%");
         Collections.sort(fileCount, (a, b) -> b.getValue().intValue() - a.getValue().intValue());
         int limit = 10;
-        fileCount.subList(0, fileCount.size() > limit ? limit : fileCount.size()).forEach(concern -> {
-            int value = concern.getValue().intValue();
-            report.addContentInDiv("<b>" + concern.getName() + "</b> " +
-                            "<br><span style='font-size: 85%; color: grey'>" + value + " " + (value == 1 ? "file" : "files") + "",
-                    "text-align: center; font-size: 80%; border: 1px solid grey; display: inline-block; border-radius: 4px; background-color: #f8f8f8; padding: 3px 9px 3px 9px; margin: 3px 2px 8px 2px");
-        });
+        fileCount.subList(0, Math.min(limit, fileCount.size())).forEach(concern -> addFeatureOfInterestCard(report, concern));
         if (fileCount.size() > limit) {
             report.startShowMoreBlockDisappear("", "<div style='vertical-align: middle; font-size: 80%; display: inline-block;'>show all...</div>");
-            fileCount.subList(limit, fileCount.size()).forEach(concern -> {
-                int value = concern.getValue().intValue();
-                report.addContentInDiv("<b>" + concern.getName() + "</b> " +
-                                "<br><span style='font-size: 85%; color: grey'>" + value + " " + (value == 1 ? "file" : "files") + "",
-                        "text-align: center; font-size: 80%; border: 1px solid grey; display: inline-block; border-radius: 4px; background-color: #f8f8f8; padding: 3px 9px 3px 9px; margin: 3px 2px 8px 2px");
-            });
-            report.endShowMoreBlock();
+            fileCount.subList(limit, fileCount.size()).forEach(concern -> addFeatureOfInterestCard(report, concern));
+            report.endShowMoreBlockDisappear();
         }
         report.endTableCell();
         report.addTableCell(linkPrefix + getDetailsIcon() + "</a>", "border: none; border-top: 2px solid lightgrey; padding-top: 10px");
@@ -526,6 +450,25 @@ public class SummaryUtils {
         report.endTableRow();
     }
 
+    // Card style: fixed width and name height so every card is the same size; the name is clamped to two lines with an
+    // ellipsis (the full name is in the title tooltip), so a long concern name can't stretch the row.
+    private static final int FEATURE_CARD_WIDTH = 120;
+    private static final String FEATURE_CARD_STYLE = "text-align: center; font-size: 80%; border: 1px solid grey; display: inline-block; vertical-align: top; "
+            + "box-sizing: border-box; width: " + FEATURE_CARD_WIDTH + "px; border-radius: 4px; background-color: #f8f8f8; padding: 3px 9px 3px 9px; margin: 3px 2px 8px 2px";
+    private static final String FEATURE_CARD_NAME_STYLE = "font-weight: bold; overflow: hidden; text-overflow: ellipsis; display: -webkit-box; "
+            + "-webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow-wrap: anywhere; line-height: 1.3em; height: 2.6em";
+
+    static String getFeatureOfInterestCard(String name, int fileCount) {
+        String escapedName = HtmlEscapeUtils.escape(name);
+        return "<div style='" + FEATURE_CARD_STYLE + "' title='" + escapedName + "'>"
+                + "<div style='" + FEATURE_CARD_NAME_STYLE + "'>" + escapedName + "</div>"
+                + "<span style='font-size: 85%; color: grey'>" + fileCount + " " + (fileCount == 1 ? "file" : "files") + "</span>"
+                + "</div>";
+    }
+
+    private void addFeatureOfInterestCard(RichTextReport report, NumericMetric concern) {
+        report.addHtmlContent(getFeatureOfInterestCard(concern.getName(), concern.getValue().intValue()));
+    }
 
     private void summarizeTags(CodeAnalysisResults analysisResults, RichTextReport report) {
         List<FoundTag> tags = analysisResults.getFoundTags();
@@ -557,7 +500,7 @@ public class SummaryUtils {
 
         Thresholds thresholds = analysisResults.getCodeConfiguration().getAnalysis().getConditionalComplexityThresholds();
 
-        String linkPrefix = "<a target='_blank' href='" + reportRoot + "ConditionalComplexity.html'  title='conditional complexity details' style='vertical-align: top'>";
+        String linkPrefix = "<a href='" + reportRoot + "ConditionalComplexity.html'  title='conditional complexity details' style='vertical-align: top'>";
         report.startTableRow();
         report.addTableCell(linkPrefix + getIconSvg("conditional") + "</a>", "border: none");
         report.addTableCell(linkPrefix + getRiskProfileVisual(distribution) + "</a>", "border: none");
@@ -578,7 +521,7 @@ public class SummaryUtils {
         int lowUnitsLOC = distribution.getLowRiskValue() + distribution.getNegligibleRiskValue();
         Thresholds thresholds = analysisResults.getCodeConfiguration().getAnalysis().getUnitSizeThresholds();
 
-        String linkPrefix = "<a target='_blank' href='" + reportRoot + "UnitSize.html'  title='unit size details' style='vertical-align: top'>";
+        String linkPrefix = "<a href='" + reportRoot + "UnitSize.html'  title='unit size details' style='vertical-align: top'>";
         report.startTableRow();
         report.addTableCell(linkPrefix + getIconSvg("unit_size") + "</a>", "border: none");
         report.addTableCell(linkPrefix + getRiskProfileVisual(distribution) + "</a>", "border: none");
@@ -596,7 +539,7 @@ public class SummaryUtils {
         Number duplicationPercentage = overallDuplication.getDuplicationPercentage();
         double duplication = duplicationPercentage.doubleValue();
         if (!analysisResults.skipDuplicationAnalysis()) {
-            String linkPrefix = "<a target='_blank' href='" + reportRoot + "Duplication.html'  title='duplication details' style='vertical-align: top'>";
+            String linkPrefix = "<a href='" + reportRoot + "Duplication.html'  title='duplication details' style='vertical-align: top'>";
             report.startTableRow();
             report.addTableCell(linkPrefix + getIconSvg("duplication") + "</a>", "border: none");
             report.addTableCell(linkPrefix + getDuplicationVisual(duplicationPercentage) + "</a>", "border: none");
@@ -622,7 +565,7 @@ public class SummaryUtils {
     }
 
     private String getRiskProfileVisual(RiskDistributionStats distributionStats) {
-        return getRiskProfileVisual(distributionStats, Palette.getRiskPalette());
+        return getRiskProfileVisual(distributionStats, Palette.getRiskPaletteCss());
     }
 
     private String getRiskProfileVisual(RiskDistributionStats distributionStats, Palette palette) {
@@ -648,41 +591,11 @@ public class SummaryUtils {
         chart.setBarHeight(BAR_HEIGHT);
         chart.setMaxBarWidth(BAR_WIDTH);
         chart.setBarStartXOffset(2);
-        chart.setActiveColor("crimson");
-        chart.setBackgroundColor("#9DC034");
+        chart.setActiveColor("var(--sk-duplicated, crimson)");
+        chart.setBackgroundColor("var(--sk-not-duplicated, #9DC034)");
         chart.setBackgroundStyle("");
 
         return chart.getPercentageSvg(duplicationPercentage.doubleValue(), "", "");
-    }
-
-    private String addDiffDiv(double value, double refValue) {
-        double diff = value - refValue;
-        String diffText = getDiffText(diff, refValue);
-        StringBuilder html = new StringBuilder("<div style='margin-top: 24px; margin-top: 0; text-align: left; color: " +
-                (diff == 0 ? "lightgrey" : (diff < 0 ? "#b9936c" : "#6b5b95")) + "'>");
-        if (diff > 0) {
-            html.append("+" + diffText + " ⬆");
-        } else if (diff < 0) {
-            html.append("" + diffText + " ⬇ ");
-        } else {
-            html.append("" + diffText + "");
-        }
-
-        html.append("</div>");
-
-        return html.toString();
-    }
-
-    private String getDiffText(double diff, double refValue) {
-        String diffText;
-        if (Math.abs(refValue) < 0.0000000000000000000001) {
-            diffText = "";
-        } else {
-            double percentage = 100.0 * diff / refValue;
-            diffText = diff + " (" + (percentage > 0 ? "+" : (percentage < 0 ? "-" : ""))
-                    + FormattingUtils.getFormattedPercentage(Math.abs(percentage)) + "%)";
-        }
-        return diffText;
     }
 
 }

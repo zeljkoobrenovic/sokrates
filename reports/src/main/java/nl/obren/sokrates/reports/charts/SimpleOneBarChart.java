@@ -5,6 +5,7 @@
 package nl.obren.sokrates.reports.charts;
 
 import nl.obren.sokrates.common.renderingutils.charts.Palette;
+import nl.obren.sokrates.reports.utils.HtmlEscapeUtils;
 
 import java.util.List;
 
@@ -39,6 +40,16 @@ public class SimpleOneBarChart {
 
         int x = barStartXOffset;
 
+        // The last drawn segment stretches to the bar end so accumulated per-segment rounding does
+        // not leave a gap. That is the last NON-ZERO value (the final entries may be zero), not just
+        // index size-1.
+        int lastNonZeroIndex = -1;
+        for (int i = 0; i < values.size(); i++) {
+            if (values.get(i).doubleValue() > 0.0000000001) {
+                lastNonZeroIndex = i;
+            }
+        }
+
         for (int i = 0; i < values.size(); i++) {
             double value = values.get(i).doubleValue();
             String color = palette.nextColor();
@@ -48,7 +59,7 @@ public class SimpleOneBarChart {
                     barSize = 1;
                 }
                 if (x < maxBarWidth + barStartXOffset) {
-                    if (i < values.size() - 1 && x + barSize <= maxBarWidth + barStartXOffset) {
+                    if (i < lastNonZeroIndex && x + barSize <= maxBarWidth + barStartXOffset) {
                         svg.append(getBarSvg(x, barSize, color));
                     } else {
                         svg.append(getBarSvg(x, maxBarWidth + barStartXOffset - x, color));
@@ -59,7 +70,7 @@ public class SimpleOneBarChart {
         }
 
 
-        svg.append(getRightAlignedTextSvg(textLeft, barStartXOffset - 4));
+        svg.append(getRightAlignedTextSvg(HtmlEscapeUtils.escape(textLeft), barStartXOffset - 4));
         svg.append(getTextSvg(textRight, (barStartXOffset + 8 + maxBarWidth)));
 
         svg.append("</svg>");
@@ -101,7 +112,7 @@ public class SimpleOneBarChart {
 
         svg += getBackgroundBarSvg(maxBarWidth);
         svg += getBarSvg((int) (activeBarSize));
-        svg += getRightAlignedTextSvg(textLeft, barStartXOffset - 4);
+        svg += getRightAlignedTextSvg(HtmlEscapeUtils.escape(textLeft), barStartXOffset - 4);
         svg += getTextSvg(textRight, barStartXOffset + 8 + maxBarWidth);
 
         svg += "</svg>";
@@ -121,6 +132,9 @@ public class SimpleOneBarChart {
         this.fontSize = "smaller";
     }
 
+    // textLeft is plain text (a component, concern, extension or distribution name — repository-
+    // controlled) and is escaped by the callers above; textRight is HTML by contract (callers put
+    // links in it) and is emitted as is.
     private String getRightAlignedTextSvg(String text, int x) {
         return "<text text-anchor='end' " +
                 " font-size='" + this.fontSize + "' " +

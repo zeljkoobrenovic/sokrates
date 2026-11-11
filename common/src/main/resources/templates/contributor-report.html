@@ -1,0 +1,888 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    ${sokrates-theme}
+    <title>Contributor</title>
+    <style type="text/css" media="all">
+        body {
+            font-family: var(--sk-font);
+        }
+
+        table {
+            color: var(--sk-text);
+            border-collapse: collapse;
+            border-spacing: 0;
+        }
+
+        td, th {
+            border: 1px solid var(--sk-border);
+            height: 30px;
+            padding-left: 10px;
+            padding-right: 10px;
+        }
+
+        th {
+            background: var(--sk-surface-3);
+            font-weight: bold;
+        }
+
+        td {
+            background: var(--sk-surface);
+            text-align: left;
+        }
+
+        h3 {
+            margin-top: 0;
+        }
+
+        p {
+            margin-top: 0;
+        }
+
+        a {
+            text-decoration: none;
+        }
+
+        ::placeholder {
+            color: var(--sk-text-faint);
+            opacity: 1;
+        }
+
+        /* Loading indicator shown while the embedded people archive is decoded. */
+        #loading {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            color: var(--sk-text-muted);
+            font-size: 15px;
+            padding: 40px 4px;
+        }
+
+        #loading .spinner {
+            width: 22px;
+            height: 22px;
+            border: 3px solid var(--sk-border);
+            border-top-color: #483D8B;
+            border-radius: 50%;
+            animation: sokrates-spin 0.8s linear infinite;
+        }
+
+        @keyframes sokrates-spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        /* Underline tab bar (matches ReportConstants.TAB_STYLE). */
+        .tab {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 4px;
+            border-bottom: 1px solid var(--sk-border);
+            margin-bottom: 4px;
+        }
+
+        .tab button {
+            position: relative;
+            font-family: var(--sk-font);
+            font-size: 14px;
+            font-weight: 500;
+            background-color: transparent;
+            color: var(--sk-text-muted);
+            border: none;
+            border-bottom: 2px solid transparent;
+            border-radius: 8px 8px 0 0;
+            outline: none;
+            cursor: pointer;
+            padding: 11px 16px;
+            margin-bottom: -1px;
+            transition: color 0.18s ease, background-color 0.18s ease, border-color 0.18s ease;
+        }
+
+        .tab button:hover {
+            color: var(--sk-text);
+            background-color: var(--sk-hover);
+        }
+
+        .tab button:focus-visible {
+            outline: 2px solid var(--sk-accent);
+            outline-offset: -2px;
+        }
+
+        .tab button.active {
+            color: var(--sk-accent);
+            border-bottom-color: var(--sk-accent);
+        }
+
+        .tabcontent {
+            padding: 2px 2px;
+            overflow-y: auto;
+        }
+
+        /* Activity grids and the members table use borderless cells, as in the original. */
+        .grid {
+            width: 100%;
+            overflow-x: auto;
+        }
+
+        .grid td {
+            border: none;
+        }
+
+        .repo-name {
+            min-width: 240px;
+        }
+
+        .member-table td, .member-table th {
+            border: none;
+            padding: 2px 8px;
+        }
+
+        .member-table th.sortable {
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .member-table th.sortable:hover {
+            color: var(--sk-accent);
+        }
+
+        .member-table th.sort-active {
+            color: var(--sk-accent);
+        }
+
+        .sort-arrow {
+            font-size: 80%;
+        }
+    </style>
+    <!-- fflate + sokratesUnzip: decodes the people archive embedded inline below (no fetch). -->
+    ${sokrates-unzip-lib}
+</head>
+<body style="margin: 20px;">
+
+<div id="loading">
+    <div class="spinner"></div>
+    <span>Loading contributor data…</span>
+</div>
+
+<div id="report" style="display: none;">
+    <div id="header"></div>
+
+    <div class="tab" id="tabs" style="margin-top: 24px"></div>
+    <div class="tabcontent">
+        <div style="color: var(--sk-text-muted); margin: 8px 0 10px 0;">
+            <input id="filter" type="text" placeholder="search... (use ; for multiple terms)"
+                   style="font-size: 16px; height: 30px; width: 320px;"
+                   onkeyup="render()">
+            <span id="search-summary" style="display: inline-block; margin-left: 6px;"></span>
+        </div>
+        <div id="content"></div>
+    </div>
+</div>
+
+<script>
+    // This is ONE shared page for all individuals. The per-person payloads (data + options) are
+    // embedded inline as a base64 archive (SOKRATES_ARCHIVE), one JSON entry per person keyed by the
+    // safe email. The page selects its person via the URL FRAGMENT (#<safe-email>) — using the
+    // fragment (not ?key=) lets the browser cache this one HTML file once and reuse it for every
+    // person. The chosen entry is extracted in-browser (see the loader at the bottom).
+    var data, langIcons, options;
+
+    function num(n) {
+        return (n || 0).toLocaleString('en-US');
+    }
+
+    // Compact magnitude label, mirroring FormattingUtils.getSmallTextForNumber (K/M suffixes),
+    // without the <b> wrapper. Used for commit and churn counts.
+    function smallNum(n) {
+        n = n || 0;
+        const strip = s => s.replace(/\.0$/, '');
+        if (n < 1000) {
+            return '' + n;
+        } else if (n < 10000) {
+            return strip((n / 1000).toFixed(1)) + 'K';
+        } else if (n < 1000000) {
+            return Math.round(n / 1000) + 'K';
+        } else if (n < 10000000) {
+            return strip((n / 1000000).toFixed(1)) + 'M';
+        }
+        return Math.round(n / 1000000) + 'M';
+    }
+
+    function esc(s) {
+        // Attribute-safe (both quotes), so the same helper serves element content and title="…"/href="…".
+        return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+    }
+
+    function langIcon(lang, size) {
+        size = size || 28;
+        if (!lang) {
+            return '';
+        }
+        const key = lang.toLowerCase();
+        if (langIcons[key]) {
+            return '<img title="' + esc(lang) + '" style="vertical-align: middle; background-color: #f1f1f1; '
+                + 'border-radius: 50%; border: 1px solid var(--sk-border); width: ' + size + 'px; height: ' + size + 'px; object-fit: contain;" src="'
+                + langIcons[key] + '">';
+        }
+        const fontSize = lang.length <= 3 ? 10 : 8;
+        const padding = Math.round(size / 4);
+        return '<div title="' + esc(lang) + '" style="display: inline-block; vertical-align: middle; '
+            + 'background-color: #D6E4E1; border-radius: 50%; border: 1px solid var(--sk-border-strong); overflow: hidden; color: darkblue; '
+            + 'width: ' + size + 'px; height: ' + size + 'px; font-size: ' + fontSize + 'px; font-weight: bold; text-align: center;">'
+            + '<div style="height: ' + padding + 'px"></div>' + esc(lang) + '</div>';
+    }
+
+    // ---- date helpers (mirror DateUtils) -------------------------------------
+
+    function pad2(n) {
+        return (n < 10 ? '0' : '') + n;
+    }
+
+    function ymd(d) {
+        return d.getUTCFullYear() + '-' + pad2(d.getUTCMonth() + 1) + '-' + pad2(d.getUTCDate());
+    }
+
+    function parseDate(s) {
+        // dates are "yyyy-MM-dd..."; build a UTC date from the first 10 chars
+        return new Date(s.substring(0, 10) + 'T00:00:00Z');
+    }
+
+    function weekMonday(dateStr) {
+        const d = parseDate(dateStr);
+        // JS getUTCDay(): 0=Sun..6=Sat; step back to Monday
+        let day = d.getUTCDay();
+        const back = (day === 0) ? 6 : (day - 1);
+        d.setUTCDate(d.getUTCDate() - back);
+        return ymd(d);
+    }
+
+    function monthOf(dateStr) {
+        return dateStr.substring(0, 7);
+    }
+
+    function yearOf(dateStr) {
+        return dateStr.length > 4 ? dateStr.substring(0, 4) : '';
+    }
+
+    function pastWeeks(n) {
+        const out = [];
+        if (!options.latestCommitDate) {
+            return out;
+        }
+        const base = parseDate(options.latestCommitDate);
+        for (let i = 0; i <= n; i++) {
+            const d = new Date(base.getTime());
+            d.setUTCDate(d.getUTCDate() - i * 7);
+            out.push(weekMonday(ymd(d)));
+        }
+        return out;
+    }
+
+    function pastMonths(n) {
+        const out = [];
+        if (!options.latestCommitDate) {
+            return out;
+        }
+        const base = parseDate(options.latestCommitDate);
+        for (let i = 0; i <= n; i++) {
+            const d = new Date(Date.UTC(base.getUTCFullYear(), base.getUTCMonth() - i, 1));
+            out.push(d.getUTCFullYear() + '-' + pad2(d.getUTCMonth() + 1));
+        }
+        return out;
+    }
+
+    function pastYears(n) {
+        const out = [];
+        if (!options.latestCommitDate) {
+            return out;
+        }
+        const baseYear = parseInt(options.latestCommitDate.substring(0, 4), 10);
+        for (let i = 0; i <= n; i++) {
+            out.push('' + (baseYear - i));
+        }
+        return out;
+    }
+
+    // ---- header --------------------------------------------------------------
+
+    function renderHeader() {
+        // Header layout mirrors the original ReportRenderer.renderHeader: breadcrumbs, then a
+        // 36px title block with the avatar and a 120% display name.
+        const fallback = options.isTeam ? options.avatarTeam : options.avatarDeveloper;
+        const avatar = '<div style="vertical-align: bottom; display: inline-block; width: 88px; margin-top: 2px;">'
+            + '<img' + (data.avatarUrl ? '' : ' class="sk-invert-dark"') + ' style="vertical-align: bottom; height: 80px; width: 80px; margin-right: 10px;" '
+            + 'src="' + esc(data.avatarUrl || fallback) + '" onerror="this.onerror=null;this.src=\'' + esc(fallback) + '\';this.classList.add(\'sk-invert-dark\');"></div>';
+
+        let html = '<div style="font-size: 36px; margin-top: 15px; padding-bottom: 15px; white-space: nowrap; overflow: hidden;">';
+        html += avatar;
+        html += '<div style="margin-left: 4px; display: inline-block; vertical-align: middle; font-size: 120%">';
+        html += '<div style="opacity: 0.7; font-size: 13px; margin-bottom: 12px;"><a href="' + esc(options.indexUrl || '../index.html') + '">'
+            + esc(options.breadcrumbsLabel || 'Contributors') + '</a></div>';
+        // Title: display name (userName) with the email beneath it in a more discrete style, like the
+        // contributors table. Falls back to the email alone when there is no name (or it equals the email).
+        if (data.userName && data.email && data.userName !== data.email) {
+            html += esc(data.userName)
+                + '<div style="color: var(--sk-text-muted); font-size: 60%; font-weight: normal;">&lt;' + esc(data.email) + '&gt;</div>';
+        } else {
+            html += esc(data.userName || data.email);
+        }
+        html += '</div></div>';
+
+        html += '<div style="margin-top: 10px; margin-bottom: 22px;">';
+        if (data.detailsLink) {
+            html += '<div style="margin-bottom: 8px;"><a href="' + esc(data.detailsLink) + '" target="_blank">More details...</a></div>';
+        }
+        if (data.links && data.links.length) {
+            html += '<div style="margin-bottom: 12px; font-size: 90%;">'
+                + data.links.map(l => '<a href="' + esc(l.href) + '" target="_blank">' + esc(l.label) + '</a>').join(' &nbsp;|&nbsp; ')
+                + '</div>';
+        }
+        html += '<div>First commit date: <b>' + esc(data.firstCommitDate) + '</b></div>';
+        html += '<div>Latest commit date: <b>' + esc(data.latestCommitDate) + '</b></div>';
+        html += '<div>Repositories count: '
+            + window30(data.repositoriesCount30Days, '30d') + window30(data.repositoriesCount90Days, '3m')
+            + window30(data.repositoriesCount180Days, '6m') + window30(data.repositoriesCount365Days, '1y')
+            + '<b>' + num(data.repositoriesCount) + '</b>' + greyLabel(' (all time)') + '</div>';
+        // Commits count and lines changed are intentionally omitted here — they are shown per-window
+        // in the table below.
+        html += '</div>';
+
+        html += '<div style="margin-bottom: 6px;">' + renderExtensions() + '</div>';
+
+        document.getElementById('header').innerHTML = html;
+    }
+
+    function greyLabel(t) {
+        return '<span style="color: var(--sk-text-faint); font-size: 90%">' + t + '</span>';
+    }
+
+    function window30(value, label) {
+        return '<b>' + smallNum(value) + '</b>' + greyLabel(' (' + label + ')') + '&nbsp;&nbsp;&nbsp;';
+    }
+
+    function renderExtensions() {
+        if (!data.extensions || !data.extensions.length) {
+            return '';
+        }
+        const max = Math.max(1, ...data.extensions.map(e => e.fileUpdates90Days));
+        let html = '<div style="margin-top: 18px;">File updates per extension (90 days):</div>';
+        html += '<table style="margin-top: 6px;"><tr>';
+        data.extensions.forEach(e => {
+            const h = Math.round(64 * e.fileUpdates90Days / max) + 1;
+            html += '<td style="border: 0; text-align: center; vertical-align: bottom;">'
+                + '<div style="text-align: center; font-size: 70%; color: var(--sk-text-faint);">' + num(e.fileUpdates90Days) + '</div>'
+                + '<div style="background-color: skyblue; width: 35px; height: ' + h + 'px;"></div></td>';
+        });
+        html += '</tr><tr>';
+        data.extensions.forEach(e => html += '<td style="border: 0; text-align: center;">' + langIcon(e.lang, 30) + '</td>');
+        html += '</tr></table>';
+        return html;
+    }
+
+    // ---- tabs ----------------------------------------------------------------
+
+    // Tabs depend on the loaded person (members tab only for teams); built in buildTabs() AFTER the
+    // data is fetched, so nothing here touches `data` at script-eval time.
+    let TABS = [];
+    let activeTab = 'year';
+
+    function buildTabs() {
+        TABS = [
+            {id: 'year', label: 'Repository Activity Per Year'},
+            {id: 'month', label: 'Per Month'},
+            {id: 'week', label: 'Per Week'}
+        ];
+        if ((data.members || []).length) {
+            TABS.push({id: 'members', label: 'Members (' + num(data.members.length) + ')'});
+        }
+        let html = '';
+        TABS.forEach(t => {
+            html += '<button class="' + (t.id === activeTab ? 'active' : '') + '" onclick="selectTab(\'' + t.id + '\')">' + t.label + '</button>';
+        });
+        document.getElementById('tabs').innerHTML = html;
+    }
+
+    function selectTab(id) {
+        activeTab = id;
+        buildTabs();
+        render();
+    }
+
+    // A search can contain several terms separated by ";"; the result is the UNION of the
+    // individual term matches (search "a;b" returns matches of "a" plus matches of "b").
+    function getFilters() {
+        return document.getElementById('filter').value.toLowerCase().trim()
+            .split(';').map(s => s.trim()).filter(s => s.length);
+    }
+
+    function matches(text, filters) {
+        if (!filters.length) {
+            return true;
+        }
+        if (!text) {
+            return false;
+        }
+        const lower = text.toLowerCase();
+        return filters.some(f => lower.includes(f));
+    }
+
+    // Repository display name: parent path greyed, last segment emphasised.
+    function repoNameHtml(repo) {
+        const name = repo.name || '';
+        let inner;
+        const i = name.indexOf('/');
+        if (i >= 0 && name.indexOf('/', i + 1) < 0) {
+            inner = '<div style="font-size: 90%; color: var(--sk-text-faint); padding-top: 2px">' + esc(name.substring(0, i)) + '</div>'
+                + '<div style="font-size: 110%;">' + esc(name.substring(i + 1)) + '</div>';
+        } else {
+            inner = '<div style="font-size: 110%;">' + esc(name) + '</div>';
+        }
+        return '<a href="' + esc(repo.repoUrl) + '" target="_blank">' + inner + '</a>';
+    }
+
+    // Sum commits per slot for a repository, using the given slot function. Uses the per-day commit
+    // counts (commitsPerDate) so the activity circles reflect commit VOLUME; falls back to counting
+    // distinct commit days (commitDates) for older data that lacks the per-day counts.
+    function commitsPerSlot(repo, slotFn) {
+        const counts = {};
+        const perDate = repo.commitsPerDate;
+        if (perDate && Object.keys(perDate).length) {
+            Object.keys(perDate).forEach(d => {
+                const slot = slotFn(d);
+                counts[slot] = (counts[slot] || 0) + perDate[d];
+            });
+        } else {
+            (repo.commitDates || []).forEach(d => {
+                const slot = slotFn(d);
+                counts[slot] = (counts[slot] || 0) + 1;
+            });
+        }
+        return counts;
+    }
+
+    // Lines added (or deleted) per time slot for a repository, from a per-day churn map.
+    function churnPerSlotFrom(perDate, slotFn) {
+        const counts = {};
+        if (perDate) {
+            Object.keys(perDate).forEach(d => {
+                const slot = slotFn(d);
+                counts[slot] = (counts[slot] || 0) + perDate[d];
+            });
+        }
+        return counts;
+    }
+
+    // Churn colors and a "+added / -deleted" cell renderer (added green, deleted red). Renders a
+    // muted dash when both are zero.
+    const CHURN_ADDED_COLOR = 'var(--sk-added, #2e7d32)';
+    const CHURN_DELETED_COLOR = 'var(--sk-deleted, #c62828)';
+
+    function churnCell(added, deleted, cellStyle) {
+        added = added || 0;
+        deleted = deleted || 0;
+        if (added === 0 && deleted === 0) {
+            return '<td style="' + cellStyle + ' text-align:center;"><span style="color: var(--sk-text-faint)">-</span></td>';
+        }
+        return '<td style="' + cellStyle + ' text-align:center; white-space: nowrap; line-height: 1.2; font-size: 80%">'
+            + '<div style="color: ' + CHURN_ADDED_COLOR + ';">+' + smallNum(added) + '</div>'
+            + '<div style="color: ' + CHURN_DELETED_COLOR + ';">-' + smallNum(deleted) + '</div></td>';
+    }
+
+    // Circle diameter for a commit count, sqrt-scaled so the AREA grows ~linearly with commits and a
+    // single very busy slot doesn't dwarf everything. `full` is the count that reaches the max size.
+    function dotSize(c, full) {
+        const minD = 10, maxD = 50;
+        const t = Math.min(1, Math.sqrt(c / full));
+        return Math.round(minD + t * (maxD - minD));
+    }
+
+    function renderGrid(slotFn, slots, dotSizeFn, summaryUnit) {
+        const filters = getFilters();
+        let repos = (data.repositories || []).filter(r => matches(r.name, filters));
+        // sort by latest activity (most recent first), matching the original
+        repos = repos.slice().sort((a, b) => latestDate(b).localeCompare(latestDate(a)));
+
+        document.getElementById('search-summary').innerHTML = '= ' + num(repos.length) + ' '
+            + (repos.length === 1 ? 'repository' : 'repositories');
+
+        let html = '<div class="grid"><table>';
+        // header: per-slot repository counts
+        html += '<tr>'
+            + '<td style="border:none"></td>'
+            + '<td style="border:none"></td>'
+            + '<td style="border:none; text-align:center; font-size: 80%; color: var(--sk-text-muted); border-bottom: 1px solid var(--sk-border)" colspan="4">Commits</td>'
+            + '<td style="border:none; text-align:center; font-size: 80%; color: var(--sk-text-muted); border-bottom: 1px solid #555;" colspan="4">Line Churn</td>'
+            + '</tr>';
+        html += '<tr><td style="border:none"></td><td class="repo-name" style="border:none"></td>'
+            + '<td style="border:none; text-align:center; font-size: 80%; color: var(--sk-text-muted);">30d</td>'
+            + '<td style="border:none; text-align:center; font-size: 80%; color: var(--sk-text-muted);">3m</td>'
+            + '<td style="border:none; text-align:center; font-size: 80%; color: var(--sk-text-muted);">1y</td>'
+            + '<td style="border:none; text-align:center; font-size: 80%; color: var(--sk-text-muted);">all time</td>'
+            + '<td style="border:none; text-align:center; font-size: 80%; color: var(--sk-text-muted);">30d</td>'
+            + '<td style="border:none; text-align:center; font-size: 80%; color: var(--sk-text-muted);">3m</td>'
+            + '<td style="border:none; text-align:center; font-size: 80%; color: var(--sk-text-muted);">1y</td>'
+            + '<td style="border:none; text-align:center; font-size: 80%; color: var(--sk-text-muted);">all time</td>';
+        slots.forEach(slot => {
+            let repoCount = 0;
+            repos.forEach(r => {
+                if ((r.commitDates || []).some(d => slotFn(d) === slot)) {
+                    repoCount++;
+                }
+            });
+            html += '<td style="border:none; font-size:70%; color: var(--sk-text-faint); text-align:center; vertical-align: bottom;" title="' + esc(slot + ': ' + repoCount + ' repositories') + '">' + slot.substring(0, 7) + '<br>' + repoCount + '</td>';
+        });
+        html += '</tr>';
+
+        // Totals row: sums of each commit column across all (filtered) repositories, plus per-slot
+        // commit totals.
+        const sum = key => repos.reduce((acc, r) => acc + (r[key] || 0), 0);
+        const total30 = sum('commits30Days');
+        const total90 = sum('commits90Days');
+        const total365 = sum('commits365Days');
+        const totalAll = sum('commitsCount');
+        const totalChurnAdded30 = sum('churnAdded30Days');
+        const totalChurnDeleted30 = sum('churnDeleted30Days');
+        const totalChurnAdded90 = sum('churnAdded90Days');
+        const totalChurnDeleted90 = sum('churnDeleted90Days');
+        const totalChurnAdded365 = sum('churnAdded365Days');
+        const totalChurnDeleted365 = sum('churnDeleted365Days');
+        const totalChurnAddedAll = sum('churnAdded');
+        const totalChurnDeletedAll = sum('churnDeleted');
+        // Two summary rows: line churn first, then commits. Each fills only its own metric's four
+        // columns (the other metric's four cells are left blank) and carries its own per-slot bar
+        // chart across the visible window. A bottom border on the commits row separates the summary
+        // from the per-repository rows below.
+        const emptyCell = 'border:none;';
+        const churnBorder = 'border:none;';
+        const totalBorder = 'border:none; border-bottom: 2px solid #ccc;';
+        const COMMIT_BAR_COLOR = '#483D8B';
+
+        // Per-slot totals across all filtered repos, for both metrics.
+        const perRepoCommitCounts = repos.map(r => commitsPerSlot(r, slotFn));
+        const commitSlotTotals = slots.map(slot => perRepoCommitCounts.reduce((acc, c) => acc + (c[slot] || 0), 0));
+        const maxCommitSlot = Math.max(1, ...commitSlotTotals);
+        // Per-slot churn split into added / deleted, summed across all filtered repos.
+        const perRepoChurnAdded = repos.map(r => churnPerSlotFrom(r.churnAddedPerDate, slotFn));
+        const perRepoChurnDeleted = repos.map(r => churnPerSlotFrom(r.churnDeletedPerDate, slotFn));
+        const churnAddedSlotTotals = slots.map(slot => perRepoChurnAdded.reduce((acc, c) => acc + (c[slot] || 0), 0));
+        const churnDeletedSlotTotals = slots.map(slot => perRepoChurnDeleted.reduce((acc, c) => acc + (c[slot] || 0), 0));
+        const maxChurnSlot = Math.max(1, ...slots.map((_, i) => churnAddedSlotTotals[i] + churnDeletedSlotTotals[i]));
+
+        // Renders a per-slot summary bar row segment (the bars after the fixed columns).
+        function slotBars(slotTotals, maxSlot, color, unitSingular, unitPlural, border) {
+            let s = '';
+            slotTotals.forEach((slotTotal, idx) => {
+                const barHeight = slotTotal > 0 ? Math.round(28 * slotTotal / maxSlot) + 1 : 0;
+                s += '<td style="' + border + ' text-align:center; vertical-align: bottom; padding: 0 2px;" '
+                    + 'title="' + esc(slots[idx] + ': ' + slotTotal + ' ' + (slotTotal === 1 ? unitSingular : unitPlural)) + '">'
+                    + '<div style="font-size: 70%; color: var(--sk-text-muted);">' + (slotTotal > 0 ? smallNum(slotTotal) : '-') + '</div>'
+                    + (slotTotal > 0
+                        ? '<div style="margin: 1px auto 0; background-color: ' + color + '; width: 60%; height: ' + barHeight + 'px;"></div>'
+                        : '')
+                    + '</td>';
+            });
+            return s;
+        }
+
+        // Per-slot stacked churn bars: added (green) on top of deleted (red), both scaled to the
+        // busiest slot's added+deleted total. Label shows the slot's total lines changed.
+        function churnSlotBars(addedTotals, deletedTotals, maxSlot, border) {
+            let s = '';
+            addedTotals.forEach((added, idx) => {
+                const deleted = deletedTotals[idx];
+                const total = added + deleted;
+                const hAdded = added > 0 ? Math.round(28 * added / maxSlot) + 1 : 0;
+                const hDeleted = deleted > 0 ? Math.round(28 * deleted / maxSlot) + 1 : 0;
+                s += '<td style="' + border + ' text-align:center; vertical-align: bottom; padding: 0 2px;" '
+                    + 'title="' + esc(slots[idx] + ': +' + added + ' / -' + deleted + ' lines') + '">'
+                    + '<div style="font-size: 70%; color: var(--sk-text-muted);">' + (total > 0 ? smallNum(total) : '-') + '</div>'
+                    + (added > 0 ? '<div style="margin: 1px auto 0; background-color: ' + CHURN_ADDED_COLOR + '; width: 60%; height: ' + hAdded + 'px;"></div>' : '')
+                    + (deleted > 0 ? '<div style="margin: 0 auto; background-color: ' + CHURN_DELETED_COLOR + '; width: 60%; height: ' + hDeleted + 'px;"></div>' : '')
+                    + '</td>';
+            });
+            return s;
+        }
+
+        // Line-churn total row: churn columns filled, commit columns blank.
+        html += '<tr style="font-weight: bold; background-color: var(--sk-surface-2);">';
+        html += '<td style="' + churnBorder + '"></td>';
+        html += '<td class="repo-name" style="' + churnBorder + '"></td>';
+        html += '<td style="' + emptyCell + '"></td>';
+        html += '<td style="' + emptyCell + '"></td>';
+        html += '<td style="' + emptyCell + '"></td>';
+        html += '<td style="' + emptyCell + '"></td>';
+        html += churnCell(totalChurnAdded30, totalChurnDeleted30, churnBorder);
+        html += churnCell(totalChurnAdded90, totalChurnDeleted90, churnBorder);
+        html += churnCell(totalChurnAdded365, totalChurnDeleted365, churnBorder);
+        html += churnCell(totalChurnAddedAll, totalChurnDeletedAll, churnBorder);
+        html += churnSlotBars(churnAddedSlotTotals, churnDeletedSlotTotals, maxChurnSlot, churnBorder);
+        html += '</tr>';
+
+        // Commits total row: commit columns filled, churn columns blank.
+        html += '<tr style="font-weight: bold; background-color: var(--sk-surface-2);">';
+        html += '<td style="' + totalBorder + '"></td>';
+        html += '<td class="repo-name" style="' + totalBorder + '"></td>';
+        html += '<td style="' + totalBorder + ' text-align:center;">' + (total30 > 0 ? smallNum(total30) : '-') + '</td>';
+        html += '<td style="' + totalBorder + ' text-align:center;">' + (total90 > 0 ? smallNum(total90) : '-') + '</td>';
+        html += '<td style="' + totalBorder + ' text-align:center;">' + (total365 > 0 ? smallNum(total365) : '-') + '</td>';
+        html += '<td style="' + totalBorder + ' text-align:center;">' + (totalAll > 0 ? smallNum(totalAll) : '-') + '</td>';
+        html += '<td style="' + totalBorder + '"></td>';
+        html += '<td style="' + totalBorder + '"></td>';
+        html += '<td style="' + totalBorder + '"></td>';
+        html += '<td style="' + totalBorder + '"></td>';
+        html += slotBars(commitSlotTotals, maxCommitSlot, COMMIT_BAR_COLOR, 'commit', 'commits', totalBorder);
+        html += '</tr>';
+
+        repos.forEach(repo => {
+            const counts = commitsPerSlot(repo, slotFn);
+            const weight = repo.commits90Days > 0 ? 'font-weight: bold;' : 'opacity: 0.4;';
+            html += '<tr>';
+            html += '<td style="border:none; text-align:center;">' + langIcon(repo.lang, 28) + '</td>';
+            html += '<td class="repo-name" style="border:none; ' + weight + '">' + repoNameHtml(repo) + '</td>';
+            html += '<td style="border:none; text-align:center; ' + weight + '">' + (repo.commits30Days > 0 ? smallNum(repo.commits30Days) : '-') + '</td>';
+            html += '<td style="border:none; text-align:center; ' + weight + '">' + (repo.commits90Days > 0 ? smallNum(repo.commits90Days) : '-') + '</td>';
+            html += '<td style="border:none; text-align:center; ' + weight + '">' + (repo.commits365Days > 0 ? smallNum(repo.commits365Days) : '-') + '</td>';
+            html += '<td style="border:none; text-align:center; ' + weight + '">' + (repo.commitsCount > 0 ? smallNum(repo.commitsCount) : '-') + '</td>';
+            html += churnCell(repo.churnAdded30Days, repo.churnDeleted30Days, 'border:none; ' + weight);
+            html += churnCell(repo.churnAdded90Days, repo.churnDeleted90Days, 'border:none; ' + weight);
+            html += churnCell(repo.churnAdded365Days, repo.churnDeleted365Days, 'border:none; ' + weight);
+            html += churnCell(repo.churnAdded, repo.churnDeleted, 'border:none; ' + weight);
+            slots.forEach((slot, idx) => {
+                const c = counts[slot] || 0;
+                html += '<td style="border:none; text-align:center; padding: 0; vertical-align: middle;">';
+                if (c > 0) {
+                    const size = dotSizeFn(c);
+                    const opacity = Math.max(0.9 - idx * 0.05, 0.2);
+                    html += '<div title="' + esc(slot + ': ' + c + (c === 1 ? ' commit' : ' commits')) + '" '
+                        + 'style="display: inline-block; background-color: #483D8B; border-radius: 50%; opacity: ' + opacity + '; '
+                        + 'width: ' + size + 'px; height: ' + size + 'px;"></div>';
+                } else {
+                    html += '<span style="color: var(--sk-text-faint); font-size: 80%;">-</span>';
+                }
+                html += '</td>';
+            });
+            html += '</tr>';
+        });
+        html += '</table></div>';
+        return html;
+    }
+
+    function latestDate(repo) {
+        const dates = repo.commitDates || [];
+        return dates.length ? dates.reduce((a, b) => a > b ? a : b) : '';
+    }
+
+    // Members table columns (mirrors the contributors report: click a header to sort, click again to
+    // flip direction). `value` extracts the sort key; `type` picks string vs numeric comparison; `dir`
+    // is the default direction when a column is first selected (1 asc, -1 desc).
+    const MEMBER_COLUMNS = [
+        {key: 'lang', label: '', type: 'string', dir: 1, sortable: false, style: 'text-align:center',
+            value: m => (m.lang || '').toLowerCase()},
+        {key: 'name', label: 'member', type: 'string', dir: 1, style: 'text-align:left',
+            value: m => (m.userName || m.email || '').toLowerCase()},
+        {key: 'commits30', label: '30d', type: 'number', dir: -1, style: 'text-align:center',
+            value: m => m.commitsCount30Days},
+        {key: 'commits90', label: '3m', type: 'number', dir: -1, style: 'text-align:center',
+            value: m => m.commitsCount90Days},
+        {key: 'commits180', label: '6m', type: 'number', dir: -1, style: 'text-align:center',
+            value: m => m.commitsCount180Days},
+        {key: 'commits365', label: '1y', type: 'number', dir: -1, style: 'text-align:center',
+            value: m => m.commitsCount365Days},
+        {key: 'commitsAll', label: 'all', type: 'number', dir: -1, style: 'text-align:center',
+            value: m => m.commitsCount},
+        {key: 'first', label: 'first', type: 'string', dir: 1, style: 'text-align:center',
+            value: m => m.firstCommitDate || ''},
+        {key: 'latest', label: 'last', type: 'string', dir: -1, style: 'text-align:center',
+            value: m => m.latestCommitDate || ''}
+    ];
+    const MEMBER_COLUMNS_BY_KEY = {};
+    MEMBER_COLUMNS.forEach(c => MEMBER_COLUMNS_BY_KEY[c.key] = c);
+
+    // Default sort: most recently active first (30d desc), matching the previous behavior.
+    let memberSort = {key: 'commits30', dir: -1};
+
+    function sortMembersBy(key) {
+        const col = MEMBER_COLUMNS_BY_KEY[key];
+        if (!col || col.sortable === false) {
+            return;
+        }
+        if (memberSort.key === key) {
+            memberSort.dir = -memberSort.dir;
+        } else {
+            memberSort.key = key;
+            memberSort.dir = col.dir;
+        }
+        render();
+    }
+
+    function memberComparator(col, dir) {
+        return (a, b) => {
+            const va = col.value(a), vb = col.value(b);
+            let cmp;
+            if (col.type === 'string') {
+                cmp = String(va == null ? '' : va).localeCompare(String(vb == null ? '' : vb));
+            } else {
+                cmp = (va < vb) ? -1 : (va > vb ? 1 : 0);
+            }
+            return cmp * dir;
+        };
+    }
+
+    function memberHeaderCell(col) {
+        if (col.sortable === false) {
+            return '<th style="' + (col.style || '') + '">' + col.label + '</th>';
+        }
+        const active = memberSort.key === col.key;
+        const arrow = active ? (memberSort.dir === 1 ? ' ▲' : ' ▼') : '';
+        const cls = 'sortable' + (active ? ' sort-active' : '');
+        return '<th class="' + cls + '" style="' + (col.style || '') + '" onclick="sortMembersBy(\'' + col.key + '\')">'
+            + col.label + '<span class="sort-arrow">' + arrow + '</span></th>';
+    }
+
+    // Name cell: display name (userName) with the email beneath it in grey, like the contributors
+    // report; falls back to email alone when no userName (or it equals the email).
+    function memberNameCell(m) {
+        let nameHtml;
+        if (m.userName && m.email && m.userName !== m.email) {
+            nameHtml = esc(m.userName)
+                + '<div title="' + esc(m.email) + '" style="color: var(--sk-text-muted); font-size: 80%; max-width: 350px; overflow: hidden; white-space: nowrap;">&lt;' + esc(m.email) + '&gt;</div>';
+        } else {
+            nameHtml = esc(m.userName || m.email);
+        }
+        // Only link members that actually have a generated individual report.
+        return m.reportUrl
+            ? '<a href="' + esc(m.reportUrl) + '" target="_blank">' + nameHtml + '</a>'
+            : nameHtml;
+    }
+
+    function renderMembers() {
+        const filters = getFilters();
+        // Search matches on both userName and email, like the contributors report.
+        let members = (data.members || []).filter(m => matches((m.userName || '') + ' ' + (m.email || ''), filters));
+        const col = MEMBER_COLUMNS_BY_KEY[memberSort.key] || MEMBER_COLUMNS_BY_KEY.commits30;
+        members = members.slice().sort(memberComparator(col, memberSort.dir));
+
+        document.getElementById('search-summary').innerHTML = '= ' + num(members.length) + ' '
+            + (members.length === 1 ? 'member' : 'members');
+
+        let html = '<table class="member-table">';
+        // Top header row spans the 11 body columns: index, lang, member, 5×commits, 2×period.
+        html += '<tr><th></th><th></th><th></th><th colspan="5" style="text-align:center">commits</th><th colspan="2" style="text-align:center">period</th></tr>';
+        // Second header row: an empty cell for the row-number column, then ALL MEMBER_COLUMNS
+        // (including the lang column's empty header) so headers line up 1:1 with the body cells.
+        html += '<tr><th></th>' + MEMBER_COLUMNS.map(memberHeaderCell).join('') + '</tr>';
+        let i = 0;
+        members.forEach(m => {
+            i++;
+            const weight = m.commitsCount30Days > 0 ? 'font-weight: bold;' : (m.commitsCount90Days > 0 ? '' : 'color: lightgrey;');
+            html += '<tr style="' + weight + '">';
+            html += '<td style="text-align:right">' + i + '.&nbsp;</td>';
+            html += '<td style="text-align:center">' + langIcon(m.lang, 28) + '</td>';
+            html += '<td>' + memberNameCell(m) + '</td>';
+            html += '<td style="text-align:center">' + smallNum(m.commitsCount30Days) + '</td>';
+            html += '<td style="text-align:center">' + smallNum(m.commitsCount90Days) + '</td>';
+            html += '<td style="text-align:center">' + smallNum(m.commitsCount180Days) + '</td>';
+            html += '<td style="text-align:center">' + smallNum(m.commitsCount365Days) + '</td>';
+            html += '<td style="text-align:center">' + smallNum(m.commitsCount) + '</td>';
+            html += '<td style="text-align:center; white-space: nowrap;">' + esc(m.firstCommitDate) + '</td>';
+            html += '<td style="text-align:center; white-space: nowrap;">' + esc(m.latestCommitDate) + '</td>';
+            html += '</tr>';
+        });
+        html += '</table>';
+        return html;
+    }
+
+    function render() {
+        let html;
+        if (activeTab === 'members') {
+            html = renderMembers();
+        } else if (activeTab === 'year') {
+            const slots = pastYears(options.commitsMaxYears || 20);
+            // Circles are sized by commit VOLUME per slot; a sqrt scale (capped) keeps small counts
+            // visible without a busy year/month/week blowing out the cell.
+            html = renderGrid(yearOf, slots, c => dotSize(c, 500));
+        } else if (activeTab === 'month') {
+            const slots = pastMonths(24);
+            html = renderGrid(monthOf, slots, c => dotSize(c, 100));
+        } else {
+            const slots = pastWeeks(104);
+            html = renderGrid(weekMonday, slots, c => dotSize(c, 40));
+        }
+        document.getElementById('content').innerHTML = html;
+    }
+
+    function param(name) {
+        var m = new RegExp('[?&]' + name + '=([^&]*)').exec(window.location.search);
+        return m ? decodeURIComponent(m[1].replace(/\+/g, ' ')) : null;
+    }
+
+    // The person key is in the URL fragment (#<safe-email>), not the query string, so the browser
+    // caches this one HTML file once and reuses it for every person (the fragment is not part of the
+    // cache key). Falls back to a legacy ?key= query param if present.
+    function personKey() {
+        var hash = window.location.hash;
+        if (hash && hash.length > 1) {
+            return decodeURIComponent(hash.substring(1));
+        }
+        return param('key');
+    }
+
+    function showError(message) {
+        document.getElementById('loading').innerHTML = '<p style="color:#b00">' + esc(message) + '</p>';
+    }
+
+    function showReport() {
+        document.getElementById('loading').style.display = 'none';
+        document.getElementById('report').style.display = 'block';
+    }
+
+    // All people live in one archive embedded inline as base64 by the generator
+    // (var SOKRATES_ARCHIVE = "..."), keyed by safe email — each person's entry is just
+    // {data, options}. The language icons (large base64 data URIs, identical across people) are NOT
+    // repeated per person; they're injected ONCE as a shared map (var SOKRATES_LANG_ICONS = {...}).
+    // Both are read in-browser (no fetch) so this opens from file://.
+    ${embedded-archive}
+    ${lang-icons}
+
+    // Memoize the unzipped archive so navigating to another person on this same cached page
+    // (hashchange) doesn't re-inflate the whole archive.
+    var __entriesCache = null;
+    function loadEmbedded(key) {
+        try {
+            if (!__entriesCache) { __entriesCache = sokratesUnzip(SOKRATES_ARCHIVE); }
+            var entries = __entriesCache;
+            var bytes = entries[key + '.json'];
+            if (!bytes) throw new Error('Person not found: ' + key);
+            var payload = JSON.parse(fflate.strFromU8(bytes));
+            // The per-person entry holds data + options; langIcons is the shared page-level map.
+            data = payload.data;
+            langIcons = (typeof SOKRATES_LANG_ICONS !== 'undefined' && SOKRATES_LANG_ICONS) || {};
+            options = payload.options || {};
+            renderHeader();
+            buildTabs();
+            render();
+            showReport();
+        } catch (e) {
+            showError(e.message);
+        }
+    }
+
+    function load() {
+        var key = personKey();
+        if (!key) { showError('Missing person key (use #<safe-email> in the URL)'); return; }
+        document.getElementById('loading').style.display = '';
+        document.getElementById('report').style.display = 'none';
+        // Decoding a large embedded archive blocks the main thread; yield one frame first so the
+        // loading spinner actually paints, then do the synchronous extract + render.
+        requestAnimationFrame(function () { setTimeout(function () { loadEmbedded(key); }, 0); });
+    }
+
+    // Re-render when the fragment changes (e.g. clicking a member link to another person on this
+    // same cached page) — no reload needed since only the fragment changed.
+    window.addEventListener('hashchange', load);
+    load();
+</script>
+</body>
+</html>

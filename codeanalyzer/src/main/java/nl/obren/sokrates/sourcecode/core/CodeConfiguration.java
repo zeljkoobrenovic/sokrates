@@ -61,9 +61,6 @@ public class CodeConfiguration {
     // A list of metrics with goals
     private List<MetricsWithGoal> goalsAndControls = new ArrayList<>();
 
-    // A configuration of trend analysis (comparing multiple analysis snapshots in time)
-    private TrendAnalysisConfig trendAnalysis = new TrendAnalysisConfig();
-
     // A configuration of commit history input file and analyses
     private FileHistoryAnalysisConfig fileHistoryAnalysis = new FileHistoryAnalysisConfig();
 
@@ -72,6 +69,9 @@ public class CodeConfiguration {
 
     // Simple rules to tag a repository based on path regex expressions
     private List<TagRule> tagRules = new ArrayList<>();
+
+    // Optional custom tabs added to the report (each tab shows an iframe with the given link)
+    private List<CustomTab> customTabs = new ArrayList<>();
 
     public CodeConfiguration() {
         createDefaultScope();
@@ -117,11 +117,20 @@ public class CodeConfiguration {
     @JsonIgnore
     public static String getAbsoluteSrcRoot(String srcRoot, File configurationFile) {
         if (configurationFile != null) {
+            // The returned path is the prefix of every analyzed file's path, and scope/ignore patterns match
+            // that whole path ("src" + relative): keep it as relative as the configuration path is, so the
+            // names of the folders above the repository (a "tests" or "docs" somewhere in an absolute path)
+            // never classify its files. A relative path such as _sokrates/config.json has no grandparent
+            // (null), which stands for the working directory — before, ".." then fell through to the working
+            // directory's parent and generateReports -confFile _sokrates/config.json analyzed that.
             File fileRelative;
             if (srcRoot.startsWith("..")) {
-                fileRelative = new File(configurationFile.getParentFile().getParentFile(), srcRoot.substring(2));
+                File parent = configurationFile.getParentFile();
+                File grandParent = parent != null ? parent.getParentFile() : null;
+                fileRelative = new File(grandParent != null ? grandParent : new File("."), srcRoot.substring(2));
             } else {
-                fileRelative = new File(configurationFile.getParent(), srcRoot);
+                File parent = configurationFile.getParentFile();
+                fileRelative = new File(parent != null ? parent : new File("."), srcRoot);
             }
             if (fileRelative.exists()) {
                 return fileRelative.getPath();
@@ -350,7 +359,12 @@ public class CodeConfiguration {
     }
 
     private String getPercentageString(NamedSourceCodeAspect concern, int totalLinesOfCode) {
-        double value = 100.0 * totalLinesOfCode / concern.getLinesOfCode();
+        int concernLinesOfCode = concern.getLinesOfCode();
+        if (concernLinesOfCode <= 0) {
+            // Undefined ratio (concern has no counted lines); avoid NaN/Infinity in the concern name.
+            return "0%";
+        }
+        double value = 100.0 * totalLinesOfCode / concernLinesOfCode;
         if (value > 0 && value < 1) {
             return "<1%";
         } else {
@@ -434,6 +448,15 @@ public class CodeConfiguration {
         this.tagRules = tagRules;
     }
 
+    /**
+     * The scope aspect a configured name refers to.
+     *
+     * <p>Labels are lower case because the subject is: a mixed-case label such as
+     * {@code "buildAndDeployment"} can never match {@code scope.toLowerCase()}, which is what left
+     * that scope - and {@code generated}, which had no case at all - falling through to {@code main}.
+     * Both then looked like real aspects, so a decomposition scoped to either one silently decomposed
+     * main instead.
+     */
     @JsonIgnore
     public NamedSourceCodeAspect getScope(String scope) {
         switch (scope.toLowerCase()) {
@@ -441,7 +464,9 @@ public class CodeConfiguration {
                 return main;
             case "test":
                 return test;
-            case "buildAndDeployment":
+            case "generated":
+                return generated;
+            case "buildanddeployment":
                 return buildAndDeployment;
             case "other":
                 return other;
@@ -568,13 +593,38 @@ public class CodeConfiguration {
         }
     }
 
-    public TrendAnalysisConfig getTrendAnalysis() {
-        return trendAnalysis;
+    public List<CustomTab> getCustomTabs() {
+        return customTabs;
     }
 
-    public void setTrendAnalysis(TrendAnalysisConfig trendAnalysis) {
-        if (trendAnalysis != null) {
-            this.trendAnalysis = trendAnalysis;
+    public void setCustomTabs(List<CustomTab> customTabs) {
+        this.customTabs = customTabs != null ? customTabs : new ArrayList<>();
+    }
+
+    /**
+     * Adds a custom tab, or replaces the existing one with the same label (labels are matched
+     * trimmed and case-insensitively, so there are never two custom tabs with the same label).
+     *
+     * @return true if an existing tab was replaced, false if a new one was added
+     */
+    @JsonIgnore
+    public boolean addOrReplaceCustomTab(CustomTab tab) {
+        if (customTabs == null) {
+            customTabs = new ArrayList<>();
         }
+        String key = customTabKey(tab.getLabel());
+        for (int i = 0; i < customTabs.size(); i++) {
+            CustomTab existing = customTabs.get(i);
+            if (existing != null && customTabKey(existing.getLabel()).equals(key)) {
+                customTabs.set(i, tab);
+                return true;
+            }
+        }
+        customTabs.add(tab);
+        return false;
+    }
+
+    private static String customTabKey(String label) {
+        return label == null ? "" : label.trim().toLowerCase();
     }
 }

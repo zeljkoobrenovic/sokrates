@@ -10,8 +10,6 @@ import nl.obren.sokrates.common.io.JsonMapper;
 import nl.obren.sokrates.sourcecode.Metadata;
 import nl.obren.sokrates.sourcecode.landscape.LandscapeConfiguration;
 import nl.obren.sokrates.sourcecode.landscape.LandscapeInfo;
-import nl.obren.sokrates.sourcecode.landscape.SokratesRepositoryLink;
-import nl.obren.sokrates.sourcecode.landscape.analysis.LandscapeAnalysisUtils;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
@@ -20,12 +18,9 @@ import org.apache.commons.logging.LogFactory;
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.List;
 
 public class LandscapeAnalysisUpdater {
-    private static final Log LOG = LogFactory.getLog(LandscapeAnalysisUtils.class);
+    private static final Log LOG = LogFactory.getLog(LandscapeAnalysisUpdater.class);
 
     public LandscapeConfiguration updateConfiguration(File analysisRoot, File landscapeConfigFile, Metadata metadata) {
         landscapeConfigFile = getLandscapeConfigFile(analysisRoot, landscapeConfigFile);
@@ -39,6 +34,11 @@ public class LandscapeAnalysisUpdater {
                 LandscapeConfiguration existingConfiguration = (LandscapeConfiguration) new JsonMapper().getObject(json, LandscapeConfiguration.class);
                 existingConfiguration.setSubLandscapes(newConfig.getSubLandscapes());
                 existingConfiguration.setRepositories(newConfig.getRepositories());
+                if (".".equals(newConfig.getAnalysisRoot()) && !".".equals(existingConfiguration.getAnalysisRoot())) {
+                    // Default layout: the only correct stored root is "." (see LandscapeAnalysisInitiator.analysisRootPath).
+                    LOG.info("Normalizing analysisRoot '" + existingConfiguration.getAnalysisRoot() + "' to '.'");
+                    existingConfiguration.setAnalysisRoot(".");
+                }
                 updateMetadata(existingConfiguration, metadata);
                 save(landscapeConfigFile, landscapeInfoFile, existingConfiguration);
                 return existingConfiguration;
@@ -50,7 +50,6 @@ public class LandscapeAnalysisUpdater {
         save(landscapeConfigFile, landscapeInfoFile, newConfig);
         return newConfig;
     }
-
 
     private void updateMetadata(LandscapeConfiguration configuration, Metadata metadata) {
         if (metadata != null) {

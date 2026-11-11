@@ -52,6 +52,15 @@ public class UnitInfo {
         this.sourceFile = sourceFile;
     }
 
+    /**
+     * The unit's first line in the source file, <b>1-based</b>, or 0 when the extractor could not
+     * place it.
+     *
+     * <p>Extractors that work from cleaned content must map back through
+     * {@code CleanedContent.getFileLineIndexes()} before adding 1, since a cleaned line index is not a
+     * file line once comments have been stripped. Reports link source fragments by these numbers, so an
+     * off-by-one sends a reader to the wrong line.
+     */
     public int getStartLine() {
         return startLine;
     }
@@ -60,6 +69,7 @@ public class UnitInfo {
         this.startLine = startLine;
     }
 
+    /** The unit's last line in the source file, <b>1-based and inclusive</b>. See {@link #getStartLine}. */
     public int getEndLine() {
         return endLine;
     }

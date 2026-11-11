@@ -2,6 +2,15 @@
 <meta charset="utf-8">
 <style>
 
+    html, body {
+        margin: 0;
+    }
+
+    svg {
+        display: block;
+        margin: 0 auto;
+    }
+
     .node {
         cursor: pointer;
     }
@@ -27,117 +36,247 @@
         pointer-events: none;
     }
 
+    .error { font: 14px sans-serif; fill: #b00; }
+
+    /* Loading indicator shown while the view is extracted from the embedded archive. */
+    #loading {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        color: grey;
+        font: 15px sans-serif;
+        padding: 40px 4px;
+    }
+
+    #loading .spinner {
+        width: 22px;
+        height: 22px;
+        border: 3px solid #e0e0e0;
+        border-top-color: #4a90d9;
+        border-radius: 50%;
+        animation: sokrates-spin 0.8s linear infinite;
+    }
+
+    @keyframes sokrates-spin {
+        to { transform: rotate(360deg); }
+    }
+
 </style>
-<svg width="960" height="960"></svg>
+<div id="loading"><div class="spinner"></div><span>Loading…</span></div>
+<svg width="960" height="960" style="display: none;"></svg>
 <script src="https://d3js.org/d3.v4.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/fflate@0.8.2/umd/index.js"></script>
+<script>
+    // Decodes the deflate+base64 JSON used for compressed inline data (and shared with the rest
+    // of the report suite). fflate is already loaded above.
+    function sokratesInflate(b64) {
+        var bin = atob(b64);
+        var bytes = new Uint8Array(bin.length);
+        for (var i = 0; i < bin.length; i++) { bytes[i] = bin.charCodeAt(i); }
+        return JSON.parse(fflate.strFromU8(fflate.unzlibSync(bytes)));
+    }
+
+    // Decodes a whole zip archive embedded inline as base64 into the { entryName: Uint8Array } map
+    // (the per-view archive embedded by the generator, so the page opens from file:// with no
+    // server). fflate is already loaded above.
+    function sokratesUnzip(b64) {
+        var bin = atob(b64);
+        var bytes = new Uint8Array(bin.length);
+        for (var i = 0; i < bin.length; i++) { bytes[i] = bin.charCodeAt(i); }
+        return fflate.unzipSync(bytes);
+    }
+
+    // Optional inline data for self-contained pages (no archive). The generator fills the
+    // placeholder below with `var SOKRATES_INLINE_DATA = sokratesInflate("<b64>");` for inline
+    // pages, or with nothing (leaving the variable undefined) for the embedded-archive pages.
+    ${sokrates-inline-data}
+
+    // The per-view archive (one JSON entry per view) embedded as base64; the generator fills this
+    // with `var SOKRATES_ARCHIVE = "<b64-zip>";`. The page extracts only its ?key= view from it.
+    ${embedded-archive}
+</script>
 <script>
 
-    var svg = d3.select("svg"),
-        margin = 20,
-        diameter = +svg.attr("width"),
-        g = svg.append("g").attr("transform", "translate(" + diameter / 2 + "," + diameter / 2 + ")");
-
-    var color = d3.scaleLinear()
-        .domain([-1, 5])
-        .range(["hsl(152,80%,100%)", "hsl(228,30%,40%)"])
-        .interpolate(d3.interpolateHcl);
-
-    var pack = d3.pack()
-        .size([diameter - margin, diameter - margin])
-        .padding(2);
-
-
-    var root = {
-        "name": "cluster",
-        "children": ${data}
+    // The per-view data is embedded inline as a base64 archive (one JSON entry per view, keyed by
+    // the view name). The page selects its view via ?key=... and extracts only that entry from the
+    // embedded bytes — no fetch, so it opens from file://.
+    function param(name) {
+        var m = new RegExp('[?&]' + name + '=([^&]*)').exec(window.location.search);
+        return m ? decodeURIComponent(m[1].replace(/\+/g, ' ')) : null;
     }
 
-    root = d3.hierarchy(root)
-        .sum(function (d) {
-            return d.size;
-        })
-        .sort(function (a, b) {
-            return b.value - a.value;
-        });
+    // The view key is in the URL fragment (#<key>), not the query string, so the browser caches
+    // this one HTML file (which embeds all views) once and reuses it for every view — the fragment
+    // is not part of the HTTP cache key. Falls back to a legacy ?key= query param.
+    function viewKey() {
+        var hash = window.location.hash;
+        if (hash && hash.length > 1) {
+            return decodeURIComponent(hash.substring(1));
+        }
+        return param('key');
+    }
 
-    var focus = root,
-        nodes = pack(root).descendants(),
-        view;
+    // Hides the loading spinner and reveals the SVG; called once the data is ready (or on error).
+    function hideSpinner() {
+        var loading = document.getElementById("loading");
+        if (loading) { loading.style.display = "none"; }
+        var svg = document.querySelector("svg");
+        if (svg) { svg.style.display = ""; }
+    }
 
-    var circle = g.selectAll("circle")
-        .data(nodes)
-        .enter().append("circle")
-        .attr("class", function (d) {
-            return d.parent ? d.children ? "node" : "node node--leaf" : "node node--root";
-        })
-        .style("fill", function (d) {
-            return d.children ? color(d.depth) : (d.data.color ? d.data.color : null);
-        })
-        .on("click", function (d) {
-            if (focus !== d) zoom(d), d3.event.stopPropagation();
-        });
+    function showError(msg) {
+        hideSpinner();
+        d3.select("svg").append("text").attr("class", "error").attr("x", 20).attr("y", 40).text(msg);
+    }
 
-    var text = g.selectAll("text")
-        .data(nodes)
-        .enter().append("text")
-        .attr("class", "label")
-        .style("fill-opacity", function (d) {
-            return d.parent === root ? 1 : 0;
-        })
-        .style("display", function (d) {
-            return d.parent === root ? "inline" : "none";
-        })
-        .text(function (d) {
-            return d.data.name.length > 33 ? (d.data.name.substr(0, 14) + "..." + d.data.name.substr(d.data.name.length - 14))  : d.data.name;
-        });
+    function render(children) {
+        // Laid out in a hidden frame (0x0) the circles would get the minimum size: wait until the frame is shown.
+        if (!window.innerWidth || !window.innerHeight) {
+            window.addEventListener('resize', function whenShown() {
+                if (!window.innerWidth || !window.innerHeight) { return; }
+                window.removeEventListener('resize', whenShown);
+                render(children);
+            });
+            return;
+        }
+        hideSpinner();
+        // Fit the circles to the frame (its smaller side) instead of a fixed 960px, so an embedded view
+        // (the report's Structure tab) has no scrollbar and no empty space below.
+        var fitSize = Math.max(320, Math.min(window.innerWidth, window.innerHeight) - 8);
+        d3.select("svg").attr("width", fitSize).attr("height", fitSize);
+        var svg = d3.select("svg"),
+            margin = 20,
+            diameter = +svg.attr("width"),
+            g = svg.append("g").attr("transform", "translate(" + diameter / 2 + "," + diameter / 2 + ")");
 
-    var node = g.selectAll("circle,text");
+        var color = d3.scaleLinear()
+            .domain([-1, 5])
+            .range(["hsl(152,80%,100%)", "hsl(228,30%,40%)"])
+            .interpolate(d3.interpolateHcl);
 
-    svg
-        .style("background", color(-1))
-        .on("click", function () {
-            zoom(root);
-        });
+        var pack = d3.pack()
+            .size([diameter - margin, diameter - margin])
+            .padding(2);
 
-    zoomTo([root.x, root.y, root.r * 2 + margin]);
 
-    function zoom(d) {
-        var focus0 = focus;
-        focus = d;
+        var root = {
+            "name": "cluster",
+            "children": children
+        }
 
-        var transition = d3.transition()
-            .duration(d3.event.altKey ? 7500 : 750)
-            .tween("zoom", function (d) {
-                var i = d3.interpolateZoom(view, [focus.x, focus.y, focus.r * 2 + margin]);
-                return function (t) {
-                    zoomTo(i(t));
-                };
+        root = d3.hierarchy(root)
+            .sum(function (d) {
+                return d.size;
+            })
+            .sort(function (a, b) {
+                return b.value - a.value;
             });
 
-        transition.selectAll("text")
-            .filter(function (d) {
-                return d.parent === focus || this.style.display === "inline";
+        var focus = root,
+            nodes = pack(root).descendants(),
+            view;
+
+        var circle = g.selectAll("circle")
+            .data(nodes)
+            .enter().append("circle")
+            .attr("class", function (d) {
+                return d.parent ? d.children ? "node" : "node node--leaf" : "node node--root";
             })
+            .style("fill", function (d) {
+                return d.children ? color(d.depth) : (d.data.color ? d.data.color : null);
+            })
+            .on("click", function (d) {
+                if (focus !== d) zoom(d), d3.event.stopPropagation();
+            });
+
+        var text = g.selectAll("text")
+            .data(nodes)
+            .enter().append("text")
+            .attr("class", "label")
             .style("fill-opacity", function (d) {
-                return d.parent === focus ? 1 : 0;
+                return d.parent === root ? 1 : 0;
             })
-            .on("start", function (d) {
-                if (d.parent === focus) this.style.display = "inline";
+            .style("display", function (d) {
+                return d.parent === root ? "inline" : "none";
             })
-            .on("end", function (d) {
-                if (d.parent !== focus) this.style.display = "none";
+            .text(function (d) {
+                return d.data.name.length > 33 ? (d.data.name.substr(0, 14) + "..." + d.data.name.substr(d.data.name.length - 14))  : d.data.name;
             });
+
+        var node = g.selectAll("circle,text");
+
+        svg
+            .style("background", color(-1))
+            .on("click", function () {
+                zoom(root);
+            });
+
+        zoomTo([root.x, root.y, root.r * 2 + margin]);
+
+        function zoom(d) {
+            var focus0 = focus;
+            focus = d;
+
+            var transition = d3.transition()
+                .duration(d3.event.altKey ? 7500 : 750)
+                .tween("zoom", function (d) {
+                    var i = d3.interpolateZoom(view, [focus.x, focus.y, focus.r * 2 + margin]);
+                    return function (t) {
+                        zoomTo(i(t));
+                    };
+                });
+
+            transition.selectAll("text")
+                .filter(function (d) {
+                    return d.parent === focus || this.style.display === "inline";
+                })
+                .style("fill-opacity", function (d) {
+                    return d.parent === focus ? 1 : 0;
+                })
+                .on("start", function (d) {
+                    if (d.parent === focus) this.style.display = "inline";
+                })
+                .on("end", function (d) {
+                    if (d.parent !== focus) this.style.display = "none";
+                });
+        }
+
+        function zoomTo(v) {
+            var k = diameter / v[2];
+            view = v;
+            node.attr("transform", function (d) {
+                return "translate(" + (d.x - v[0]) * k + "," + (d.y - v[1]) * k + ")";
+            });
+            circle.attr("r", function (d) {
+                return d.r * k;
+            });
+        }
     }
 
-    function zoomTo(v) {
-        var k = diameter / v[2];
-        view = v;
-        node.attr("transform", function (d) {
-            return "translate(" + (d.x - v[0]) * k + "," + (d.y - v[1]) * k + ")";
-        });
-        circle.attr("r", function (d) {
-            return d.r * k;
-        });
+    var __circlesEntriesCache = null;
+    function loadEmbedded() {
+        try {
+            var key = viewKey() || 'main';
+            if (!__circlesEntriesCache) { __circlesEntriesCache = sokratesUnzip(SOKRATES_ARCHIVE); }
+            var bytes = __circlesEntriesCache[key + '.json'];
+            if (!bytes) throw new Error('View not found: ' + key);
+            render(JSON.parse(fflate.strFromU8(bytes)));
+        } catch (e) {
+            showError(e.message);
+        }
     }
+
+    (function load() {
+        // Inline mode (self-contained page, e.g. landscape sub-landscape circles): the data is
+        // embedded directly. Otherwise the per-view archive is embedded inline (SOKRATES_ARCHIVE)
+        // and we extract the #<key> view from it — no fetch, so the page works from file://.
+        if (typeof SOKRATES_INLINE_DATA !== 'undefined' && SOKRATES_INLINE_DATA !== null) {
+            render(SOKRATES_INLINE_DATA);
+            return;
+        }
+        // Decoding a large embedded archive blocks the main thread; yield one frame first so the
+        // loading spinner actually paints, then do the synchronous extract + render.
+        requestAnimationFrame(function () { setTimeout(loadEmbedded, 0); });
+    })();
 
 </script>

@@ -4,12 +4,18 @@ import nl.obren.sokrates.common.io.JsonGenerator;
 import nl.obren.sokrates.common.renderingutils.ExplorerTemplate;
 import nl.obren.sokrates.common.utils.SystemUtils;
 import nl.obren.sokrates.reports.landscape.statichtml.LandscapeReportGenerator;
+import nl.obren.sokrates.reports.generators.explorers.FilesExportUtils;
 import nl.obren.sokrates.reports.landscape.statichtml.repositories.TagMap;
+import nl.obren.sokrates.sourcecode.threshold.Thresholds;
 import nl.obren.sokrates.reports.landscape.utils.ContributorPerExtensionHelper;
+import nl.obren.sokrates.reports.landscape.utils.FeaturesOfInterestAggregator;
+import nl.obren.sokrates.reports.landscape.utils.RepositoryConcernData;
 import nl.obren.sokrates.reports.landscape.utils.TagStats;
+import nl.obren.sokrates.reports.utils.DataImageUtils;
 import nl.obren.sokrates.sourcecode.analysis.results.AspectAnalysisResults;
 import nl.obren.sokrates.sourcecode.analysis.results.CodeAnalysisResults;
 import nl.obren.sokrates.sourcecode.contributors.Contributor;
+import nl.obren.sokrates.sourcecode.landscape.LandscapeConfiguration;
 import nl.obren.sokrates.sourcecode.landscape.TeamsConfig;
 import nl.obren.sokrates.sourcecode.landscape.analysis.ContributorRepositories;
 import nl.obren.sokrates.sourcecode.landscape.analysis.FileExport;
@@ -22,17 +28,27 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 
 public class LandscapeDataExport {
+    private boolean hasFeaturesOfInterest = false;
+
     public static final String REPOSITORIES_DATA_FILE_NAME = "repositories.txt";
     public static final String REPOSITORIES_DATA_JSON_FILE_NAME = "repositories.json";
     private LandscapeAnalysisResults analysisResults;
     private File dataFolder;
     private File reportsFolder;
+    // When set, only data/ is written: the client-rendered pages this export also renders
+    // (files-explorer.html, repositories.html) are skipped.
+    private boolean dataOnly = false;
 
     public LandscapeDataExport(LandscapeAnalysisResults analysisResults, File folder) {
         this.analysisResults = analysisResults;
@@ -43,8 +59,12 @@ public class LandscapeDataExport {
         this.reportsFolder = folder;
     }
 
+    public void setDataOnly(boolean dataOnly) {
+        this.dataOnly = dataOnly;
+    }
+
     public void exportRepositories(TagMap tagMap) {
-        exportJson();
+        exportJson(tagMap);
 
         exportRepositories(analysisResults.getFilteredRepositoryAnalysisResults(), REPOSITORIES_DATA_FILE_NAME);
         tagMap.keySet().forEach(key -> {
@@ -54,16 +74,22 @@ public class LandscapeDataExport {
         exportRepositories(analysisResults.getIgnoredRepositoryAnalysisResults(), "ignoredRepositories.txt");
     }
 
-    private void exportJson() {
+    private void exportJson(TagMap tagMap) {
         try {
+            LandscapeConfiguration configuration = analysisResults.getConfiguration();
+            String latestCommitDate = analysisResults.getLatestCommitDate();
             List<RepositoryExport> repositoryExports = new ArrayList<>();
             List<FileExport> files = new ArrayList<>();
+            // Set-backed membership so the dedup is O(1) instead of List.contains O(n) per file
+            // (O(total files^2) overall). FileExport has no equals/hashCode, so the set uses object
+            // identity - exactly the semantics List.contains had here.
+            Set<FileExport> seenFiles = new HashSet<>();
 
             analysisResults.getFilteredRepositoryAnalysisResults().forEach(repositoryAnalysisResults -> {
-                RepositoryExport repositoryExport = new RepositoryExport(repositoryAnalysisResults);
+                RepositoryExport repositoryExport = new RepositoryExport(repositoryAnalysisResults, tagMap, configuration, latestCommitDate);
                 repositoryExports.add(repositoryExport);
                 repositoryAnalysisResults.getFiles().forEach(file -> {
-                    if (!files.contains(file) && !file.getPath().startsWith("- -")) {
+                    if (!file.getPath().startsWith("- -") && seenFiles.add(file)) {
                         files.add(file);
                     }
                 });
@@ -75,14 +101,165 @@ public class LandscapeDataExport {
 
             FileUtils.write(new File(dataFolder, "files.json"), new JsonGenerator().generate(files), UTF_8);
 
-            String htmlExplorer = explorerTemplate.render("repository-explorer.html", repositoryExports);
-            FileUtils.write(new File(reportsFolder, "repositories-explorer.html"), htmlExplorer, UTF_8);
+            if (dataOnly) {
+                return;
+            }
 
-            String filesExplorer = explorerTemplate.render("files-explorer.html", files);
-            FileUtils.write(new File(reportsFolder, "files-explorer.html"), filesExplorer, UTF_8);
+            writeFilesExplorer(explorerTemplate, files);
+            writeRepositoriesReport(explorerTemplate, repositoryExports, configuration);
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+
+    /** The landscape-level files explorer: standard risk thresholds, no report or source links. */
+    private void writeFilesExplorer(ExplorerTemplate explorerTemplate, List<FileExport> files) throws IOException {
+        List<String> fileLangs = files.stream().map(FileExport::getMainLang).collect(Collectors.toList());
+        String fileLangIcons = DataImageUtils.getLangDataImageMapJson(fileLangs);
+        Map<String, String> filesPlaceholders = new HashMap<>();
+        filesPlaceholders.put("langIcons", fileLangIcons);
+        // The landscape aggregates many repositories with potentially different thresholds, so use
+        // the standard thresholds for the risk colouring.
+        filesPlaceholders.put("fileSizeThresholds",
+                FilesExportUtils.thresholdsJson(Thresholds.defaultFileSizeThresholds()));
+        filesPlaceholders.put("fileAgeThresholds",
+                FilesExportUtils.thresholdsJson(Thresholds.defaultFileAgeThresholds()));
+        filesPlaceholders.put("fileUpdateFrequencyThresholds",
+                FilesExportUtils.thresholdsJson(Thresholds.defaultFileUpdateFrequencyThresholds()));
+        filesPlaceholders.put("fileContributorsCountThresholds",
+                FilesExportUtils.thresholdsJson(Thresholds.defaultFileContributorsCountThresholds()));
+        // No per-repository reports or cached source pages at the landscape level, so suppress
+        // both the report links and the file-name source links.
+        filesPlaceholders.put("reportLinkBase", "");
+        filesPlaceholders.put("saveSourceFiles", "false");
+        String filesExplorer = explorerTemplate.render("files-explorer.html", files, filesPlaceholders);
+        FileUtils.write(new File(reportsFolder, "files-explorer.html"), filesExplorer, UTF_8);
+    }
+
+    /** The full, client-rendered repositories report (replaces the old static repositories.html). */
+    private void writeRepositoriesReport(ExplorerTemplate explorerTemplate, List<RepositoryExport> repositoryExports, LandscapeConfiguration configuration) throws IOException {
+        // The repositories explorer has been folded into the Size & Details tab of
+        // repositories.html; we only keep the shared language-icon map here.
+        List<String> repositoryLangs = repositoryExports.stream().map(RepositoryExport::getMainLang).collect(Collectors.toList());
+        String repositoryLangIcons = DataImageUtils.getLangDataImageMapJson(repositoryLangs);
+        JsonGenerator jsonGenerator = new JsonGenerator();
+        Map<String, String> placeholders = new HashMap<>();
+        placeholders.put("langIcons", repositoryLangIcons);
+        placeholders.put("features", jsonGenerator.generateCompressed(buildFeaturesData(configuration)));
+        placeholders.put("options", jsonGenerator.generateCompressed(buildOptions(configuration, repositoryExports)));
+        String repositoriesReport = explorerTemplate.render("repositories-report.html", repositoryExports, placeholders);
+        FileUtils.write(new File(reportsFolder, "repositories.html"), repositoriesReport, UTF_8);
+    }
+
+    private Map<String, Object> buildOptions(LandscapeConfiguration configuration, List<RepositoryExport> repositoryExports) {
+        Map<String, Object> options = new LinkedHashMap<>();
+        options.put("showCommits", analysisResults.getCommitsCount() > 0);
+        options.put("showTags", repositoryExports.stream().anyMatch(r -> r.getTags() != null && !r.getTags().isEmpty()));
+        options.put("showControls", configuration.isShowRepositoryControls());
+        options.put("showScores", configuration.isShowMaintainabilityScores());
+        options.put("historyYears", configuration.getRepositoriesHistoryLimit());
+        return options;
+    }
+
+    /**
+     * Aggregates features of interest across repositories into a compact matrix
+     * (concerns + per-repository match/file counts) for the report's Features tab.
+     */
+    /** Whether repositories.html has a Features of Interest tab (known once the repositories are exported). */
+    public boolean hasFeaturesOfInterest() {
+        return hasFeaturesOfInterest;
+    }
+
+    private Map<String, Object> buildFeaturesData(LandscapeConfiguration configuration) {
+        FeaturesOfInterestAggregator aggregator = new FeaturesOfInterestAggregator(analysisResults.getRepositoryAnalysisResults());
+        aggregator.aggregateFeaturesOfInterest(configuration.getRepositoriesListLimit());
+
+        Map<String, Object> result = new LinkedHashMap<>();
+        List<Map<String, Object>> concernsOut = new ArrayList<>();
+        List<List<RepositoryConcernData>> concerns = aggregator.getConcerns().stream()
+                .filter(c -> c.size() > 0).collect(Collectors.toList());
+        concerns.forEach(concern -> {
+            Map<String, Object> c = new LinkedHashMap<>();
+            c.put("name", concern.get(0).getConcern().getName());
+            c.put("count", concern.size());
+            concernsOut.add(c);
+        });
+        result.put("concerns", concernsOut);
+        hasFeaturesOfInterest = !concernsOut.isEmpty();
+
+        List<Map<String, Object>> reposOut = new ArrayList<>();
+        aggregator.getRepositories().forEach(repository -> {
+            RepositoryConcernData first = repository.get(0);
+            RepositoryAnalysisResults repo = first.getRepository();
+            Map<String, Object> r = new LinkedHashMap<>();
+            r.put("name", first.getRepositoryName());
+            r.put("mainLang", mainLangOf(repo));
+            r.put("langs", langsOf(repo));
+            r.put("langsByScope", langsByScopeOf(repo));
+            r.put("reportFolderUrl", configuration.getRepositoryReportsUrlPrefix()
+                    + repo.getSokratesRepositoryLink().getHtmlReportsRoot() + "/");
+            Map<String, Object> perConcern = new LinkedHashMap<>();
+            concerns.forEach(concern -> {
+                String concernName = concern.get(0).getConcern().getName();
+                String key = first.getRepositoryName() + "::" + concernName;
+                RepositoryConcernData data = aggregator.getRepositoriesConcernMap().get(key);
+                if (data != null) {
+                    Map<String, Object> cell = new LinkedHashMap<>();
+                    cell.put("matches", data.getConcern().getNumberOfRegexLineMatches());
+                    cell.put("files", data.getConcern().getFilesCount());
+                    perConcern.put(concernName, cell);
+                }
+            });
+            r.put("perConcern", perConcern);
+            reposOut.add(r);
+        });
+        result.put("repositories", reposOut);
+        return result;
+    }
+
+    private static String mainLangOf(RepositoryAnalysisResults repo) {
+        List<NumericMetric> perExtension = repo.getAnalysisResults().getMainAspectAnalysisResults().getLinesOfCodePerExtension();
+        if (perExtension != null && !perExtension.isEmpty()) {
+            return perExtension.get(0).getName().replace("*.", "").trim().toLowerCase();
+        }
+        return "";
+    }
+
+    // Every language (lowercased extension) the repository contains any code in, across all scopes;
+    // mirrors RepositoryExport.langs so includesLang:<lang> works on the Features tab too.
+    private static List<String> langsOf(RepositoryAnalysisResults repo) {
+        Set<String> langs = new java.util.LinkedHashSet<>();
+        langsByScopeOf(repo).values().forEach(langs::addAll);
+        return new ArrayList<>(langs);
+    }
+
+    // The same languages split per scope (main/test/build/generated/other); mirrors
+    // RepositoryExport.langsByScope so a scoped includesLang:main:<lang> works on the Features tab.
+    private static Map<String, List<String>> langsByScopeOf(RepositoryAnalysisResults repo) {
+        CodeAnalysisResults analysis = repo.getAnalysisResults();
+        Map<String, List<String>> byScope = new LinkedHashMap<>();
+        byScope.put("main", scopeLangs(analysis.getMainAspectAnalysisResults()));
+        byScope.put("test", scopeLangs(analysis.getTestAspectAnalysisResults()));
+        byScope.put("build", scopeLangs(analysis.getBuildAndDeployAspectAnalysisResults()));
+        byScope.put("generated", scopeLangs(analysis.getGeneratedAspectAnalysisResults()));
+        byScope.put("other", scopeLangs(analysis.getOtherAspectAnalysisResults()));
+        return byScope;
+    }
+
+    private static List<String> scopeLangs(AspectAnalysisResults aspect) {
+        List<String> langs = new ArrayList<>();
+        if (aspect == null || aspect.getLinesOfCodePerExtension() == null) {
+            return langs;
+        }
+        aspect.getLinesOfCodePerExtension().forEach(metric -> {
+            if (metric.getValue() != null && metric.getValue().intValue() > 0) {
+                String lang = metric.getName().replace("*.", "").trim().toLowerCase();
+                if (!lang.isEmpty() && !langs.contains(lang)) {
+                    langs.add(lang);
+                }
+            }
+        });
+        return langs;
     }
 
     public static String getTagRepositoriesFileName(String key) {

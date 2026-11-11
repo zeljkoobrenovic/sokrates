@@ -16,6 +16,12 @@ public class GitHistoryPerExtensionUtils {
     private Map<String, List<String>> paths90Days = new HashMap<>();
     private Map<String, Map<String,ContributorPerExtensionStats>> contributorPerExtensionStatsMap = new HashMap<>();
 
+    // Companion membership sets for the distinct-value lists above, so updateMaps dedups in O(1)
+    // instead of an O(n) contains() scan per file update. Keyed by list-map *identity* (an
+    // IdentityHashMap) - the list-maps compare equal by content, so a content-keyed map would
+    // conflate them (e.g. emails vs paths while both are empty).
+    private final Map<Map<String, List<String>>, Map<String, Set<String>>> seenValues = new IdentityHashMap<>();
+
     public List<CommitsPerExtension> getCommitsPerExtensions(File file, FileHistoryAnalysisConfig config) {
         GitHistoryUtils.getHistoryFromFile(file, config).forEach(fileUpdate -> {
             String extension = fileUpdate.getExtension();
@@ -107,13 +113,12 @@ public class GitHistoryPerExtensionUtils {
         return commitsPerExtension;
     }
 
-    private static void updateMaps(String extension, String value, Map<String, List<String>> map) {
-        List<String> extList = map.get(extension);
-        if (extList == null) {
-            extList = new ArrayList<>();
-            map.put(extension, extList);
-        }
-        if (!extList.contains(value)) {
+    private void updateMaps(String extension, String value, Map<String, List<String>> map) {
+        List<String> extList = map.computeIfAbsent(extension, k -> new ArrayList<>());
+        Set<String> seen = seenValues
+                .computeIfAbsent(map, k -> new HashMap<>())
+                .computeIfAbsent(extension, k -> new HashSet<>());
+        if (seen.add(value)) {
             extList.add(value);
         }
     }
