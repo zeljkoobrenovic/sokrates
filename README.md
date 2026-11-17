@@ -8,7 +8,7 @@ It implements Željko Obrenović's "examined code" vision: a pragmatic, efficien
 
 For details and examples, visit [sokrates.dev](https://sokrates.dev).
 
-Sokrates is free open-source project, with a commercial friendly [MIT license](LICENSE). You can **[sponsor the work on Sokrates](https://github.com/sponsors/zeljkoobrenovic)** via GitHub [sponsors program](https://github.com/sponsors/zeljkoobrenovic). 
+Sokrates is free and open source under the [MIT license](LICENSE), including for commercial use. [Support its development](#support-sokrates).
 
 ## Quick start (no install: Docker)
 
@@ -265,6 +265,16 @@ Sokrates is a Maven multi-module project. The dependency chain is `common → co
 | [`reports`](reports/README.md) | Turns analysis results into HTML reports and JSON data exports |
 | [`cli`](cli/README.md) | Command line interface and git-history extraction |
 | [`codeexplorer`](codeexplorer/README.md) | JavaFX GUI for interactive exploration |
+
+## Support Sokrates
+
+If Sokrates helps you better understand your code, please consider supporting its development.
+
+Sponsorship helps sustain the time spent improving the analysis, fixing bugs, testing compatibility, and maintaining documentation and examples. Individual and corporate sponsors are welcome, whether one-time or monthly.
+
+Contributions go to Željko Obrenović and support his open-source work, including Sokrates. Sponsorship is entirely voluntary. Sokrates will remain free and open source under the MIT license.
+
+**[Sponsor Sokrates on GitHub](https://github.com/sponsors/zeljkoobrenovic)** · [How sponsorship helps](https://www.sokrates.dev/support/)
 
 ## License
 
