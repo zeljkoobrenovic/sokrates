@@ -1,0 +1,24 @@
+docs/dev/sponsorship.md
+  s_108590e9a04276::t_aee183b016b36f 1-57
+README.md
+  s_108590e9a04276::t_aee183b016b36f 11,269-277
+  s_108590e9a04276::t_b4873b58ef7ac0 278
+.github/FUNDING.yml
+  s_108590e9a04276::t_aee183b016b36f 1
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "02292dd5ad5c6eedd67b42dab2cedce58a8980cd",
+  "prompts": {},
+  "sessions": {
+    "s_108590e9a04276": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a1eb70-ca1f-7c92-9b43-c935cd1119ab",
+        "model": "gpt-6-astra"
+      },
+      "human_author": "Zeljko Obrenovic <zeljkoobrenovic@yahoo.com>"
+    }
+  }
+}
