@@ -3,6 +3,35 @@
 User-visible behaviour changes, newest first. `:latest` of the Docker image and the `master` branch carry
 everything listed under the most recent date.
 
+## 2026-11-19
+
+### Perl: regexes, quote-like operators and here-docs no longer cut files short
+
+A quote inside a Perl regex (`$var =~ s/"/&quot;/g;`) was read as the start of a string (issue #131). When no later
+quote closed it, the rest of the file was dropped before any analysis ran; when one did, the comments in between were
+counted as code. Now the Perl analyzer recognises:
+
+- The quote-like operators `m`, `q`, `qq`, `qw`, `qr`, `s`, `tr` and `y` with any delimiter, including bracket pairs
+  (`s{a}{b}`, nested braces), `#` (`s#a#b#`) and quotes (`q'…'`). Variables, hash keys, methods, file tests and regex
+  escapes that look like them (`$s`, `$h{s}`, `s => 1`, `->s`, `-s $file`, `\s`) stay code.
+- A bare `/…/` regex where a division can't be: after `=~`, `!~`, `(`, `{`, `,`, `;`, `=`, `?`, `!`, `&&`, `||`
+  and after `split`, `grep`, `if`, `unless`, `and`, `or`, `not`, `return`, `when`, `while`, `until`.
+- Here-docs (`<<EOT`, `<<"EOT"`, `<<'EOT'`, `<<~EOT`): their text is skipped up to the terminator line, so an
+  apostrophe or regex-like text in it (`You'll`, `$1[s.i]`) opens nothing.
+- `$#array`, `$#{…}` and `$#$ref`: the `#` is not a comment.
+
+The former `q//` and `qq//` rules only ever matched the empty `q//` and `qq//`; they are gone.
+
+**All languages:** a string literal that never closes no longer removes the rest of the file. Its opening quote is
+treated as an ordinary character and cleaning carries on. An unclosed block comment still runs to the end of the file.
+
+What to check: lines of code and units of Perl files change on the next analysis. Files that were cut short grow and
+get their missing units back, files where a misread string hid comments shrink, and here-doc text is now counted as
+code like other string content. On bugzilla/bugzilla (35b7162) 24 of 241 Perl files change: `Bugzilla/Util.pm` gets
+its 10 missing subs back, `t/010dependencies.t` goes from 14 to 86 lines of code, `Bugzilla/DB/Mysql.pm` from 900 to
+720, and units that ended early at a `$#` now end where they do. Files in other languages change only where an
+unclosed string cut them short.
+
 ## 2026-10-28
 
 ### Rust: conditional complexity counts Rust's decisions

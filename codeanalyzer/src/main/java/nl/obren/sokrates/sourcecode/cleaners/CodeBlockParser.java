@@ -12,6 +12,10 @@ public class CodeBlockParser {
     private String endMarker = "\"";
     private String escapeMarker = "\\";
     private boolean removeWhenCleaning = true;
+    // A string literal that never closes is a misread (e.g. a quote inside a regex), not a string
+    // running to the end of the file: its opening marker is then treated as an ordinary character.
+    // An unclosed comment still removes the rest of the content.
+    private boolean stringLiteral = false;
 
     public CodeBlockParser() {
     }
@@ -63,6 +67,9 @@ public class CodeBlockParser {
         int endIndex = this.getStringEndIndex(content, startIndex + 1);
 
         if (endIndex == -1) {
+            if (stringLiteral) {
+                return new CleaningResult(content, startIndex + 1);
+            }
             return new CleaningResult(content.substring(0, startIndex), startIndex);
         }
 
@@ -80,6 +87,15 @@ public class CodeBlockParser {
         } else {
             return new CleaningResult(content, endIndex + endMarker.length());
         }
+    }
+
+    public boolean isStringLiteral() {
+        return stringLiteral;
+    }
+
+    public CodeBlockParser setStringLiteral(boolean stringLiteral) {
+        this.stringLiteral = stringLiteral;
+        return this;
     }
 
     public String getStartMarker() {
