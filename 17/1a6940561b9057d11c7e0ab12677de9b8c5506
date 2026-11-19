@@ -1,0 +1,35 @@
+codeanalyzer/src/test/java/nl/obren/sokrates/sourcecode/lang/perl/PerlHeuristicDependenciesExtractorTest.java
+  s_bde0e61e813a28::t_cd9abe8ecfaa57 7,9-11,18-19,22,30-33,37,39-40,42-44,46-53,55-70,73-117
+codeanalyzer/src/main/java/nl/obren/sokrates/sourcecode/lang/LanguageAnalyzer.java
+  s_bde0e61e813a28::t_4806a9af53b726 39-47
+codeanalyzer/src/main/java/nl/obren/sokrates/sourcecode/lang/perl/PerlAnalyzer.java
+  s_bde0e61e813a28::t_48bab1ba9eaa78 89-94
+codeanalyzer/src/main/java/nl/obren/sokrates/sourcecode/dependencies/DependenciesUtils.java
+  s_bde0e61e813a28::t_4806a9af53b726 15,17,25-29,35-51
+  s_bde0e61e813a28::t_237c4d26ed4770 52
+codeanalyzer/src/main/java/nl/obren/sokrates/sourcecode/dependencies/HeuristicDependenciesExtractor.java
+  s_bde0e61e813a28::t_4806a9af53b726 36,38,82-90
+  s_bde0e61e813a28::t_0edf83bfad6e30 91
+codeanalyzer/src/main/java/nl/obren/sokrates/sourcecode/lang/perl/PerlHeuristicDependenciesExtractor.java
+  s_bde0e61e813a28::t_f5ff4d6b74be1e 14-15,17-23,25-29,34,36-45,47,50-64,68-122
+CLAUDE.md
+  s_bde0e61e813a28::t_27e1e3601deab5 217
+CHANGELOG.md
+  s_bde0e61e813a28::t_fa38e63cc1c3da 8-31
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "171a6940561b9057d11c7e0ab12677de9b8c5506",
+  "prompts": {},
+  "sessions": {
+    "s_bde0e61e813a28": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "7fa612dc-5965-4f81-b70c-e27de51df7ce",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "zeljkoobrenovic <zeljkoobrenovic@yahoo.com>"
+    }
+  }
+}
