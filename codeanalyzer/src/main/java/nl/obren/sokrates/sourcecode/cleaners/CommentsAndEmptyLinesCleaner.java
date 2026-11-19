@@ -31,11 +31,11 @@ public class CommentsAndEmptyLinesCleaner {
     }
 
     public void addStringBlockHelper(String marker, String escapeMarker) {
-        codeBlockParsers.add(new CodeBlockParser(marker, marker, escapeMarker, false));
+        codeBlockParsers.add(new CodeBlockParser(marker, marker, escapeMarker, false).setStringLiteral(true));
     }
 
     public void addStringBlockHelper(String startMarker, String endMarker, String escapeMarker) {
-        codeBlockParsers.add(new CodeBlockParser(startMarker, endMarker, escapeMarker, false));
+        codeBlockParsers.add(new CodeBlockParser(startMarker, endMarker, escapeMarker, false).setStringLiteral(true));
     }
 
     public void addCommentBlockHelper(String startMarker, String endMarker) {

@@ -28,4 +28,22 @@ public class CommentsAndEmptyLinesCleanerTest {
                 "    return add(x, add(x,x));\n" +
                 "}", cleaner.clean(code).getCleanedContent());
     }
+
+    @Test
+    public void anUnclosedStringIsAnOrdinaryCharacterNotTheRestOfTheFile() {
+        CommentsAndEmptyLinesCleaner cleaner = new CommentsAndEmptyLinesCleaner("//", "/*", "*/", "\"", "\\");
+        String code = "a = x\"; // stray quote\n" +
+                "// comment\n" +
+                "b = 1; // comment";
+
+        assertEquals("a = x\";\n" +
+                "b = 1;", cleaner.clean(code).getCleanedContent().replaceAll(" +\n", "\n").trim());
+    }
+
+    @Test
+    public void anUnclosedBlockCommentStillRunsToTheEnd() {
+        CommentsAndEmptyLinesCleaner cleaner = new CommentsAndEmptyLinesCleaner("//", "/*", "*/", "\"", "\\");
+
+        assertEquals("a = 1;", cleaner.clean("a = 1;\n/* never closed\nb = 2;").getCleanedContent());
+    }
 }

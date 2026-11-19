@@ -51,14 +51,15 @@ public class PerlAnalyzer extends LanguageAnalyzer {
         return stringBuilder.toString();
     }
 
-    private CommentsAndEmptyLinesCleaner getCleaner() {
+    CommentsAndEmptyLinesCleaner getCleaner() {
         CommentsAndEmptyLinesCleaner cleaner = new CommentsAndEmptyLinesCleaner();
 
-        cleaner.addCommentBlockHelper("#", "\n");
+        // the construct that starts first wins, so a regex or quote-like operator (s/"/&quot;/g,
+        // qw(don't), m/#/) hides the quotes and # inside it from the string and comment parsers
+        cleaner.getCodeBlockParsers().add(new PerlQuoteLikeParser());
+        cleaner.getCodeBlockParsers().add(new PerlCommentParser());
         cleaner.addStringBlockHelper("\"", "\\");
         cleaner.addStringBlockHelper("'", "\\");
-        cleaner.addStringBlockHelper("qq//", "/", "\\");
-        cleaner.addStringBlockHelper("q//", "/", "\\");
 
         return cleaner;
     }

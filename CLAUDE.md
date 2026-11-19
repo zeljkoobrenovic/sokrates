@@ -209,6 +209,12 @@ Dependency/visualization graphs (component, file-temporal, duplication-between-c
     - Macro arguments are skipped (`withoutMacroArguments`: `name!(…)`/`[…]`/`{…}`, bracket-balanced), because table macros like `hashify::map!` write entries with `=>`. The cost is the branches of `select!`/`matches!`.
     - `?` and `loop` don't count.
   - Tests in `RustAnalyzerTest`: test files need a `.rs` name (`new File("a.rs")`). The units extractor cleans through `LanguageAnalyzerFactory` by extension, so `new File("")` silently uses the default analyzer.
+- **An unclosed string literal is code, not the rest of the file** (2026-11-19, issue #131): `CodeBlockParser` has a `stringLiteral` flag, set by `CommentsAndEmptyLinesCleaner.addStringBlockHelper`; when such a block never closes, `cleanOrSkip` skips its opening marker and carries on instead of truncating. Unclosed comments still truncate. A custom string parser built with the constructor directly must call `setStringLiteral(true)` to get this.
+- **Perl** (`lang/perl/`, issue #131, measured on bugzilla/bugzilla at 35b7162): `PerlQuoteLikeParser` (a `CodeBlockParser`, registered before the `#` comment and `"`/`'` string parsers; the earliest start wins) skips as one block:
+  - the quote-like operators `m q qq qw qr s tr y` with any delimiter (bracket pairs nest, `s`/`tr`/`y` have a second part, which may be a separate bracket pair after whitespace; trailing modifiers). The word must start a token: not after a word character, a sigil `$@%&*`, `-` (file tests), `\` (regex escapes like `\s`), `->` or `::`. A closer, `,`, `;` or `=>` is not a delimiter, and after whitespace only an opening bracket, a quote or `/` is.
+  - a bare single-line `/…/` in an operand position (after `=~ !~ ( ! { , ; = ? && ||` or `split grep if unless and or not return when while until`).
+  - here-docs `<<EOT`/`<<"EOT"`/`<<'EOT'`/`<<~EOT`, from the `<<` to the terminator line (the rest of the opening line goes with it).
+  `PerlCommentParser` ignores the `#` of `$#array`/`$#{…}`/`$#$ref`. `PerlHeuristicUnitsExtractor.extraCleanContent` removes the quote-like constructs (braces in `s/\{//`) but only skips strings, since removing a string across lines lets a here-doc apostrophe swallow code. Not handled: the old `'` package separator (`$main'var`). Tests in `PerlQuoteLikeTest` (`.pl` file names, as for Rust).
 
 ## Per-repository report notes
 
