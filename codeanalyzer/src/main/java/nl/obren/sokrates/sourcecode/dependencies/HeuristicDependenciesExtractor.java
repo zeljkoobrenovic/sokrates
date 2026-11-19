@@ -33,9 +33,9 @@ public abstract class HeuristicDependenciesExtractor {
             }
             progressFeedback.setText(sourceAnchor.getAnchor());
             for (SourceFile sourceFile : sourceAnchor.getSourceFiles()) {
-                String content = sourceFile.getContent();
+                String content = getContentForDependencies(sourceFile);
                 for (DependencyAnchor targetAnchor : anchors) {
-                    if (sourceAnchor != targetAnchor && content.contains(targetAnchor.getAnchor())) {
+                    if (sourceAnchor != targetAnchor && mayReference(content, targetAnchor)) {
                         extractDependenciesToTargetAnchor(dependencies, dependencyIndex, content, sourceFile, sourceAnchor, targetAnchor);
                     }
                 }
@@ -78,6 +78,16 @@ public abstract class HeuristicDependenciesExtractor {
         return anchors;
     }
 
+
+    /** The content searched for dependency lines; a language can leave out documentation or data sections. */
+    protected String getContentForDependencies(SourceFile sourceFile) {
+        return sourceFile.getContent();
+    }
+
+    /** A cheap pre-filter: only a target the content may reference is checked line by line. */
+    protected boolean mayReference(String content, DependencyAnchor targetAnchor) {
+        return content.contains(targetAnchor.getAnchor());
+    }
 
     public abstract List<DependencyAnchor> extractDependencyAnchors(SourceFile sourceFile);
 }

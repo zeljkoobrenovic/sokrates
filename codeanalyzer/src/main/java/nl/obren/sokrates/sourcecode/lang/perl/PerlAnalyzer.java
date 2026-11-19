@@ -86,6 +86,12 @@ public class PerlAnalyzer extends LanguageAnalyzer {
         return new PerlHeuristicDependenciesExtractor().extractDependencies(sourceFiles, progressFeedback);
     }
 
+    /** Scripts (.pl, .cgi, .t, ...) depend on modules (.pm), so all Perl files are analysed together. */
+    @Override
+    public String getDependenciesGroup(String extension) {
+        return "perl";
+    }
+
     @Override
     public List<String> getFeaturesDescription() {
         List<String> features = new ArrayList<>();
