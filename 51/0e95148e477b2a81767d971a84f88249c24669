@@ -1,0 +1,48 @@
+codeanalyzer/src/main/java/nl/obren/sokrates/sourcecode/cleaners/CommentsAndEmptyLinesCleaner.java
+  s_2cc76c651bcd15::t_8c302068f6cf30 34,38
+codeanalyzer/src/main/java/nl/obren/sokrates/sourcecode/lang/perl/PerlQuoteLikeParser.java
+  s_2cc76c651bcd15::t_ad8bb1414d49b7 14-15,22-24,31,86-88,203-225
+  s_2cc76c651bcd15::t_edb5cd5fb6973a 139,145,182-183
+  s_2cc76c651bcd15::t_1eba28f384c6a0 1-13,16-21,25-30,32-85,89-138,140-144,146-181,184-202,226-256
+codeanalyzer/src/main/java/nl/obren/sokrates/sourcecode/cleaners/CodeBlockParser.java
+  s_2cc76c651bcd15::t_8c302068f6cf30 15-18,70-72,92-99
+  s_2cc76c651bcd15::t_766b265e617526 100
+codeanalyzer/src/main/java/nl/obren/sokrates/sourcecode/lang/perl/PerlCommentParser.java
+  s_2cc76c651bcd15::t_b825b1ad88e965 1-23
+codeanalyzer/src/main/java/nl/obren/sokrates/sourcecode/lang/perl/PerlHeuristicUnitsExtractor.java
+  s_2cc76c651bcd15::t_861f773df09ada 8,22-30
+  s_2cc76c651bcd15::t_cfce39f8249802 18-21
+  s_2cc76c651bcd15::t_4491b8e8f6f3f7 31-32
+CHANGELOG.md
+  s_2cc76c651bcd15::t_0272c964eb60b7 6-34
+codeanalyzer/src/test/java/nl/obren/sokrates/sourcecode/lang/perl/PerlQuoteLikeTest.java
+  s_2cc76c651bcd15::t_382a2436dd02aa 31-32
+  s_2cc76c651bcd15::t_082ae988402972 33,37,39,45,47,54,56,63,65,93,95,115,117,124-126,129,131-169
+  s_2cc76c651bcd15::t_444c33628cb831 73-92
+  s_2cc76c651bcd15::t_3de1123b2e9a84 103-114
+  s_2cc76c651bcd15::t_bb1f09bda5605e 1-30,34-36,38,40-44,46,48-53,55,57-62,64,66-72,94,96-102,116,118-123,127-128,130,170
+codeanalyzer/src/main/java/nl/obren/sokrates/sourcecode/lang/perl/PerlAnalyzer.java
+  s_2cc76c651bcd15::t_b825b1ad88e965 54,59-60
+  s_2cc76c651bcd15::t_861f773df09ada 57-58
+codeanalyzer/src/test/java/nl/obren/sokrates/sourcecode/cleaners/CommentsAndEmptyLinesCleanerTest.java
+  s_2cc76c651bcd15::t_382a2436dd02aa 35-40
+  s_2cc76c651bcd15::t_878b06895b3de9 31-34,41-48
+CLAUDE.md
+  s_2cc76c651bcd15::t_0272c964eb60b7 212-217
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "510e95148e477b2a81767d971a84f88249c24669",
+  "prompts": {},
+  "sessions": {
+    "s_2cc76c651bcd15": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ccb68df6-3544-4d46-991c-7f96909f6372",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "zeljkoobrenovic <zeljkoobrenovic@yahoo.com>"
+    }
+  }
+}
