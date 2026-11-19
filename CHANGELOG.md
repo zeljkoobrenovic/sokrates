@@ -5,6 +5,30 @@ everything listed under the most recent date.
 
 ## 2026-11-19
 
+### Perl: dependencies from scripts, `require` and `use parent`; full package names only
+
+Perl dependency extraction missed real dependencies and reported false ones (issue #132):
+
+- **Scripts are sources.** All Perl files (`.pm`, `.pl`, `.t`, … and files mapped to Perl by an analyzer override,
+  such as `.cgi`) are analysed together, and a file without a `package` statement is a source anchored by its path.
+  Before, each extension was analysed on its own and only a file with a `package` could depend on anything, so scripts
+  and tests never depended on modules.
+- **Only the full package name matches.** `use App::Model::User` no longer references `App` or `App::Model`, and a
+  module mentioning a package name in a comment no longer depends on it because it has some other `use App::…` line.
+- **More statements count:** an indented `use`, `require Name` (also inside `eval { … }`), and `use parent` /
+  `use base` with the names quoted, in `qw(…)` or after `-norequire`. POD sections and everything after
+  `__END__` / `__DATA__` are ignored, so a SYNOPSIS example is not a dependency.
+- A file declaring several packages is a target for each of them.
+
+What stays the same: other languages are unaffected (they are still analysed per extension, through a new
+`LanguageAnalyzer.getDependenciesGroup` hook that only Perl overrides). Two files declaring the same package (e.g.
+`Bugzilla.pm` and `contrib/Bugzilla.pm`) are still both targets of a `use` of it.
+
+What to check: Perl component dependencies change on the next analysis. On bugzilla/bugzilla (35b7162, with `.cgi`
+mapped to Perl) the file-to-package links go from 1,136 (660 real, all from `.pm` files) to 1,206, identical to an
+independent script's count; 499 of them come from `.cgi`, `.pl` and `.t` files, and links to `package Bugzilla` drop
+from 151 (every `use Bugzilla::…`) to the 76 real `use Bugzilla;` lines.
+
 ### Perl: regexes, quote-like operators and here-docs no longer cut files short
 
 A quote inside a Perl regex (`$var =~ s/"/&quot;/g;`) was read as the start of a string (issue #131). When no later

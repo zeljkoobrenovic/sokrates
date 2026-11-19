@@ -36,6 +36,15 @@ public abstract class LanguageAnalyzer {
 
     public abstract DependenciesAnalysis extractDependencies(List<SourceFile> sourceFiles, ProgressFeedback progressFeedback);
 
+    /**
+     * The files of one dependency group are given to {@link #extractDependencies} together. By default
+     * each extension is its own group; a language whose files of different extensions depend on each
+     * other (Perl scripts on modules) returns one key for all of them.
+     */
+    public String getDependenciesGroup(String extension) {
+        return extension;
+    }
+
     public abstract List<String> getFeaturesDescription();
 
     public List<MetaDependencyRule> getMetaDependencyRules() {
