@@ -1,5 +1,6 @@
 package nl.obren.sokrates.reports.dataexporters;
 
+import nl.obren.sokrates.reports.core.HealthSummary;
 import nl.obren.sokrates.sourcecode.ExtensionGroupExtractor;
 import nl.obren.sokrates.sourcecode.IgnoredFilesGroup;
 import nl.obren.sokrates.sourcecode.SourceFile;
@@ -12,13 +13,16 @@ import nl.obren.sokrates.sourcecode.filehistory.DateUtils;
 import nl.obren.sokrates.sourcecode.filehistory.FileModificationHistory;
 import nl.obren.sokrates.sourcecode.search.FoundLine;
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
-import static java.nio.charset.StandardCharsets.UTF_8;
 import java.util.function.Consumer;
+
+import static java.nio.charset.StandardCharsets.UTF_8;
 
 /**
  * The file-list text exports of data/text/: the files excluded by extension or by rule, the per-aspect file lists
@@ -256,6 +260,9 @@ class FileListsDataExporter {
         return builder.toString();
     }
 
+    /** The days a file changed in the past {@link HealthSummary#HOTSPOT_WINDOW_DAYS} days (the hotspot window). */
+    public static final String ACTIVE_DAYS_365_COLUMN = "# active days (365d)";
+
     static String getFilesWithHistoryAsTxt(List<SourceFile> sourceFiles) {
         StringBuilder builder = new StringBuilder();
 
@@ -263,7 +270,9 @@ class FileListsDataExporter {
                 .append("# active days\tdays since first update\tdays since last update\t")
                 .append("# commits\t# commits (30d)\t# commits (90d)\t# contributors\t")
                 .append("line churn\tline churn (30d)\tline churn (90d)\t")
-                .append("first updated\tlast updated\tfirst contributor\tlast contributor")
+                .append("first updated\tlast updated\tfirst contributor\tlast contributor\t")
+                // Appended last (readers find columns by header name; this keeps positional readers working too).
+                .append(ACTIVE_DAYS_365_COLUMN)
                 .append("\n");
 
         sourceFiles.forEach(sourceFile -> {
@@ -273,6 +282,9 @@ class FileListsDataExporter {
                         .filter(date -> DateUtils.isCommittedLessThanDaysAgo(date, 30)).count();
                 long commits90Days = history.getDates().stream()
                         .filter(date -> DateUtils.isCommittedLessThanDaysAgo(date, 90)).count();
+                // The days the file changed in the hotspot window, counted as the Highlights tab counts them.
+                long activeDays365 = history.getDates().stream()
+                        .filter(date -> DateUtils.isDateWithinRange(date, HealthSummary.HOTSPOT_WINDOW_DAYS)).count();
                 builder.append(sourceFile.getRelativePath()).append("\t")
                         .append(sourceFile.getLinesOfCode()).append("\t")
                         .append(history.getDates().size()).append("\t")
@@ -288,11 +300,84 @@ class FileListsDataExporter {
                         .append(history.getOldestDate()).append("\t")
                         .append(history.getLatestDate()).append("\t")
                         .append(history.getOldestContributor()).append("\t")
-                        .append(history.getLatestContributor()).append("\n");
+                        .append(history.getLatestContributor()).append("\t")
+                        .append(activeDays365).append("\n");
             }
         });
 
         return builder.toString();
+    }
+
+    /**
+     * Who changed each file: one line per (file, contributor), the file's contributors most active first. The
+     * contributor is the analysed identity (after the ignore/anonymize/transform rules and config-people.json), so it
+     * matches contributors.json and the reports; "(365d)" is the hotspot window of the Highlights tab.
+     */
+    static String getFileContributorsAsTxt(List<SourceFile> sourceFiles) {
+        StringBuilder builder = new StringBuilder();
+        builder.append("path\tcontributor\t# commits\t# commits (365d)\tfirst commit\tlast commit\n");
+        sourceFiles.forEach(sourceFile -> {
+            FileModificationHistory history = sourceFile.getFileModificationHistory();
+            if (history == null) {
+                return;
+            }
+            Map<String, FileContributor> byEmail = new HashMap<>();
+            history.getCommits().forEach(commit -> {
+                if (StringUtils.isBlank(commit.getEmail())) {
+                    return;
+                }
+                byEmail.computeIfAbsent(commit.getEmail(), FileContributor::new).add(commit.getId(), commit.getDate());
+            });
+            byEmail.values().stream()
+                    .sorted(Comparator.comparingInt(FileContributor::commits365).reversed()
+                            .thenComparing(Comparator.comparingInt(FileContributor::commits).reversed())
+                            .thenComparing(FileContributor::email))
+                    .forEach(contributor -> builder.append(sourceFile.getRelativePath()).append("\t")
+                            .append(contributor.email()).append("\t")
+                            .append(contributor.commits()).append("\t")
+                            .append(contributor.commits365()).append("\t")
+                            .append(contributor.first).append("\t")
+                            .append(contributor.last).append("\n"));
+        });
+        return builder.toString();
+    }
+
+    private static class FileContributor {
+        private final String email;
+        private final Set<String> commits = new HashSet<>();
+        private final Set<String> commits365 = new HashSet<>();
+        private String first = "";
+        private String last = "";
+
+        FileContributor(String email) {
+            this.email = email;
+        }
+
+        void add(String id, String date) {
+            String commitId = StringUtils.defaultIfBlank(id, date + "#" + commits.size());
+            commits.add(commitId);
+            if (date != null && DateUtils.isDateWithinRange(date, HealthSummary.HOTSPOT_WINDOW_DAYS)) {
+                commits365.add(commitId);
+            }
+            if (date != null && (first.isEmpty() || date.compareTo(first) < 0)) {
+                first = date;
+            }
+            if (date != null && date.compareTo(last) > 0) {
+                last = date;
+            }
+        }
+
+        String email() {
+            return email;
+        }
+
+        int commits() {
+            return commits.size();
+        }
+
+        int commits365() {
+            return commits365.size();
+        }
     }
 
     static String getFilesWithoutHistoryAsTxt(List<SourceFile> sourceFiles) {

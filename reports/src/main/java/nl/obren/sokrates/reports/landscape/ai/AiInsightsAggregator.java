@@ -52,37 +52,47 @@ public class AiInsightsAggregator {
             // <repo>/reports/data/analysisResults.json -> <repo>/reports
             // normalized lexically: the "../" prefix must resolve even when the landscape folder does not exist yet
             File reportsFolder = new File(landscapeFolder, prefix + analysisResultsPath).toPath().toAbsolutePath().normalize().getParent().getParent().toFile();
-            File aiFolder = new File(reportsFolder, AI_INSIGHTS_FOLDER);
-            if (!aiFolder.isDirectory()) {
-                continue;
-            }
             String reportsRelative = analysisResultsPath.replaceAll("/data/analysisResults\\.json$", "");
-            RepositoryLinks links = new RepositoryLinks(prefix + reportsRelative,
-                    new File(reportsFolder, IN_REPORT_PAGE).isFile());
-            String insightsUrl = links.insights();
-            String reportUrl = prefix + reportsRelative + "/index.html";
-            String name = repository.getAnalysisResults().getMetadata().getName();
-            AiRepositoryExport repositoryExport = new AiRepositoryExport();
-            repositoryExport.setName(name);
-            repositoryExport.setInsightsUrl(insightsUrl);
-            repositoryExport.setReportUrl(reportUrl);
-            File[] files = aiFolder.listFiles((dir, fileName) -> fileName.endsWith(".json") && !fileName.equals("combined-report.json"));
-            Arrays.sort(files == null ? new File[0] : files);
-            for (File file : files == null ? new File[0] : files) {
-                try {
-                    addScanner(export, repositoryExport, name, links, MAPPER.readTree(FileUtils.readFileToString(file, StandardCharsets.UTF_8)));
-                } catch (Exception e) {
-                    LOG.warn("Skipping " + file.getPath() + ": " + e.getMessage());
-                }
-            }
-            if (!repositoryExport.getScanners().isEmpty()) {
-                export.getRepositories().add(repositoryExport);
+            addRepository(export, repository.getAnalysisResults().getMetadata().getName(), reportsFolder, prefix + reportsRelative);
+        }
+        sort(export);
+        return export;
+    }
+
+    /**
+     * Adds the findings of one repository whose reports are in {@code reportsFolder}; nothing when it has none.
+     * {@code reportsUrl} is the link to that reports folder the finding and scanner links are built on
+     * (relative to the landscape folder for the landscape page, an absolute path for the server).
+     */
+    public static void addRepository(AiInsightsLandscapeExport export, String name, File reportsFolder, String reportsUrl) {
+        File aiFolder = new File(reportsFolder, AI_INSIGHTS_FOLDER);
+        if (!aiFolder.isDirectory()) {
+            return;
+        }
+        RepositoryLinks links = new RepositoryLinks(reportsUrl, new File(reportsFolder, IN_REPORT_PAGE).isFile());
+        AiRepositoryExport repositoryExport = new AiRepositoryExport();
+        repositoryExport.setName(name);
+        repositoryExport.setInsightsUrl(links.insights());
+        repositoryExport.setReportUrl(reportsUrl + "/index.html");
+        File[] files = aiFolder.listFiles((dir, fileName) -> fileName.endsWith(".json") && !fileName.equals("combined-report.json"));
+        Arrays.sort(files == null ? new File[0] : files);
+        for (File file : files == null ? new File[0] : files) {
+            try {
+                addScanner(export, repositoryExport, name, links, MAPPER.readTree(FileUtils.readFileToString(file, StandardCharsets.UTF_8)));
+            } catch (Exception e) {
+                LOG.warn("Skipping " + file.getPath() + ": " + e.getMessage());
             }
         }
+        if (!repositoryExport.getScanners().isEmpty()) {
+            export.getRepositories().add(repositoryExport);
+        }
+    }
+
+    /** Findings by severity, repository, scanner and title; repositories with the most attention items first. */
+    public static void sort(AiInsightsLandscapeExport export) {
         export.getFindings().sort(Comparator.comparingInt((AiFindingExport f) -> severityRank(f.getSeverity()))
                 .thenComparing(AiFindingExport::getRepo).thenComparing(AiFindingExport::getScanner).thenComparing(AiFindingExport::getTitle));
         export.getRepositories().sort(Comparator.comparingInt(AiRepositoryExport::getAttention).reversed().thenComparing(AiRepositoryExport::getName));
-        return export;
     }
 
     /** Adds one scanner document (the parsed findings JSON) of a repository; ignored when it has no scanner name or findings list. */

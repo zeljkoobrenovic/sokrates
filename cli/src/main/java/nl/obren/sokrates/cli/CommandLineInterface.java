@@ -48,6 +48,7 @@ public class CommandLineInterface {
     final GitHistoryCommands gitHistoryCommands = new GitHistoryCommands(this, commands);
     final PeopleConfigCommands peopleConfigCommands = new PeopleConfigCommands(this, commands);
     final SkillsCommands skillsCommands = new SkillsCommands(this, commands);
+    final ServeCommands serveCommands = new ServeCommands(commands);
     final ReportsCommands reportsCommands = new ReportsCommands(this, commands);
     final ConfigCommands configCommands = new ConfigCommands(this, commands);
     final GitRepoCommands gitRepoCommands = new GitRepoCommands(this, commands);
@@ -93,6 +94,7 @@ public class CommandLineInterface {
         handlers.put(Commands.UPDATE_CONFIG, configCommands::updateConfig);
         handlers.put(Commands.ADD_CUSTOM_TAB, configCommands::addCustomTab);
         handlers.put(Commands.INSTALL_SKILLS, skillsCommands::installSkills);
+        handlers.put(Commands.SERVE, serveCommands::serve);
         handlers.put(Commands.EXTRACT_GIT_HISTORY, gitHistoryCommands::extractGitHistory);
         handlers.put(Commands.INIT_CONVENTIONS, configCommands::createNewConventionsFile);
         handlers.put(Commands.EXPORT_STANDARD_CONVENTIONS, configCommands::exportConventions);

@@ -38,6 +38,14 @@ public class Commands {
     public static final String ARG_PROJECT = "project";
     public static final String ARG_COPY = "copy";
     public static final String ARG_CACHE_FOLDER = "cacheFolder";
+    public static final String SERVE = "serve";
+    public static final String SERVE_DESCRIPTION = "Serves the Sokrates analyses found under -root (repository analyses and landscapes, as written by analyze, analyzeGitRepo and analyzeLandscape) read-only: a REST API under /api/v1, a Model Context Protocol endpoint at /mcp, and the HTML reports under /reports/. With -mcpStdio it speaks MCP on stdin/stdout instead (for a local agent: \"command\": \"java\", \"args\": [\"-jar\", \"<sokrates jar>\", \"serve\", \"-root\", \"<folder>\", \"-mcpStdio\"]). Reads the analyses as they are (data/data.zip, reports/ai-insights/*.json) and picks up new runs without a restart.";
+    public static final String ARG_ROOT = "root";
+    public static final String ARG_PORT = "port";
+    public static final String ARG_HOST = "host";
+    public static final String ARG_TOKEN = "token";
+    public static final String ARG_MCP_STDIO = "mcpStdio";
+    public static final String ARG_HIDE_PEOPLE = "hidePeople";
     public static final String ADD_CUSTOM_TAB = "addCustomTab";
     public static final String ADD_CUSTOM_TAB_DESCRIPTION = "Adds a custom iframe tab to the repository report configuration (config.json customTabs). If a custom tab with the same label already exists, it is overwritten instead of added.";
 
@@ -159,6 +167,12 @@ public class Commands {
     private Option setName = new Option(ARG_SET_NAME, true, "[OPTIONAL] sets a repository name");
     private Option setDescription = new Option(ARG_SET_DESCRIPTION, true, "[OPTIONAL] sets a repository description");
     private Option setLogoLink = new Option(ARG_SET_LOGO_LINK, true, "[OPTIONAL] sets a repository logo link");
+    private Option serveRoot = new Option(ARG_ROOT, true, "[OPTIONAL] the folder with the analyses to serve (default is the current folder)");
+    private Option port = new Option(ARG_PORT, true, "[OPTIONAL] the HTTP port (default is 8080; 0 picks a free one)");
+    private Option host = new Option(ARG_HOST, true, "[OPTIONAL] the address to listen on (default is 127.0.0.1, this machine only; 0.0.0.0 for every interface, e.g. in Docker)");
+    private Option token = new Option(ARG_TOKEN, true, "[OPTIONAL] a bearer token every request must send (default is the SOKRATES_SERVER_TOKEN environment variable; none = no authentication)");
+    private Option hidePeople = new Option(ARG_HIDE_PEOPLE, false, "[OPTIONAL] pseudonymizes contributors (person-<id>, the same person in every repository; stable across restarts with the SOKRATES_PSEUDONYM_KEY environment variable), redacts emails in AI findings, and does not serve the HTML reports, which list names and emails");
+    private Option mcpStdio = new Option(ARG_MCP_STDIO, false, "[OPTIONAL] speaks MCP on stdin/stdout instead of starting the HTTP server");
     private Option source = new Option(ARG_SOURCE, true, "the skills repository to install from: a git URL or a local checkout folder (default is https://github.com/zeljkoobrenovic/sokrates-skills.git)");
     private Option ref = new Option(ARG_REF, true, "the branch or tag of the skills repository (default is main)");
     private Option target = new Option(ARG_TARGET, true, "a skills folder to install into (repeatable; default is ~/.claude/skills and ~/.agents/skills)");
@@ -238,6 +252,7 @@ public class Commands {
         commands.add(new CommandUsage(UPDATE_CONFIG, UPDATE_CONFIG_DESCRIPTION, getUpdateConfigOptions()));
         commands.add(new CommandUsage(ADD_CUSTOM_TAB, ADD_CUSTOM_TAB_DESCRIPTION, getAddCustomTabOptions()));
         commands.add(new CommandUsage(INSTALL_SKILLS, INSTALL_SKILLS_DESCRIPTION, getInstallSkillsOptions()));
+        commands.add(new CommandUsage(SERVE, SERVE_DESCRIPTION, getServeOptions()));
         commands.add(new CommandUsage(EXTRACT_GIT_HISTORY, EXTRACT_GIT_HISTORY_DESCRIPTION, getExtractGitHistoryOption()));
 
         commands.add(new CommandUsage(INIT_CONVENTIONS, INIT_CONVENTIONS_DESCRIPTION, null));
@@ -381,6 +396,42 @@ public class Commands {
         help.setArgs(0);
 
         return options;
+    }
+
+    public Options getServeOptions() {
+        Options options = new Options();
+        options.addOption(serveRoot);
+        options.addOption(port);
+        options.addOption(host);
+        options.addOption(token);
+        options.addOption(mcpStdio);
+        options.addOption(hidePeople);
+        options.addOption(help);
+        return options;
+    }
+
+    public Option getServeRoot() {
+        return serveRoot;
+    }
+
+    public Option getPort() {
+        return port;
+    }
+
+    public Option getHost() {
+        return host;
+    }
+
+    public Option getToken() {
+        return token;
+    }
+
+    public Option getHidePeople() {
+        return hidePeople;
+    }
+
+    public Option getMcpStdio() {
+        return mcpStdio;
     }
 
     public Options getInstallSkillsOptions() {

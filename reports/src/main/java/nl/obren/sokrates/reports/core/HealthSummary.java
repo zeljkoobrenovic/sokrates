@@ -38,7 +38,8 @@ import java.util.stream.Collectors;
 public class HealthSummary {
     public static final int MAX_HOTSPOTS = 10;
     public static final int SPARKLINE_MONTHS = 12;
-    static final int HOTSPOT_WINDOW_DAYS = 365;
+    // Also the window of the "# active days (365d)" column of text/mainFilesWithHistory.txt (FileListsDataExporter).
+    public static final int HOTSPOT_WINDOW_DAYS = 365;
 
     // {good up to, watch up to} in percent; above the second bound the status is "high".
     static final double[] DUPLICATION_BANDS = {5, 10};
