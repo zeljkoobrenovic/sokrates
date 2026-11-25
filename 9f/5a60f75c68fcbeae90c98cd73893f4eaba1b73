@@ -1,0 +1,55 @@
+server/src/main/java/nl/obren/sokrates/server/LandscapeOverviewBuilder.java
+  s_af96378a829e3d::t_ff48fdc93647b8 20-21,144-150
+  s_af96378a829e3d::t_e2187ee3f47630 25-27,31,100
+server/src/test/java/nl/obren/sokrates/server/SokratesServerTest.java
+  s_af96378a829e3d::t_77f510bf88fe9e 129,205-230
+  s_af96378a829e3d::t_0ca8bd48c06733 231,233-249,379-380,384
+  s_af96378a829e3d::t_a9c92006542b83 232
+docs/server.md
+  s_af96378a829e3d::t_14f2ac9319da45 37-39,58-60
+  s_af96378a829e3d::t_c3ded3cc22e697 83-86
+server/src/main/java/nl/obren/sokrates/server/api/Api.java
+  s_af96378a829e3d::t_30ca72cac61366 28,31-34,44,57,105,133-134,164-165
+  s_af96378a829e3d::t_91a29c4f896933 29-30,35-39
+  s_af96378a829e3d::t_e2187ee3f47630 84-88
+server/src/main/java/nl/obren/sokrates/server/HotspotData.java
+  s_af96378a829e3d::t_ff48fdc93647b8 103,111
+server/src/main/java/nl/obren/sokrates/server/SokratesQueryService.java
+  s_af96378a829e3d::t_e2187ee3f47630 127,147-150,152,174-184,227,229,231-238,604,608-609
+  s_af96378a829e3d::t_ff48fdc93647b8 230,241-260,377,383,518-520,622-629
+  s_af96378a829e3d::t_9503a20a363d1a 239,263-267,278-288,292-302
+  s_af96378a829e3d::t_640de9dd643732 240
+server/src/main/java/nl/obren/sokrates/server/McpHandler.java
+  s_af96378a829e3d::t_77f510bf88fe9e 30-32
+  s_af96378a829e3d::t_9503a20a363d1a 72
+CLAUDE.md
+  s_af96378a829e3d::t_14f2ac9319da45 72
+codeanalyzer/src/main/java/nl/obren/sokrates/sourcecode/analysis/CodeAnalyzer.java
+  s_af96378a829e3d::t_2c0f6c5c0ca699 7,53
+CHANGELOG.md
+  s_af96378a829e3d::t_14f2ac9319da45 8-19
+  s_af96378a829e3d::t_c3ded3cc22e697 20-27
+server/src/main/java/nl/obren/sokrates/server/SokratesHttpServer.java
+  s_af96378a829e3d::t_9503a20a363d1a 139
+codeanalyzer/src/main/java/nl/obren/sokrates/sourcecode/analysis/results/CodeAnalysisResults.java
+  s_af96378a829e3d::t_2c0f6c5c0ca699 61-62,269-275
+  s_af96378a829e3d::t_b0a1f20e9a4cd1 276
+server/src/main/java/nl/obren/sokrates/server/ExpertsData.java
+  s_af96378a829e3d::t_ff48fdc93647b8 161
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "9f5a60f75c68fcbeae90c98cd73893f4eaba1b73",
+  "prompts": {},
+  "sessions": {
+    "s_af96378a829e3d": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "cf2cb69b-6e18-48c4-8cc2-70522e54aa55",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "zeljkoobrenovic <zeljkoobrenovic@yahoo.com>"
+    }
+  }
+}
