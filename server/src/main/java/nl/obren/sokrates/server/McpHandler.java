@@ -23,7 +23,7 @@ public class McpHandler {
     private static final Log LOG = LogFactory.getLog(McpHandler.class);
     static final List<String> PROTOCOL_VERSIONS = List.of("2025-06-18", "2025-03-26", "2024-11-05");
     private static final String INSTRUCTIONS = "Read-only access to Sokrates source-code analyses (sokrates.dev) of repositories and landscapes. "
-            + "Start with list_repositories (or list_landscapes for portfolios), then get_repository for one repository's size, languages, "
+            + "Start with get_landscape_overview for a portfolio, list_repositories to find repositories, then get_repository for one repository's size, languages, "
             + "quality profiles, ease-of-change scores, activity and components, get_hotspots for the files to look at first, "
             + "who_knows and get_contributors for the people, get_dependencies for the component dependencies, and "
             + "search_findings for the AI findings the sokrates-skills scanners wrote. Repositories are named by id or name (often owner/repo). "
@@ -43,6 +43,14 @@ public class McpHandler {
         this.tools = new java.util.LinkedHashMap<>();
         register("list_landscapes", "Lists the landscapes (portfolios of repositories) with their repository counts.",
                 schema(), args -> Map.of("landscapes", service.landscapes()));
+        register("get_landscape_overview",
+                "A landscape (or, without landscape, every analysis) at a glance: repository counts (with code, active in 30 / 365 "
+                        + "days), lines of code per scope and main language, ease-of-change grade distributions and size-weighted averages, "
+                        + "duplication, commits and distinct contributors (merged as the landscape merges people; bots apart), AI findings "
+                        + "per severity, and the largest, most active and lowest-scoring repositories (the last among those with 1,000+ lines). "
+                        + "Start here for portfolio questions.",
+                schema(prop("landscape", "string", "landscape id from list_landscapes; omit for every analysis")),
+                args -> service.overview(text(args, "landscape")));
         register("list_repositories",
                 "Lists repositories with main language, lines of code, ease-of-change scores (0-10, A-E, for people and for AI agents), "
                         + "30-day commits and contributors, and AI findings count. query: terms split by ';' - mainLang:java,kt (main language), "

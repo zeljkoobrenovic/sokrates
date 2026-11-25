@@ -322,6 +322,29 @@ class SokratesServerTest {
     }
 
     @Test
+    void summarizesALandscape() {
+        Api.LandscapeOverview overview = service.overview("portfolio");
+        assertEquals("ACME", overview.name());
+        assertEquals(2, overview.repositories());
+        assertEquals(2, overview.repositoriesWithCode());
+        assertEquals(12500, overview.scopes().get(0).linesOfCode()); // main: 10,000 + 2,500
+        assertEquals(List.of("java", "tf", "kt", "py"), overview.mainLanguages().stream().map(Api.LanguageShare::language).collect(Collectors.toList()));
+        assertEquals(72.0, overview.mainLanguages().get(0).percentage());
+        assertEquals(2, overview.activity().contributors365Days()); // ada and bob; the bot apart
+        assertEquals(1, overview.activity().bots365Days());
+        assertEquals(1, overview.aiFindingsBySeverity().get("high"));
+        assertEquals(1, overview.aiFindingsBySeverity().get("low"));
+        assertEquals(List.of("acme/payments", "acme/infra"), overview.largest().stream().map(Api.RepositoryItem::name).collect(Collectors.toList()));
+        assertNull(overview.averageHumanScore(), "no scores in the fixture");
+        assertEquals("/reports/portfolio/_sokrates_landscape/index.html", overview.reportUrl());
+
+        Api.LandscapeOverview all = service.overview(null);
+        assertEquals("all", all.landscape());
+        assertEquals(3, all.repositories());
+        assertThrows(SokratesQueryService.NotFoundException.class, () -> service.overview("nope"));
+    }
+
+    @Test
     void listsComponentDependenciesWithCycles() {
         Api.Dependencies dependencies = service.dependencies("acme/payments", null, null);
         assertEquals("primary", dependencies.decomposition());
@@ -396,7 +419,7 @@ class SokratesServerTest {
         assertNull(mcp.handle("{\"jsonrpc\":\"2.0\",\"method\":\"notifications/initialized\"}"));
 
         JsonNode tools = mapper.readTree(mcp.handle("{\"jsonrpc\":\"2.0\",\"id\":2,\"method\":\"tools/list\"}"));
-        assertEquals(8, tools.path("result").path("tools").size());
+        assertEquals(9, tools.path("result").path("tools").size());
 
         JsonNode call = mapper.readTree(mcp.handle("{\"jsonrpc\":\"2.0\",\"id\":3,\"method\":\"tools/call\",\"params\":"
                 + "{\"name\":\"get_hotspots\",\"arguments\":{\"repository\":\"acme/payments\",\"limit\":1}}}"));

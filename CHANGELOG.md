@@ -5,6 +5,15 @@ everything listed under the most recent date.
 
 ## 2026-11-25
 
+### `serve`: a landscape overview
+
+New MCP tool `get_landscape_overview` and endpoint `/api/v1/overview?landscape=`: a landscape (or every analysis) at a
+glance — repository counts, size per scope and language, grade distributions and size-weighted averages, duplication,
+commits and distinct contributors, AI findings per severity, and short lists of the largest, most active and
+lowest-scoring repositories. Contributors are people (merged by the landscape's rules, bots apart), so the count can be
+lower than the landscape's own "recent contributors", which counts email addresses. Grades only count repositories with
+at least 1,000 main lines.
+
 ### "Who knows" ignores bulk commits; the server counts each repository once
 
 Found by running `serve` on a real landscape (junit-team):
