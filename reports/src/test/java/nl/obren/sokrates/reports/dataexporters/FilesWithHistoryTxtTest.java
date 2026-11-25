@@ -76,4 +76,23 @@ class FilesWithHistoryTxtTest {
         file.setFileModificationHistory(history);
         return file;
     }
+
+    @Test
+    void leavesBulkCommitsOut() {
+        List<SourceFile> files = new ArrayList<>();
+        int count = nl.obren.sokrates.sourcecode.analysis.scores.MaintainabilityScoresAnalyzer.MAX_FILES_PER_COMMIT + 1;
+        for (int i = 0; i < count; i++) {
+            SourceFile file = fileChangedOn("team@example.com", "2026-01-06"); // one copyright-year commit over every file
+            file.setRelativePath("src/F" + i + ".java");
+            file.getFileModificationHistory().getCommits().forEach(c -> c.setId("bulk"));
+            files.add(file);
+        }
+        CommitInfo real = new CommitInfo("feature", "2026-03-01");
+        real.setEmail("ada@example.com");
+        files.get(0).getFileModificationHistory().getCommits().add(real);
+
+        String[] lines = FileListsDataExporter.getFileContributorsAsTxt(files).split("\n");
+        assertEquals(2, lines.length, "only ada's feature commit is left");
+        assertEquals("src/F0.java\tada@example.com\t1\t1\t2026-03-01\t2026-03-01", lines[1]);
+    }
 }
