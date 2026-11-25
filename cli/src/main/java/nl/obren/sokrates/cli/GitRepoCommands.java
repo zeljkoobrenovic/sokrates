@@ -8,6 +8,7 @@ import nl.obren.sokrates.cli.git.GitRepoCloner;
 import nl.obren.sokrates.cli.git.GitRepoMetadata;
 import nl.obren.sokrates.common.utils.*;
 import nl.obren.sokrates.reports.generators.explorers.AiInsightsExplorerGenerator;
+import nl.obren.sokrates.sourcecode.analysis.files.ContributorsAnalyzer;
 import nl.obren.sokrates.sourcecode.core.CodeConfigurationUtils;
 import nl.obren.sokrates.sourcecode.filehistory.DateUtils;
 import org.apache.commons.cli.*;
@@ -80,7 +81,7 @@ class GitRepoCommands {
 
     /**
      * The analyzeGitRepo step for one repository: clone into a temporary folder, analyze there, keep
-     * only the analysis in {@code output} (reusing a config.json already kept there). Returns false
+     * only the analysis in {@code output} (reusing a config.json and config-people.json already kept there). Returns false
      * when the clone fails; the analysis itself reports its own errors.
      */
     /** What the clone-and-analyze step did with one URL. */
@@ -111,6 +112,13 @@ class GitRepoCommands {
             if (keptConfig.exists()) {
                 LOG.info("Reusing the configuration kept in " + keptConfig.getPath());
                 FileUtils.copyFile(keptConfig, CodeConfigurationUtils.getDefaultSokratesConfigFile(clone));
+            }
+            // The repository's people rules (read from the config folder when the history is parsed) travel along
+            // too; before, only config.json did, so a config-people.json kept next to it was never applied.
+            File keptPeople = new File(output, ContributorsAnalyzer.PEOPLE_CONFIG_FILE_NAME);
+            if (keptPeople.exists()) {
+                LOG.info("Reusing the people configuration kept in " + keptPeople.getPath());
+                FileUtils.copyFile(keptPeople, new File(analysisFolder, ContributorsAnalyzer.PEOPLE_CONFIG_FILE_NAME));
             }
             // The AI findings of earlier runs travel along too: the fresh reports link them, and the move
             // below (which replaces reports/) does not lose them when the post-analysis command is skipped.

@@ -86,6 +86,40 @@ class AnalyzeGitRepoCommandTest {
     }
 
     @Test
+    void appliesAPeopleConfigKeptNextToTheConfig(@TempDir Path tmp) throws Exception {
+        File work = tmp.resolve("work").toFile();
+        File bare = tmp.resolve("people.git").toFile();
+        Git.init().setBare(true).setDirectory(bare).call().close();
+        try (Git git = Git.init().setDirectory(work).call()) {
+            for (String[] commit : new String[][]{{"a.ts", "ada@example.com"}, {"b.ts", "ada@example.com"}, {"c.ts", "ada@old.example.com"}}) {
+                FileUtils.write(new File(work, "src/" + commit[0]), "export const x = 1;\n", UTF_8);
+                git.add().addFilepattern(".").call();
+                git.commit().setMessage(commit[0]).setAuthor("Ada", commit[1]).setCommitter("Ada", commit[1]).call();
+            }
+            git.remoteAdd().setName("origin").setUri(new org.eclipse.jgit.transport.URIish(bare.toURI().toString())).call();
+            git.push().setRemote("origin").setPushAll().call();
+        }
+        String url = bare.toURI().toString();
+        File output = tmp.resolve("analyses/people").toFile();
+        new CommandLineInterface().run(new String[]{"analyzeGitRepo", "-url", url, "-destFolder", output.getPath()});
+        assertTrue(contributors(output).contains("ada@old.example.com"), "without people rules the old address is its own contributor");
+
+        File people = new File(output, "config-people.json");
+        FileUtils.write(people, "{\"people\": [{\"email\": \"ada@example.com\", \"emailPatterns\": [\"ada@old\\\\.example\\\\.com\"]}]}", UTF_8);
+        new CommandLineInterface().run(new String[]{"analyzeGitRepo", "-url", url, "-destFolder", output.getPath()});
+
+        assertFalse(contributors(output).contains("ada@old.example.com"), "the kept config-people.json must be applied");
+        assertTrue(contributors(output).contains("ada@example.com"));
+        assertTrue(people.exists(), "and kept for the next run");
+    }
+
+    private static String contributors(File output) throws Exception {
+        try (java.util.zip.ZipFile zip = new java.util.zip.ZipFile(new File(output, "reports/data/data.zip"))) {
+            return new String(zip.getInputStream(zip.getEntry("contributors.json")).readAllBytes(), UTF_8);
+        }
+    }
+
+    @Test
     void defaultDestinationIsNamedAfterTheUrl(@TempDir Path tmp) throws Exception {
         File bare = tmp.resolve("named-after-url.git").toFile();
         File work = tmp.resolve("work").toFile();

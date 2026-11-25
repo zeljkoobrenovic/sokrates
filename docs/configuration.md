@@ -569,6 +569,10 @@ an avatar image, and profile links shown on their individual contributor report.
 > `_sokrates/config-people.json` using the same format and the same additive grouping. The
 > contributor-detection rules (`ignoreContributors`, `bots`, `transformContributorEmails`,
 > `anonymizeContributors`) are taken from the repo's own `_sokrates/config.json`.
+>
+> For an analysis made from a URL (`analyzeGitRepo`, `analyzeLandscape -urls`, `analyzeGitHubOrg`,
+> `analyzeGitLabGroup`), which keeps `config.json` without a `_sokrates` folder, put the repository's
+> `config-people.json` next to that kept `config.json`: every re-run copies both into the fresh clone.
 
 > The same `bots`, `ignoreContributors`, `anonymizeContributors`, and `transformContributorEmails`
 > options on the landscape `config.json` (Part 2) also shape how contributors are detected and
