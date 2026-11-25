@@ -34,7 +34,9 @@ Contributors are shown as the analysis identified them: the repository's `ignore
 reports. When a repository is part of a landscape, its people are then merged by that landscape's rules too (the
 deepest landscape whose folder holds it: its `ignoreContributors`, `transformContributorEmails` and
 `config-people.json`), in `get_contributors` and `who_knows` alike, so a person has one identity in every answer, as
-in the landscape report: their addresses become one row, commits added up. By default the API returns their email addresses and user names; protect it with `-token` and the default
+in the landscape report: their addresses become one row, commits added up. The same holds across all analyses (no
+`landscape` given): each repository's people are merged by the landscape it belongs to. Contributor counts
+(`contributors30Days`, a summary's `activity`, the overview) count these people, bots left out, not email addresses. By default the API returns their email addresses and user names; protect it with `-token` and the default
 `-host 127.0.0.1`.
 
 With **`-hidePeople`** no identity leaves the server, while the people questions still work:
@@ -53,7 +55,9 @@ With **`-hidePeople`** no identity leaves the server, while the people questions
 - A **repository analysis** is a `data/data.zip` (or, for reports older than the zip, a loose
   `data/analysisResults.json`) outside any `_sokrates_landscape` folder. Its **id** is the path of its analysis folder
   relative to the root (`acme/payments`, `_sokrates`); its **name** is the configured `metadata.name` (usually
-  `owner/repo`). Anywhere a repository is asked for, either works (the name case-insensitively).
+  `owner/repo`). Anywhere a repository is asked for, either works (the name case-insensitively), and so does the
+  short name (`junit4` for `junit-team/junit4`) when only one repository has it; a miss suggests the names that
+  contain what was asked.
 - A **landscape** is a `_sokrates_landscape/config.json` (the generated virtual landscapes are not listed). Its id is
   the folder holding `_sokrates_landscape`; its repositories are the analyses below that folder.
 
@@ -76,7 +80,10 @@ With **`-hidePeople`** no identity leaves the server, while the people questions
 `query` uses the landscape repository list's syntax: terms split by `;`, `mainLang:java,kt`, `includesLang:tf`, any
 other term matches the name or description. `sort`: `loc` (default), `name`, `commits`, `humanScore`, `aiScore`
 (lowest first), `findings`. Lists are pages (`total`, `offset`, `items`; at most 500 items). Numbers are those of the
-analysis: the 30/90-day windows end at the analysis date, not at the time of the request.
+analysis: the 30/90/365-day windows end at the analysis date, not at the time of the request. Every repository row,
+summary, hotspots and single-repository experts answer says which date that is (`analyzedOn`: the day the analysis ran,
+or its `-date`) and how old it is (`analysisAgeDays`); the overview gives the oldest and newest analysis and how many
+are older than 30 days (`analyses`).
 
 `reportUrl` and finding `url` values are paths on the server (`/reports/…`). Only files inside a repository's
 `reports` folder or a landscape folder are served, never other files below the root, such as sources.

@@ -158,7 +158,7 @@ class ExpertsData {
         Double topShare = recentChanges == 0 ? null : SokratesQueryService.round(100.0 * experts.stream().filter(e -> !e.bot())
                 .findFirst().map(Api.Expert::fileChanges365Days).orElse(0) / recentChanges);
         return new Api.Experts(label, scope, files, changed365.size(), experts.size(), topShare,
-                acrossRepositories ? repositories.size() : null, acrossRepositories ? notCovered : null,
+                acrossRepositories ? repositories.size() : null, acrossRepositories ? notCovered : null, null, null,
                 experts.size() > limit ? new ArrayList<>(experts.subList(0, limit)) : experts);
     }
 

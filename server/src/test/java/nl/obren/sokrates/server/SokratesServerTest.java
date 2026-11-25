@@ -126,6 +126,7 @@ class SokratesServerTest {
     }
 
     private static void peopleAndDependencies(CodeAnalysisResults results) {
+        results.setAnalysisDate("2026-01-01");
         results.getContributorsAnalysisResults().getContributors().add(contributor("ada@acme.com", 50, 30, false));
         results.getContributorsAnalysisResults().getContributors().add(contributor("bob@acme.com", 80, 5, false));
         results.getContributorsAnalysisResults().getContributors().add(contributor("bot@acme.com", 9, 9, true));
@@ -199,6 +200,51 @@ class SokratesServerTest {
         Api.Experts terraform = service.experts(null, "portfolio", null, null, null, "tf", 10);
         assertEquals(0, terraform.repositoriesNotCovered());
         assertEquals(1, terraform.files());
+    }
+
+    @Test
+    void saysWhenEachAnalysisRan() {
+        int age = (int) java.time.temporal.ChronoUnit.DAYS.between(java.time.LocalDate.parse("2026-01-01"), java.time.LocalDate.now());
+        Api.RepositoryItem payments = service.repositories("payments", null, null, 0, 0).items().get(0);
+        assertEquals("2026-01-01", payments.analyzedOn());
+        assertEquals(age, payments.analysisAgeDays());
+        assertEquals(age, service.repository("acme/payments").orElseThrow().analysisAgeDays());
+        assertEquals("2026-01-01", service.hotspots("acme/payments", null, 10).analyzedOn());
+        assertEquals("2026-01-01", service.experts("acme/payments", null, null, null, null, null, 10).analyzedOn());
+        assertNull(service.experts(null, "portfolio", null, null, null, null, 10).analyzedOn(), "across repositories: see the overview");
+        // an analysis without a stored date (older Sokrates, start time 0 in the fixture) has none
+        assertNull(service.repository("acme/infra").orElseThrow().analyzedOn());
+
+        Api.AnalysisDates dates = service.overview("portfolio").analyses();
+        assertEquals("2026-01-01", dates.oldest());
+        assertEquals(age > LandscapeOverviewBuilder.STALE_DAYS ? 1 : 0, dates.olderThanStaleDays());
+    }
+
+    @Test
+    void anOlderAnalysisFallsBackToTheDayItRan() {
+        CodeAnalysisResults results = new CodeAnalysisResults();
+        results.setAnalysisStartTimeMs(java.time.LocalDate.parse("2025-03-04").atStartOfDay(java.time.ZoneId.systemDefault()).toInstant().toEpochMilli() + 3_600_000);
+        assertEquals("2025-03-04", SokratesQueryService.analyzedOn(results));
+        results.setAnalysisDate("2025-02-01"); // -date
+        assertEquals("2025-02-01", SokratesQueryService.analyzedOn(results));
+        assertNull(SokratesQueryService.ageDays(null));
+    }
+
+    @Test
+    void findsARepositoryByItsShortNameAndSuggestsNames() {
+        assertEquals("acme/payments", service.repository("payments").orElseThrow().name());
+        assertEquals("acme/infra", service.hotspots("INFRA", null, 10).repository());
+        SokratesQueryService.NotFoundException miss = assertThrows(SokratesQueryService.NotFoundException.class,
+                () -> service.hotspots("pay", null, 10));
+        assertTrue(miss.getMessage().contains("did you mean: acme/payments"), miss.getMessage());
+        assertTrue(service.notFound("zzz").contains("list_repositories"));
+    }
+
+    @Test
+    void countsPeopleNotAddresses() {
+        // payments: ada@acme.com + ada@old-acme.com (one person by the landscape), bob, and a bot
+        Api.Activity activity = service.repository("acme/payments").orElseThrow().activity();
+        assertEquals(2, activity.contributors());
     }
 
     @Test
@@ -330,11 +376,12 @@ class SokratesServerTest {
         assertEquals(List.of("ada@acme.com", "carol@acme.com"), experts(terraform));
         assertEquals(69.2, terraform.topContributorShare365Days()); // 9 of 13
 
-        // without a landscape: every analysis, identities as analysed, the legacy analysis not covered
+        // without a landscape: every analysis, each repository's people by the landscape it belongs to (infra's
+        // ada@old-acme.com is ada@acme.com by portfolio's rules); the legacy analysis is not covered
         Api.Experts everything = service.experts(null, null, null, null, null, ".TF, py", 10);
         assertEquals("all", everything.repository());
         assertEquals(1, everything.repositoriesNotCovered());
-        assertEquals(List.of("ada@old-acme.com", "carol@acme.com"), experts(everything));
+        assertEquals(List.of("ada@acme.com", "carol@acme.com"), experts(everything));
         assertThrows(SokratesQueryService.NotFoundException.class, () -> service.experts(null, "portfolio", null, null, null, "rs", 10));
 
         // the same person, the same pseudonym, in a repository and across the landscape

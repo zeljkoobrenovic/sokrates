@@ -17,15 +17,18 @@ import java.util.stream.Collectors;
 class LandscapeOverviewBuilder {
     static final int TOP = 5;
     static final int MIN_LINES_FOR_SCORE_RANKING = 1000;
+    // An analysis older than this is flagged as stale: its "recent" numbers end that long before the question.
+    static final int STALE_DAYS = 30;
     static final List<String> GRADES = List.of("A", "B", "C", "D", "E");
     static final List<String> SCOPES = List.of("main", "test", "generated", "build", "other");
 
-    /** One repository: its list row, its details, its contributors and its AI findings per severity. */
-    record Input(Api.RepositoryItem item, Api.RepositoryDetails details, List<Api.Contributor> contributors, Map<String, Integer> findings) {
+    /** One repository: its list row, its details, its contributors, its AI findings per severity, and how its people are identified. */
+    record Input(Api.RepositoryItem item, Api.RepositoryDetails details, List<Api.Contributor> contributors, Map<String, Integer> findings,
+                 Function<Api.Contributor, String> identity) {
     }
 
     static Api.LandscapeOverview build(String landscape, String name, String description, String reportUrl,
-                                       List<Input> inputs, Function<Api.Contributor, String> identity) {
+                                       List<Input> inputs) {
         int withCode = 0;
         int active30 = 0;
         int active365 = 0;
@@ -94,7 +97,7 @@ class LandscapeOverviewBuilder {
             commits90 += details.activity().commits90Days();
             commits365 += details.activity().commits365Days();
             for (Api.Contributor contributor : input.contributors()) {
-                String id = identity.apply(contributor);
+                String id = input.identity().apply(contributor);
                 if (id == null) {
                     continue;
                 }
@@ -138,7 +141,13 @@ class LandscapeOverviewBuilder {
                 aiLines == 0 ? null : SokratesQueryService.round(aiWeighted / aiLines),
                 duplicationLines == 0 ? null : SokratesQueryService.round(duplicationWeighted / duplicationLines),
                 new Api.PortfolioActivity(commits30, commits90, commits365, people30.size(), people365.size(), bots365.size()),
-                findings, largest, mostActive, MIN_LINES_FOR_SCORE_RANKING, lowest, reportUrl);
+                findings, largest, mostActive, MIN_LINES_FOR_SCORE_RANKING, lowest, reportUrl, dates(items));
+    }
+
+    private static Api.AnalysisDates dates(List<Api.RepositoryItem> items) {
+        List<String> dates = items.stream().map(Api.RepositoryItem::analyzedOn).filter(d -> d != null && !d.isBlank()).sorted().collect(Collectors.toList());
+        int stale = (int) items.stream().filter(item -> item.analysisAgeDays() != null && item.analysisAgeDays() > STALE_DAYS).count();
+        return new Api.AnalysisDates(dates.isEmpty() ? null : dates.get(0), dates.isEmpty() ? null : dates.get(dates.size() - 1), stale, STALE_DAYS);
     }
 
     private static Map<String, Integer> grades() {

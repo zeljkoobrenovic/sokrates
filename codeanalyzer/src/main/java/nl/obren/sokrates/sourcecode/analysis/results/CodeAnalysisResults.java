@@ -58,6 +58,8 @@ public class CodeAnalysisResults {
     private int numberOfExcludedFiles;
     private Map<String, Integer> excludedExtensions;
     private long analysisStartTimeMs;
+    // The reference date the time windows (30 days, past year, ...) end at: the day of the run, or -date. Empty in older analyses.
+    private String analysisDate = "";
     @JsonIgnore
     private List<SourceFile> filesExcludedByExtension;
     @JsonIgnore
@@ -262,6 +264,14 @@ public class CodeAnalysisResults {
 
     public void setAnalysisStartTimeMs(long analysisStartTimeMs) {
         this.analysisStartTimeMs = analysisStartTimeMs;
+    }
+
+    public String getAnalysisDate() {
+        return analysisDate;
+    }
+
+    public void setAnalysisDate(String analysisDate) {
+        this.analysisDate = analysisDate;
     }
 
     @JsonIgnore

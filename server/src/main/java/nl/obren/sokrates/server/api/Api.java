@@ -25,12 +25,23 @@ public final class Api {
     public record Landscape(String id, String name, String description, int repositories, String reportUrl) {
     }
 
-    /** One row of the repository list. */
+    /**
+     * The dates of the analyses in an overview: the oldest and newest {@code analyzedOn}, and how many analyses are
+     * older than {@code staleDays} days.
+     */
+    public record AnalysisDates(String oldest, String newest, int olderThanStaleDays, int staleDays) {
+    }
+
+    /**
+     * One row of the repository list. {@code analyzedOn} is the date the analysis's time windows (30 days, 90 days, past
+     * year) end at, and {@code analysisAgeDays} how many days before the answer that was: every "recent" number is as of
+     * {@code analyzedOn}, not today. The same two fields are on a repository's details, hotspots and experts.
+     */
     public record RepositoryItem(String id, String name, String description, String mainLanguage,
                                  int mainLinesOfCode, int testLinesOfCode,
                                  ScoreBrief humanScore, ScoreBrief aiScore,
                                  int commits30Days, int contributors30Days, String latestCommitDate,
-                                 int aiFindings, String reportUrl) {
+                                 int aiFindings, String reportUrl, String analyzedOn, Integer analysisAgeDays) {
     }
 
     public record ScoreBrief(double value, String grade) {
@@ -43,7 +54,7 @@ public final class Api {
                                     RiskProfile fileSize, RiskProfile unitSize, RiskProfile unitComplexity,
                                     Score humanScore, Score aiScore,
                                     Activity activity, List<Decomposition> decompositions,
-                                    String reportUrl) {
+                                    String reportUrl, String analyzedOn, Integer analysisAgeDays) {
     }
 
     public record Link(String label, String href) {
@@ -70,7 +81,11 @@ public final class Api {
     public record SubScore(String key, String label, double score, double weight, double drag, String measure) {
     }
 
-    /** Commit activity, counted at analysis time (windows end at the analysis date, not at the time of the request). */
+    /**
+     * Commit activity, counted at analysis time (windows end at the analysis date, not at the time of the request).
+     * {@code contributors} and {@code contributors30Days} count people (merged by the repository's landscape, bots left
+     * out), as the overview and {@link RepositoryItem#contributors30Days()} do.
+     */
     public record Activity(int commits, int commits30Days, int commits90Days, int commits365Days,
                            int contributors, int contributors30Days, int churn30Days, int churn90Days,
                            String firstCommitDate, String latestCommitDate) {
@@ -87,7 +102,7 @@ public final class Api {
      * code when the language has no units) times how often the file changed in the window — the days it changed in
      * the past 365 days by default, as the report's Highlights tab ranks them ({@code basis} says which applied).
      */
-    public record Hotspots(String repository, String window, String basis, List<Hotspot> items) {
+    public record Hotspots(String repository, String window, String basis, String analyzedOn, Integer analysisAgeDays, List<Hotspot> items) {
     }
 
     /** {@code daysChanged365Days} is null for analyses made before the export carried it. */
@@ -115,7 +130,8 @@ public final class Api {
      * repositories whose analysis predates the per-file contributors export (regenerate them to include them).
      */
     public record Experts(String repository, String scope, int files, int filesChanged365Days, int contributors,
-                          Double topContributorShare365Days, Integer repositories, Integer repositoriesNotCovered, List<Expert> items) {
+                          Double topContributorShare365Days, Integer repositories, Integer repositoriesNotCovered,
+                          String analyzedOn, Integer analysisAgeDays, List<Expert> items) {
     }
 
     /** {@code repositories} and {@code topRepositories} (most changes in the past year first) only across repositories. */
@@ -145,7 +161,8 @@ public final class Api {
                                     Double averageHumanScore, Double averageAiScore, Double duplicationPercentage,
                                     PortfolioActivity activity, Map<String, Integer> aiFindingsBySeverity,
                                     List<RepositoryItem> largest, List<RepositoryItem> mostActive30Days,
-                                    int minLinesForScoreRanking, List<RepositoryItem> lowestHumanScores, String reportUrl) {
+                                    int minLinesForScoreRanking, List<RepositoryItem> lowestHumanScores, String reportUrl,
+                                    AnalysisDates analyses) {
     }
 
     public record LanguageShare(String language, int linesOfCode, double percentage, int repositories) {

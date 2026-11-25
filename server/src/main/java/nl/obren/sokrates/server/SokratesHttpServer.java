@@ -136,7 +136,7 @@ public class SokratesHttpServer {
             case API + "/repository":
                 String name = requireParam(q, "name");
                 sendJson(exchange, 200, service.repository(name)
-                        .orElseThrow(() -> new SokratesQueryService.NotFoundException("No repository with id or name \"" + name + "\"")));
+                        .orElseThrow(() -> new SokratesQueryService.NotFoundException(service.notFound(name))));
                 return;
             case API + "/repository/hotspots":
                 sendJson(exchange, 200, service.hotspots(requireParam(q, "name"), q.get("window"), number(q, "limit")));
