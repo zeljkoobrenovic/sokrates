@@ -116,6 +116,40 @@ public class SokratesQueryService {
         return repository -> prefix.isEmpty() || repository.id().startsWith(prefix);
     }
 
+    /**
+     * A landscape at a glance ({@code landscapeId} blank: every analysis): repository counts, size per scope and
+     * language, grade distributions, size-weighted averages, activity with distinct people (merged as the landscape
+     * merges them; counts only), AI findings per severity, and short lists of the largest, most active and
+     * lowest-scoring repositories.
+     */
+    public Api.LandscapeOverview overview(String landscapeId) {
+        List<RepositoryLocation> locations = catalog.snapshot().repositories();
+        LandscapeIdentities identities = LandscapeIdentities.AS_ANALYZED;
+        String id = "all";
+        String name = "All analyses";
+        String description = null;
+        String reportUrl = null;
+        if (StringUtils.isNotBlank(landscapeId)) {
+            LandscapeLocation landscape = landscape(landscapeId);
+            locations = locations.stream().filter(inLandscape(landscape)).collect(Collectors.toList());
+            identities = identities(landscape);
+            id = landscape.id();
+            Metadata metadata = landscapeMetadata(landscape);
+            name = metadata != null && StringUtils.isNotBlank(metadata.getName()) ? metadata.getName() : landscape.id();
+            description = metadata == null ? null : StringUtils.trimToNull(metadata.getDescription());
+            reportUrl = privacy.reportLink(REPORTS_PATH + catalog.servedPath(new File(landscape.landscapeFolder(), "index.html")));
+        }
+        LandscapeIdentities people = identities;
+        List<LandscapeOverviewBuilder.Input> inputs = distinctByName(locations).stream().map(location -> {
+            Loaded row = load(location);
+            Map<String, Integer> bySeverity = new HashMap<>();
+            findingsOf(location, row.item().name()).forEach(f -> bySeverity.merge(f.severity(), 1, Integer::sum));
+            return new LandscapeOverviewBuilder.Input(withFindingsCount(row), row.details(), row.contributors(), bySeverity);
+        }).collect(Collectors.toList());
+        return LandscapeOverviewBuilder.build(id, name, description, reportUrl, inputs,
+                contributor -> people.canonical(contributor.email(), contributor.userName()));
+    }
+
     // ---- repositories ----
 
     /**
