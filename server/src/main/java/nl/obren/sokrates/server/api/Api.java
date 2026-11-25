@@ -1,6 +1,7 @@
 package nl.obren.sokrates.server.api;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * The response shapes of the server's REST API and MCP tools (version {@link #VERSION}).
@@ -129,5 +130,29 @@ public final class Api {
 
     /** {@code cyclic}: the two components also depend the other way around. */
     public record Dependency(String from, String to, int count, boolean cyclic) {
+    }
+
+    /**
+     * A landscape (or every analysis) at a glance: counts and totals only, no people identities. Averages are weighted
+     * by main lines of code; the grade distributions and {@code lowestHumanScores} only count repositories with at least
+     * {@code minLinesForScoreRanking} main lines, as the scores of tiny repositories say little. Contributors are
+     * people (merged, bots apart), so fewer than the distinct email addresses the landscape's own counters report.
+     */
+    public record LandscapeOverview(String landscape, String name, String description,
+                                    int repositories, int repositoriesWithCode, int activeRepositories30Days, int activeRepositories365Days,
+                                    List<ScopeSize> scopes, List<LanguageShare> mainLanguages,
+                                    Map<String, Integer> humanGrades, Map<String, Integer> aiGrades,
+                                    Double averageHumanScore, Double averageAiScore, Double duplicationPercentage,
+                                    PortfolioActivity activity, Map<String, Integer> aiFindingsBySeverity,
+                                    List<RepositoryItem> largest, List<RepositoryItem> mostActive30Days,
+                                    int minLinesForScoreRanking, List<RepositoryItem> lowestHumanScores, String reportUrl) {
+    }
+
+    public record LanguageShare(String language, int linesOfCode, double percentage, int repositories) {
+    }
+
+    /** Commits summed over the repositories; contributors are distinct people (merged as the landscape merges them), bots left out. */
+    public record PortfolioActivity(int commits30Days, int commits90Days, int commits365Days,
+                                    int contributors30Days, int contributors365Days, int bots365Days) {
     }
 }

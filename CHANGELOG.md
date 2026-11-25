@@ -13,6 +13,22 @@ a repository analysed this way could not merge its contributors' addresses at al
 a `config-people.json` you placed next to a kept `config.json` takes effect on the next run (contributor counts, the
 contributors and knowledge reports); nothing changes where there is none.
 
+### `serve`: a repository's people merged by its landscape's rules
+
+`get_contributors` and per-repository `who_knows` now identify people by the rules of the landscape the repository
+belongs to (the deepest one whose folder holds it), as landscape-wide answers already did: a person has one identity in
+every answer. On junit-team, junit-framework's contributors drop from two rows for M.P. Korstanje to one (commits
+added up). Repositories outside any landscape are unchanged; so is the repository's own HTML report.
+
+### `serve`: a landscape overview
+
+New MCP tool `get_landscape_overview` and endpoint `/api/v1/overview?landscape=`: a landscape (or every analysis) at a
+glance — repository counts, size per scope and language, grade distributions and size-weighted averages, duplication,
+commits and distinct contributors, AI findings per severity, and short lists of the largest, most active and
+lowest-scoring repositories. Contributors are people (merged by the landscape's rules, bots apart), so the count can be
+lower than the landscape's own "recent contributors", which counts email addresses. Grades only count repositories with
+at least 1,000 main lines.
+
 ### "Who knows" ignores bulk commits; the server counts each repository once
 
 Found by running `serve` on a real landscape (junit-team):

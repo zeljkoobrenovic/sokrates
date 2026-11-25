@@ -31,7 +31,10 @@ java -jar sokrates.jar serve -root ~/landscapes/acme -mcpStdio
 
 Contributors are shown as the analysis identified them: the repository's `ignoreContributors`,
 `anonymizeContributors`, `transformContributorEmails` and `config-people.json` are already applied, as in the HTML
-reports. By default the API returns their email addresses and user names; protect it with `-token` and the default
+reports. When a repository is part of a landscape, its people are then merged by that landscape's rules too (the
+deepest landscape whose folder holds it: its `ignoreContributors`, `transformContributorEmails` and
+`config-people.json`), in `get_contributors` and `who_knows` alike, so a person has one identity in every answer, as
+in the landscape report: their addresses become one row, commits added up. By default the API returns their email addresses and user names; protect it with `-token` and the default
 `-host 127.0.0.1`.
 
 With **`-hidePeople`** no identity leaves the server, while the people questions still work:
@@ -60,6 +63,7 @@ With **`-hidePeople`** no identity leaves the server, while the people questions
 | --- | --- |
 | `GET /api/v1` | the list of endpoints |
 | `GET /api/v1/landscapes` | landscapes with repository counts |
+| `GET /api/v1/overview?landscape=` | a landscape (or, without `landscape`, every analysis) at a glance: repository counts (with code, active in 30 / 365 days), lines of code per scope and main language, ease-of-change grade distributions and size-weighted averages, duplication, commits and distinct contributors (people merged as the landscape merges them, bots apart, counts only), AI findings per severity, and the largest, most active and lowest-scoring repositories. Grades and the lowest-scoring list only count repositories with at least 1,000 main lines |
 | `GET /api/v1/repositories?query=&landscape=&sort=&limit=&offset=` | a page of repositories: main language, lines of code, ease-of-change scores, 30-day commits and contributors, AI findings count, report link |
 | `GET /api/v1/repository?name=` | one repository: size per scope, languages, duplication, file size / unit size / unit complexity risk profiles, scores with sub-scores, activity, components |
 | `GET /api/v1/repository/hotspots?name=&window=365\|90\|all&limit=` | the main files to look at first, ranked as the report's Highlights tab: complexity × days changed in the past 365 days (`window=90`: commits in 90 days; `window=all`: days changed, all time, also used when nothing changed in the window). Analyses made before the `# active days (365d)` column existed fall back to the 90-day commits until they are regenerated |
@@ -79,7 +83,7 @@ analysis: the 30/90-day windows end at the analysis date, not at the time of the
 
 ## MCP
 
-Tools: `list_landscapes`, `list_repositories`, `get_repository`, `get_hotspots`, `get_contributors`, `who_knows`,
+Tools: `list_landscapes`, `get_landscape_overview` (`/api/v1/overview`), `list_repositories`, `get_repository`, `get_hotspots`, `get_contributors`, `who_knows`,
 `get_dependencies`, `search_findings`, with the same parameters as the REST requests (`who_knows` without
 `repository` is `/api/v1/experts`). Over HTTP the endpoint is `POST /mcp` (Streamable HTTP, JSON responses, no
 server-initiated streams; a browser `Origin` must match the `Host`). A local agent can start it over stdio, e.g. in

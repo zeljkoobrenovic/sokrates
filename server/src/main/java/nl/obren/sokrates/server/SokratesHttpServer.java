@@ -126,6 +126,9 @@ public class SokratesHttpServer {
             case API + "/landscapes":
                 sendJson(exchange, 200, service.landscapes());
                 return;
+            case API + "/overview":
+                sendJson(exchange, 200, service.overview(q.get("landscape")));
+                return;
             case API + "/repositories":
                 sendJson(exchange, 200, service.repositories(q.get("query"), q.get("landscape"), q.get("sort"),
                         number(q, "offset"), number(q, "limit")));
@@ -169,6 +172,7 @@ public class SokratesHttpServer {
         index.put("root", service.getCatalog().getRoot().getPath());
         Map<String, String> endpoints = new LinkedHashMap<>();
         endpoints.put("GET " + API + "/landscapes", "landscapes with repository counts");
+        endpoints.put("GET " + API + "/overview?landscape=", "a landscape (or every analysis) at a glance: totals, grades, activity, short lists");
         endpoints.put("GET " + API + "/repositories?query=&landscape=&sort=&limit=&offset=",
                 "repositories; query: mainLang:java;includesLang:tf;<text>, sort: loc|name|commits|humanScore|aiScore|findings");
         endpoints.put("GET " + API + "/repository?name=", "one repository's summary (name = id or repository name)");

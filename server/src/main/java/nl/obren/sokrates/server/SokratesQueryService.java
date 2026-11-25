@@ -116,6 +116,40 @@ public class SokratesQueryService {
         return repository -> prefix.isEmpty() || repository.id().startsWith(prefix);
     }
 
+    /**
+     * A landscape at a glance ({@code landscapeId} blank: every analysis): repository counts, size per scope and
+     * language, grade distributions, size-weighted averages, activity with distinct people (merged as the landscape
+     * merges them; counts only), AI findings per severity, and short lists of the largest, most active and
+     * lowest-scoring repositories.
+     */
+    public Api.LandscapeOverview overview(String landscapeId) {
+        List<RepositoryLocation> locations = catalog.snapshot().repositories();
+        LandscapeIdentities identities = LandscapeIdentities.AS_ANALYZED;
+        String id = "all";
+        String name = "All analyses";
+        String description = null;
+        String reportUrl = null;
+        if (StringUtils.isNotBlank(landscapeId)) {
+            LandscapeLocation landscape = landscape(landscapeId);
+            locations = locations.stream().filter(inLandscape(landscape)).collect(Collectors.toList());
+            identities = identities(landscape);
+            id = landscape.id();
+            Metadata metadata = landscapeMetadata(landscape);
+            name = metadata != null && StringUtils.isNotBlank(metadata.getName()) ? metadata.getName() : landscape.id();
+            description = metadata == null ? null : StringUtils.trimToNull(metadata.getDescription());
+            reportUrl = privacy.reportLink(REPORTS_PATH + catalog.servedPath(new File(landscape.landscapeFolder(), "index.html")));
+        }
+        LandscapeIdentities people = identities;
+        List<LandscapeOverviewBuilder.Input> inputs = distinctByName(locations).stream().map(location -> {
+            Loaded row = load(location);
+            Map<String, Integer> bySeverity = new HashMap<>();
+            findingsOf(location, row.item().name()).forEach(f -> bySeverity.merge(f.severity(), 1, Integer::sum));
+            return new LandscapeOverviewBuilder.Input(withFindingsCount(row), row.details(), row.contributors(), bySeverity);
+        }).collect(Collectors.toList());
+        return LandscapeOverviewBuilder.build(id, name, description, reportUrl, inputs,
+                contributor -> people.canonical(contributor.email(), contributor.userName()));
+    }
+
     // ---- repositories ----
 
     /**
@@ -422,10 +456,11 @@ public class SokratesQueryService {
 
     /** The repository's contributors, most active in the past 365 days first; {@code query} terms match email or name. */
     public Api.Page<Api.Contributor> contributors(String idOrName, String query, boolean includeBots, int offset, int limit) {
+        RepositoryLocation location = require(idOrName);
         Loaded row = loaded(idOrName);
         List<String> terms = terms(query);
-        // Filtered after pseudonymizing, so a hidden server cannot be probed for an email address.
-        List<Api.Contributor> people = row.contributors().stream()
+        // Filtered after merging and pseudonymizing, so a hidden server cannot be probed for an email address.
+        List<Api.Contributor> people = mergeContributors(row.contributors(), identitiesFor(location)).stream()
                 .filter(c -> includeBots || !c.bot())
                 .map(c -> new Api.Contributor(privacy.person(c.email()), privacy.userName(c.userName()), c.bot(), c.commits(),
                         c.commits30Days(), c.commits90Days(), c.commits365Days(), c.firstCommitDate(), c.latestCommitDate()))
@@ -436,6 +471,41 @@ public class SokratesQueryService {
                         .thenComparing(Api.Contributor::email))
                 .collect(Collectors.toList());
         return page(people, offset, limit);
+    }
+
+    /**
+     * One row per person: the identities the landscape merges are added up (commits summed, the earliest first and the
+     * latest last commit, the user name of the most active identity), the ones it ignores are left out.
+     */
+    static List<Api.Contributor> mergeContributors(List<Api.Contributor> contributors, LandscapeIdentities identities) {
+        Map<String, List<Api.Contributor>> byPerson = new LinkedHashMap<>();
+        contributors.stream().sorted(Comparator.comparingInt(Api.Contributor::commits).reversed()).forEach(c -> {
+            String id = identities.canonical(c.email(), c.userName());
+            if (id != null) {
+                byPerson.computeIfAbsent(id, k -> new ArrayList<>()).add(c);
+            }
+        });
+        List<Api.Contributor> merged = new ArrayList<>();
+        byPerson.forEach((id, rows) -> merged.add(new Api.Contributor(id,
+                rows.stream().map(Api.Contributor::userName).filter(StringUtils::isNotBlank).findFirst().orElse(null),
+                rows.stream().anyMatch(Api.Contributor::bot),
+                rows.stream().mapToInt(Api.Contributor::commits).sum(), rows.stream().mapToInt(Api.Contributor::commits30Days).sum(),
+                rows.stream().mapToInt(Api.Contributor::commits90Days).sum(), rows.stream().mapToInt(Api.Contributor::commits365Days).sum(),
+                rows.stream().map(Api.Contributor::firstCommitDate).filter(StringUtils::isNotBlank).min(String::compareTo).orElse(null),
+                rows.stream().map(Api.Contributor::latestCommitDate).filter(StringUtils::isNotBlank).max(String::compareTo).orElse(null))));
+        return merged;
+    }
+
+    /**
+     * How the people of a repository are identified: by the rules of the deepest landscape whose folder holds it (so a
+     * person has one identity in every answer, as in that landscape's report), else as the repository analysed them.
+     */
+    LandscapeIdentities identitiesFor(RepositoryLocation location) {
+        return catalog.snapshot().landscapes().stream()
+                .filter(landscape -> inLandscape(landscape).test(location))
+                .max(Comparator.comparingInt(landscape -> landscape.id().equals(".") ? 0 : landscape.id().length() + 1))
+                .map(this::identities)
+                .orElse(LandscapeIdentities.AS_ANALYZED);
     }
 
     /**
@@ -454,6 +524,7 @@ public class SokratesQueryService {
         String label;
         if (single) {
             locations = List.of(require(repository));
+            identities = identitiesFor(locations.get(0));
             label = null;
         } else if (StringUtils.isNotBlank(landscapeId)) {
             LandscapeLocation landscape = landscape(landscapeId);
