@@ -5,6 +5,14 @@ everything listed under the most recent date.
 
 ## 2026-11-25
 
+### Analyses made from a URL apply their kept `config-people.json`
+
+`analyzeGitRepo`, `analyzeLandscape -urls`, `analyzeGitHubOrg` and `analyzeGitLabGroup` analyse a fresh clone and keep
+only the analysis. A re-run copied the kept `config.json` into the clone, but not a `config-people.json` next to it, so
+a repository analysed this way could not merge its contributors' addresses at all. Both are copied now. What to check:
+a `config-people.json` you placed next to a kept `config.json` takes effect on the next run (contributor counts, the
+contributors and knowledge reports); nothing changes where there is none.
+
 ### "Who knows" ignores bulk commits; the server counts each repository once
 
 Found by running `serve` on a real landscape (junit-team):
