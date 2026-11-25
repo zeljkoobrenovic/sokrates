@@ -117,6 +117,9 @@ public class DataExporter {
     public void zipDataFolder() {
         try {
             File zipFile = new File(dataFolder, DATA_ZIP_FILE_NAME);
+            // The preview of an earlier run embeds that run's whole archive: zipped along, every re-run
+            // would nest all earlier archives (data.zip grew to hundreds of MB). The landscape does the same.
+            FileUtils.deleteQuietly(new File(dataFolder, DATA_PREVIEW_FILE_NAME));
             ZipUtils.zipFolder(dataFolder, zipFile);
 
             // Remove the now-redundant loose files/subfolders, keeping only data.zip.
@@ -152,6 +155,8 @@ public class DataExporter {
 
     // The data-preview.html file name (sits next to data.zip; report data links open it with ?entry=).
     public static final String DATA_PREVIEW_FILE_NAME = "data-preview.html";
+    // Who changed each main file (text/, so data.zip entry "text/mainFileContributors.txt"); read by the server module.
+    public static final String MAIN_FILE_CONTRIBUTORS_FILE_NAME = "mainFileContributors.txt";
 
     // Writes data/data-preview.html next to data.zip with the whole archive embedded inline as
     // base64. data.zip stays as the raw-data contract (whole-archive download / landscape reads);
@@ -411,6 +416,7 @@ public class DataExporter {
         FileUtils.write(new File(textDataFolder, "mainFiles.txt"), FileListsDataExporter.getFilesAsTxt(mainSourceFiles), UTF_8);
         FileUtils.write(new File(textDataFolder, "mainFilesWithHistory.txt"), FileListsDataExporter.getFilesWithHistoryAsTxt(mainSourceFiles), UTF_8);
         FileUtils.write(new File(textDataFolder, "mainFilesWithoutHistory.txt"), FileListsDataExporter.getFilesWithoutHistoryAsTxt(mainSourceFiles), UTF_8);
+        FileUtils.write(new File(textDataFolder, MAIN_FILE_CONTRIBUTORS_FILE_NAME), FileListsDataExporter.getFileContributorsAsTxt(mainSourceFiles), UTF_8);
         try {
             List<SourceFile> testSourceFile = analysisResults.getTestAspectAnalysisResults().getAspect().getSourceFiles();
             List<SourceFile> generatedSourceFiles = analysisResults.getGeneratedAspectAnalysisResults().getAspect().getSourceFiles();

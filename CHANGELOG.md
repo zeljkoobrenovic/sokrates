@@ -3,6 +3,44 @@
 User-visible behaviour changes, newest first. `:latest` of the Docker image and the `master` branch carry
 everything listed under the most recent date.
 
+## 2026-11-25
+
+### New `serve` command: a read-only REST API and MCP server over the analyses
+
+`serve -root <folder>` exposes the repository analyses and landscapes in a folder to tools and AI agents: a REST API
+under `/api/v1` (repositories, landscapes, one repository's summary, hotspots, contributors, who knows a file / folder /
+component, component dependencies, AI findings), a Model Context Protocol
+endpoint at `/mcp` (or over stdio with `-mcpStdio`) and the HTML reports under `/reports/`. It reads the analyses as
+they are; nothing is stored beside them. Listens on `127.0.0.1` unless `-host` says otherwise; `-token` (or
+`SOKRATES_SERVER_TOKEN`) requires a bearer token; `-hidePeople` replaces every contributor by a stable pseudonym, redacts
+emails in AI findings and stops serving the HTML reports. See [docs/server.md](docs/server.md).
+
+### History file lists: days changed in the past 365 days
+
+`text/mainFilesWithHistory.txt` (and the test/generated/build/other `*FilesWithHistory.txt`) in `data.zip` gain a last
+column, `# active days (365d)`: the days the file changed in the past 365 days, counted as the Highlights tab counts
+them for "Where to look first". The new `serve` command ranks its hotspots with it, so the API and the report agree.
+What stays the same: the existing columns and their order (the column is appended; the landscape and the
+sokrates-skills scripts read columns by header name). Older analyses lack the column until they are regenerated; the
+server then ranks by commits in the past 90 days.
+
+### New data entry: who changed each main file
+
+`data.zip` gains `text/mainFileContributors.txt`: one line per main file and contributor (`path`, `contributor`,
+`# commits`, `# commits (365d)`, `first commit`, `last commit`), the file's most active contributors in the past year
+first. The contributor is the analysed identity (ignore/anonymize/transform rules and `config-people.json` applied), so
+it matches `contributors.json` and the reports. The `serve` command's `who_knows` (`/api/v1/repository/experts`) reads
+it, in one repository or across a landscape (people merged as in the landscape report) and by language; analyses
+made before it answer with a request to regenerate (across repositories they are counted as not covered). Nothing else
+reads or changes.
+
+### `data.zip` no longer grows with every re-run
+
+Each `generateReports` (and `analyze`) into an existing reports folder packed the previous run's
+`data/data-preview.html`, which embeds that run's whole archive, into the new `data/data.zip`, so the zip nested every
+earlier archive (this repository's own grew to 686 MB). The old preview is now removed before zipping, as the
+landscape already did. What to check: an existing oversized `data.zip` shrinks on the next run; nothing else changes.
+
 ## 2026-11-19
 
 ### Perl: dependencies from scripts, `require` and `use parent`; full package names only

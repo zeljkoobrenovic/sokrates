@@ -27,6 +27,7 @@
         <module>codeanalyzer</module>
         <module>codeexplorer</module>
         <module>reports</module>
+        <module>server</module>
         <module>cli</module>
     </modules>
 

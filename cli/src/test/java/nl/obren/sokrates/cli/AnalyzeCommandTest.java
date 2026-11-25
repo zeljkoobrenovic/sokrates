@@ -59,6 +59,9 @@ class AnalyzeCommandTest {
         assertFalse(history.exists(), "-skipGitHistory must not re-extract the history");
         assertTrue(FileUtils.readFileToString(config, UTF_8).contains("edited-name"), "an existing config must be kept");
         assertTrue(new File(reports, "index.html").exists());
+        try (java.util.zip.ZipFile zip = new java.util.zip.ZipFile(new File(reports, "data/data.zip"))) {
+            assertNull(zip.getEntry("data-preview.html"), "a re-run must not pack the previous run's preview (and its archive) into data.zip");
+        }
     }
 
     @Test
