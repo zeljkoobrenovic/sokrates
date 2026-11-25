@@ -31,7 +31,10 @@ java -jar sokrates.jar serve -root ~/landscapes/acme -mcpStdio
 
 Contributors are shown as the analysis identified them: the repository's `ignoreContributors`,
 `anonymizeContributors`, `transformContributorEmails` and `config-people.json` are already applied, as in the HTML
-reports. By default the API returns their email addresses and user names; protect it with `-token` and the default
+reports. When a repository is part of a landscape, its people are then merged by that landscape's rules too (the
+deepest landscape whose folder holds it: its `ignoreContributors`, `transformContributorEmails` and
+`config-people.json`), in `get_contributors` and `who_knows` alike, so a person has one identity in every answer, as
+in the landscape report: their addresses become one row, commits added up. By default the API returns their email addresses and user names; protect it with `-token` and the default
 `-host 127.0.0.1`.
 
 With **`-hidePeople`** no identity leaves the server, while the people questions still work:

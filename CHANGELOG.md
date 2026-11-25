@@ -5,6 +5,13 @@ everything listed under the most recent date.
 
 ## 2026-11-25
 
+### `serve`: a repository's people merged by its landscape's rules
+
+`get_contributors` and per-repository `who_knows` now identify people by the rules of the landscape the repository
+belongs to (the deepest one whose folder holds it), as landscape-wide answers already did: a person has one identity in
+every answer. On junit-team, junit-framework's contributors drop from two rows for M.P. Korstanje to one (commits
+added up). Repositories outside any landscape are unchanged; so is the repository's own HTML report.
+
 ### `serve`: a landscape overview
 
 New MCP tool `get_landscape_overview` and endpoint `/api/v1/overview?landscape=`: a landscape (or every analysis) at a
