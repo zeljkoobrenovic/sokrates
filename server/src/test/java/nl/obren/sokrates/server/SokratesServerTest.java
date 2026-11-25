@@ -66,6 +66,7 @@ class SokratesServerTest {
                         + "src/Ledger.java\tbob@acme.com\t30\t0\t2020-01-01\t2025-01-01\n"
                         + "src/Util.java\tada@acme.com\t2\t2\t2026-09-01\t2026-10-20\n"
                         + "src/Util.java\tbot@acme.com\t3\t3\t2026-01-01\t2026-10-01\n"
+                        + "src/Util.java\tada@old-acme.com\t1\t1\t2025-12-01\t2025-12-01\n"
                         + "src/Old.java\tbob@acme.com\t12\t0\t2020-01-01\t2024-01-01\n",
                 "files.json", "[{\"relativePath\":\"src/Ledger.java\",\"components\":[\"primary::core\"]},"
                         + "{\"relativePath\":\"src/Util.java\",\"components\":[\"primary::util\"]},"
@@ -128,6 +129,8 @@ class SokratesServerTest {
         results.getContributorsAnalysisResults().getContributors().add(contributor("ada@acme.com", 50, 30, false));
         results.getContributorsAnalysisResults().getContributors().add(contributor("bob@acme.com", 80, 5, false));
         results.getContributorsAnalysisResults().getContributors().add(contributor("bot@acme.com", 9, 9, true));
+        // the same person as ada@acme.com, by the landscape's config-people.json only
+        results.getContributorsAnalysisResults().getContributors().add(contributor("ada@old-acme.com", 3, 1, false));
         nl.obren.sokrates.sourcecode.analysis.results.LogicalDecompositionAnalysisResults primary =
                 new nl.obren.sokrates.sourcecode.analysis.results.LogicalDecompositionAnalysisResults("primary");
         primary.setComponentDependencies(new java.util.ArrayList<>(List.of(
@@ -291,6 +294,25 @@ class SokratesServerTest {
     }
 
     @Test
+    void mergesARepositorysPeopleByItsLandscapesRules() throws Exception {
+        // payments is in the portfolio landscape, whose config-people.json makes ada@old-acme.com ada@acme.com
+        Api.Page<Api.Contributor> people = service.contributors("acme/payments", null, false, 0, 0);
+        assertEquals(List.of("ada@acme.com", "bob@acme.com"), people.items().stream().map(Api.Contributor::email).collect(Collectors.toList()));
+        assertEquals(53, people.items().get(0).commits()); // 50 + 3
+        assertEquals(31, people.items().get(0).commits365Days());
+        Api.Experts util = service.experts("acme/payments", null, "src/Util.java", null, null, null, 10);
+        assertEquals(List.of("ada@acme.com", "bot@acme.com"), experts(util));
+        assertEquals(3, util.items().get(0).fileChanges()); // 2 + 1 under the old address
+
+        // a landscape at the root does not take over: the deepest landscape holding the repository decides
+        FileUtils.writeStringToFile(new File(root, "_sokrates_landscape/config.json"), "{\"metadata\": {\"name\": \"Root\"}}", StandardCharsets.UTF_8);
+        service = new SokratesQueryService(new AnalysisCatalog(root, 0));
+        assertEquals(2, service.contributors("acme/payments", null, false, 0, 0).total());
+        // and the root landscape's (empty) rules apply to the analysis outside portfolio
+        assertEquals(0, service.contributors("legacy", null, false, 0, 0).total());
+    }
+
+    @Test
     void findsWhoKnowsAcrossALandscapeWithItsMergedIdentities() {
         Api.Experts all = service.experts(null, "portfolio", null, null, null, null, 10);
         assertEquals("portfolio", all.repository());
@@ -301,7 +323,7 @@ class SokratesServerTest {
         assertEquals("ada@acme.com", ada.contributor());
         assertEquals(2, ada.repositories());
         assertEquals(List.of("acme/infra", "acme/payments"), ada.topRepositories()); // 9 vs 8 changes in the past year
-        assertEquals(17, ada.fileChanges365Days());
+        assertEquals(18, ada.fileChanges365Days());
 
         Api.Experts terraform = service.experts(null, "portfolio", null, null, null, "tf", 10);
         assertEquals(1, terraform.files());
