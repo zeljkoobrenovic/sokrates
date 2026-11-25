@@ -124,7 +124,7 @@ public class SokratesQueryService {
      */
     public Api.LandscapeOverview overview(String landscapeId) {
         List<RepositoryLocation> locations = catalog.snapshot().repositories();
-        LandscapeIdentities identities = LandscapeIdentities.AS_ANALYZED;
+        LandscapeIdentities identities = null;
         String id = "all";
         String name = "All analyses";
         String description = null;
@@ -144,10 +144,12 @@ public class SokratesQueryService {
             Loaded row = load(location);
             Map<String, Integer> bySeverity = new HashMap<>();
             findingsOf(location, row.item().name()).forEach(f -> bySeverity.merge(f.severity(), 1, Integer::sum));
-            return new LandscapeOverviewBuilder.Input(withFindingsCount(row), row.details(), row.contributors(), bySeverity);
+            // a landscape's own rules; for every analysis, each repository by the landscape it belongs to
+            LandscapeIdentities rules = people != null ? people : identitiesFor(location);
+            return new LandscapeOverviewBuilder.Input(withFindingsCount(row), row.details(), row.contributors(), bySeverity,
+                    contributor -> rules.canonical(contributor.email(), contributor.userName()));
         }).collect(Collectors.toList());
-        return LandscapeOverviewBuilder.build(id, name, description, reportUrl, inputs,
-                contributor -> people.canonical(contributor.email(), contributor.userName()));
+        return LandscapeOverviewBuilder.build(id, name, description, reportUrl, inputs);
     }
 
     // ---- repositories ----
@@ -169,7 +171,17 @@ public class SokratesQueryService {
     }
 
     public Optional<Api.RepositoryDetails> repository(String idOrName) {
-        return find(idOrName).map(this::load).map(Loaded::details);
+        return find(idOrName).map(this::load).map(row -> {
+            Api.RepositoryDetails d = row.details();
+            List<Api.Contributor> people = people(row);
+            Api.Activity a = d.activity();
+            Api.Activity activity = new Api.Activity(a.commits(), a.commits30Days(), a.commits90Days(), a.commits365Days(), people.size(),
+                    (int) people.stream().filter(c -> c.commits30Days() > 0).count(), a.churn30Days(), a.churn90Days(),
+                    a.firstCommitDate(), a.latestCommitDate());
+            return new Api.RepositoryDetails(d.id(), d.name(), d.description(), d.links(), d.scopes(), d.mainLanguages(),
+                    d.duplicationPercentage(), d.fileSize(), d.unitSize(), d.unitComplexity(), d.humanScore(), d.aiScore(), activity,
+                    d.decompositions(), d.reportUrl(), d.analyzedOn(), ageDays(d.analyzedOn()));
+        });
     }
 
     private List<Loaded> loadAll(String landscapeId) {
@@ -212,12 +224,47 @@ public class SokratesQueryService {
     private Api.RepositoryItem withFindingsCount(Loaded row) {
         Api.RepositoryItem item = row.item();
         int count = findingsOf(row.location(), item.name()).size();
+        int people30Days = (int) people(row).stream().filter(c -> c.commits30Days() > 0).count();
         return new Api.RepositoryItem(item.id(), item.name(), item.description(), item.mainLanguage(), item.mainLinesOfCode(),
-                item.testLinesOfCode(), item.humanScore(), item.aiScore(), item.commits30Days(), item.contributors30Days(),
-                item.latestCommitDate(), count, item.reportUrl());
+                item.testLinesOfCode(), item.humanScore(), item.aiScore(), item.commits30Days(), people30Days,
+                item.latestCommitDate(), count, item.reportUrl(), item.analyzedOn(), ageDays(item.analyzedOn()));
     }
 
-    /** By id (the analysis folder relative to the root), else by name (case-insensitive; the first when two share it). */
+    /**
+     * A repository's people: its contributors merged by its landscape's rules, bots left out. The counts of
+     * contributors in lists and summaries count these, as the overview does (not email addresses).
+     */
+    private List<Api.Contributor> people(Loaded row) {
+        return mergeContributors(row.contributors(), identitiesFor(row.location())).stream().filter(c -> !c.bot()).collect(Collectors.toList());
+    }
+
+    /** The date an analysis's time windows end at: the stored reference date, else (older analyses) the day it ran. */
+    static String analyzedOn(CodeAnalysisResults results) {
+        if (StringUtils.isNotBlank(results.getAnalysisDate())) {
+            return results.getAnalysisDate();
+        }
+        return results.getAnalysisStartTimeMs() > 0
+                ? java.time.Instant.ofEpochMilli(results.getAnalysisStartTimeMs()).atZone(java.time.ZoneId.systemDefault()).toLocalDate().toString()
+                : null;
+    }
+
+    /** Days from the analysis date to today (when the question is asked), or null without a date. */
+    static Integer ageDays(String analyzedOn) {
+        if (StringUtils.isBlank(analyzedOn)) {
+            return null;
+        }
+        try {
+            return (int) java.time.temporal.ChronoUnit.DAYS.between(java.time.LocalDate.parse(analyzedOn), java.time.LocalDate.now());
+        } catch (java.time.format.DateTimeParseException e) {
+            return null;
+        }
+    }
+
+    /**
+     * By id (the analysis folder relative to the root), else by name (case-insensitive; the newest analysis of that
+     * name), else by short name: the part after the last "/" of a name ("junit4" for "junit-team/junit4"), when exactly
+     * one repository has it.
+     */
     Optional<RepositoryLocation> find(String idOrName) {
         if (StringUtils.isBlank(idOrName)) {
             return Optional.empty();
@@ -228,12 +275,31 @@ public class SokratesQueryService {
         if (byId.isPresent()) {
             return byId;
         }
-        // by name: the most recent analysis of that name, as in the lists
-        return distinctByName(repositories).stream().filter(r -> wanted.equalsIgnoreCase(load(r).item().name())).findFirst();
+        List<RepositoryLocation> distinct = distinctByName(repositories);
+        Optional<RepositoryLocation> byName = distinct.stream().filter(r -> wanted.equalsIgnoreCase(load(r).item().name())).findFirst();
+        if (byName.isPresent()) {
+            return byName;
+        }
+        List<RepositoryLocation> byShortName = distinct.stream().filter(r -> wanted.equalsIgnoreCase(shortName(load(r).item().name()))).collect(Collectors.toList());
+        return byShortName.size() == 1 ? Optional.of(byShortName.get(0)) : Optional.empty();
+    }
+
+    private static String shortName(String name) {
+        return name.substring(name.lastIndexOf('/') + 1);
     }
 
     RepositoryLocation require(String idOrName) {
-        return find(idOrName).orElseThrow(() -> new NotFoundException("No repository with id or name \"" + idOrName + "\""));
+        return find(idOrName).orElseThrow(() -> new NotFoundException(notFound(idOrName)));
+    }
+
+    /** "No repository …", with the names that contain it (so an agent can retry at once instead of listing everything). */
+    String notFound(String idOrName) {
+        String wanted = StringUtils.defaultString(idOrName).trim().toLowerCase(Locale.ROOT);
+        List<String> candidates = wanted.isEmpty() ? List.of() : distinctByName(catalog.snapshot().repositories()).stream()
+                .map(r -> load(r).item().name()).filter(name -> name.toLowerCase(Locale.ROOT).contains(wanted))
+                .sorted().limit(10).collect(Collectors.toList());
+        return "No repository with id or name \"" + idOrName + "\""
+                + (candidates.isEmpty() ? "; list_repositories shows the names" : "; did you mean: " + String.join(", ", candidates));
     }
 
     private Loaded load(RepositoryLocation location) {
@@ -308,13 +374,13 @@ public class SokratesQueryService {
                 riskProfile("lines of code per file", results.getFilesAnalysisResults() == null ? null : results.getFilesAnalysisResults().getOverallFileSizeDistribution()),
                 riskProfile("lines of code per unit", results.getUnitsAnalysisResults() == null ? null : results.getUnitsAnalysisResults().getUnitSizeRiskDistribution()),
                 riskProfile("McCabe index per unit", results.getUnitsAnalysisResults() == null ? null : results.getUnitsAnalysisResults().getConditionalComplexityRiskDistribution()),
-                human, ai, activity, decompositions(results), reportUrl);
+                human, ai, activity, decompositions(results), reportUrl, analyzedOn(results), null);
         Api.RepositoryItem item = new Api.RepositoryItem(location.id(), name, description, mainLanguage,
                 main.getLinesOfCode(), results.getTestAspectAnalysisResults().getLinesOfCode(),
                 human == null ? null : new Api.ScoreBrief(human.value(), human.grade()),
                 ai == null ? null : new Api.ScoreBrief(ai.value(), ai.grade()),
                 contributors.getCommitsCount30Days(), contributors30Days, activity.latestCommitDate(),
-                0, reportUrl);
+                0, reportUrl, analyzedOn(results), null);
         List<Api.Contributor> people = contributors.getContributors().stream()
                 .map(c -> new Api.Contributor(c.getEmail(), StringUtils.trimToNull(c.getUserName()), c.isBot(), c.getCommitsCount(),
                         c.getCommitsCount30Days(), c.getCommitsCount90Days(), c.getCommitsCount365Days(),
@@ -449,7 +515,9 @@ public class SokratesQueryService {
         Map<String, Integer> linesOfCode = new HashMap<>();
         boolean anyUnits = HotspotData.readComplexity(LandscapeAnalyzer.readDataEntry(location.dataFolder(), "mainFiles.json"), complexity, linesOfCode);
         List<HotspotData.FileHistory> history = HotspotData.readHistory(LandscapeAnalyzer.readDataEntry(location.dataFolder(), "text/mainFilesWithHistory.txt"));
-        return HotspotData.rank(name, complexity, linesOfCode, anyUnits, history, window, clamp(limit, 10));
+        Api.Hotspots hotspots = HotspotData.rank(name, complexity, linesOfCode, anyUnits, history, window, clamp(limit, 10));
+        String analyzedOn = row == null ? null : row.item().analyzedOn();
+        return new Api.Hotspots(hotspots.repository(), hotspots.window(), hotspots.basis(), analyzedOn, ageDays(analyzedOn), hotspots.items());
     }
 
     // ---- people ----
@@ -533,10 +601,12 @@ public class SokratesQueryService {
             label = landscape.id();
         } else {
             locations = distinctByName(catalog.snapshot().repositories());
+            identities = null; // each repository by the landscape it belongs to
             label = "all";
         }
         LandscapeIdentities people = identities;
-        List<RepositoryExperts> perRepository = locations.parallelStream().map(location -> repositoryChanges(location, scope, people))
+        List<RepositoryExperts> perRepository = locations.parallelStream()
+                .map(location -> repositoryChanges(location, scope, people != null ? people : identitiesFor(location)))
                 .filter(r -> r != null).collect(Collectors.toList());
         int notCovered = (int) perRepository.stream().filter(r -> !r.covered()).count();
         if (single && notCovered > 0) {
@@ -549,7 +619,14 @@ public class SokratesQueryService {
         }
         List<ExpertsData.Change> changes = perRepository.stream().flatMap(r -> r.changes().stream()).collect(Collectors.toList());
         String name = single ? perRepository.get(0).name() : label;
-        return ExpertsData.aggregate(name, scope.describe(), files, changes, !single, notCovered, clamp(limit, 10));
+        Api.Experts experts = ExpertsData.aggregate(name, scope.describe(), files, changes, !single, notCovered, clamp(limit, 10));
+        if (!single) {
+            return experts;
+        }
+        String analyzedOn = load(locations.get(0)).item().analyzedOn();
+        return new Api.Experts(experts.repository(), experts.scope(), experts.files(), experts.filesChanged365Days(), experts.contributors(),
+                experts.topContributorShare365Days(), experts.repositories(), experts.repositoriesNotCovered(), analyzedOn, ageDays(analyzedOn),
+                experts.items());
     }
 
     private record RepositoryExperts(String name, boolean covered, int files, List<ExpertsData.Change> changes) {

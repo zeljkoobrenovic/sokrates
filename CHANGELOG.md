@@ -5,6 +5,26 @@ everything listed under the most recent date.
 
 ## 2026-11-25
 
+### `serve`: fixes from an agent evaluation
+
+Found by letting an AI agent answer questions about the junit-team landscape over MCP:
+
+- A repository can be asked for by its short name (`junit4` for `junit-team/junit4`) when only one has it; a miss
+  now suggests the matching names. Agents asked for `junit-framework` and had to list everything to recover.
+- Contributor counts (repository rows, a repository's activity) count people, merged by the repository's landscape
+  and without bots, as the overview does: an agent saw 8 recent contributors for one repository and 6 for the whole
+  landscape and doubted both.
+- `who_knows` and the overview without a landscape (every analysis) merge each repository's people by the landscape
+  it belongs to, instead of not merging them at all.
+
+### Analyses record their reference date; `serve` says how old each analysis is
+
+`analysisResults.json` now stores `analysisDate`, the date the analysis's time windows (30 days, 90 days, past year) end
+at: the day it ran, or the `-date` given. `serve` returns it as `analyzedOn` with `analysisAgeDays` on repository rows,
+summaries, hotspots and `who_knows`, and the landscape overview gives the oldest and newest analysis and how many are
+older than 30 days, so an agent does not present a months-old analysis's "past 30 days" as current. Older analyses fall
+back to the day they ran (wrong only for those made with `-date`).
+
 ### Analyses made from a URL apply their kept `config-people.json`
 
 `analyzeGitRepo`, `analyzeLandscape -urls`, `analyzeGitHubOrg` and `analyzeGitLabGroup` analyse a fresh clone and keep

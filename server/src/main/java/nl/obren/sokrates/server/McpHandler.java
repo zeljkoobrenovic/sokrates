@@ -27,7 +27,9 @@ public class McpHandler {
             + "quality profiles, ease-of-change scores, activity and components, get_hotspots for the files to look at first, "
             + "who_knows and get_contributors for the people, get_dependencies for the component dependencies, and "
             + "search_findings for the AI findings the sokrates-skills scanners wrote. Repositories are named by id or name (often owner/repo). "
-            + "Numbers were measured when the analysis ran; reportUrl values are paths on this server.";
+            + "Numbers were measured when the analysis ran: every time window (30 days, 90 days, past year) ends at the repository's "
+            + "analyzedOn date, not today, and analysisAgeDays says how old that is. When an analysis is more than a few weeks old, say so "
+            + "and give the date with any 'recent' number. reportUrl values are paths on this server.";
 
     private final ObjectMapper mapper = new ObjectMapper().setSerializationInclusion(JsonInclude.Include.NON_NULL);
     private final SokratesQueryService service;
@@ -67,7 +69,7 @@ public class McpHandler {
                         + "ease-of-change scores with sub-scores, commit activity and logical components.",
                 schema(required(prop("repository", "string", "repository id or name"))),
                 args -> service.repository(text(args, "repository"))
-                        .orElseThrow(() -> new SokratesQueryService.NotFoundException("No repository \"" + text(args, "repository") + "\"")));
+                        .orElseThrow(() -> new SokratesQueryService.NotFoundException(service.notFound(text(args, "repository")))));
         register("get_hotspots",
                 "The main files to look at first in a repository, ranked as the report's Highlights tab: complexity (McCabe sum of "
                         + "units, or lines of code) times the days the file changed in the past 365 days (window=90: commits in 90 days; "

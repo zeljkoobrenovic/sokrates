@@ -4,6 +4,7 @@
 
 package nl.obren.sokrates.sourcecode.analysis;
 
+import nl.obren.sokrates.sourcecode.filehistory.DateUtils;
 import nl.obren.sokrates.common.utils.ProcessingStopwatch;
 import nl.obren.sokrates.common.utils.ProgressFeedback;
 import nl.obren.sokrates.sourcecode.analysis.files.*;
@@ -49,6 +50,7 @@ public class CodeAnalyzer {
         results.setMetadata(codeConfiguration.getMetadata());
         start = System.currentTimeMillis();
         results.setAnalysisStartTimeMs(start);
+        results.setAnalysisDate(DateUtils.getAnalysisDate());
         results.setCodeConfiguration(codeConfiguration);
 
         // Apply an optional _sokrates/config-people.json (same model as landscapes) before any analyzer

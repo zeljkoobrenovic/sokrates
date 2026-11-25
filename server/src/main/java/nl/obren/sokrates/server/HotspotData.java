@@ -100,7 +100,7 @@ class HotspotData {
         history.forEach(file -> byPath.put(file.path(), file));
         if (history.isEmpty()) {
             List<Api.Hotspot> hotspots = score(complexity, linesOfCode, anyUnits, byPath, null);
-            return new Api.Hotspots(repository, "none", complexityMeasure + " (no git history)", top(hotspots, limit));
+            return new Api.Hotspots(repository, "none", complexityMeasure + " (no git history)", null, null, top(hotspots, limit));
         }
         Measure measure = measure(window, history.stream().anyMatch(file -> file.activeDays365() != null));
         List<Api.Hotspot> hotspots = score(complexity, linesOfCode, anyUnits, byPath, measure);
@@ -108,7 +108,7 @@ class HotspotData {
             measure = DAYS_ALL;
             hotspots = score(complexity, linesOfCode, anyUnits, byPath, measure);
         }
-        return new Api.Hotspots(repository, measure.window(), complexityMeasure + " × " + measure.changes(), top(hotspots, limit));
+        return new Api.Hotspots(repository, measure.window(), complexityMeasure + " × " + measure.changes(), null, null, top(hotspots, limit));
     }
 
     private static Measure measure(String window, boolean has365) {
