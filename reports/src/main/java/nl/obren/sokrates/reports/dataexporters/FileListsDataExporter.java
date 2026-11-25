@@ -7,6 +7,7 @@ import nl.obren.sokrates.sourcecode.SourceFile;
 import nl.obren.sokrates.sourcecode.SourceFileWithSearchData;
 import nl.obren.sokrates.sourcecode.analysis.results.AspectAnalysisResults;
 import nl.obren.sokrates.sourcecode.analysis.results.CodeAnalysisResults;
+import nl.obren.sokrates.sourcecode.analysis.scores.MaintainabilityScoresAnalyzer;
 import nl.obren.sokrates.sourcecode.aspects.NamedSourceCodeAspect;
 import nl.obren.sokrates.sourcecode.core.CodeConfiguration;
 import nl.obren.sokrates.sourcecode.filehistory.DateUtils;
@@ -311,9 +312,13 @@ class FileListsDataExporter {
     /**
      * Who changed each file: one line per (file, contributor), the file's contributors most active first. The
      * contributor is the analysed identity (after the ignore/anonymize/transform rules and config-people.json), so it
-     * matches contributors.json and the reports; "(365d)" is the hotspot window of the Highlights tab.
+     * matches contributors.json and the reports; "(365d)" is the hotspot window of the Highlights tab. Bulk commits
+     * (more than {@link MaintainabilityScoresAnalyzer#MAX_FILES_PER_COMMIT} of these files: copyright years, formatting,
+     * renames) are left out, as the ease-of-change scores leave them out: one licence-header commit would otherwise make
+     * its author the expert of every file it touched.
      */
     static String getFileContributorsAsTxt(List<SourceFile> sourceFiles) {
+        Set<String> bulkCommits = bulkCommits(sourceFiles);
         StringBuilder builder = new StringBuilder();
         builder.append("path\tcontributor\t# commits\t# commits (365d)\tfirst commit\tlast commit\n");
         sourceFiles.forEach(sourceFile -> {
@@ -323,7 +328,7 @@ class FileListsDataExporter {
             }
             Map<String, FileContributor> byEmail = new HashMap<>();
             history.getCommits().forEach(commit -> {
-                if (StringUtils.isBlank(commit.getEmail())) {
+                if (StringUtils.isBlank(commit.getEmail()) || bulkCommits.contains(commit.getId())) {
                     return;
                 }
                 byEmail.computeIfAbsent(commit.getEmail(), FileContributor::new).add(commit.getId(), commit.getDate());
@@ -340,6 +345,25 @@ class FileListsDataExporter {
                             .append(contributor.last).append("\n"));
         });
         return builder.toString();
+    }
+
+    // The ids of the commits that touched more than MAX_FILES_PER_COMMIT of the files.
+    static Set<String> bulkCommits(List<SourceFile> sourceFiles) {
+        Map<String, Integer> filesPerCommit = new HashMap<>();
+        sourceFiles.forEach(sourceFile -> {
+            FileModificationHistory history = sourceFile.getFileModificationHistory();
+            if (history != null) {
+                history.getCommits().stream().map(commit -> commit.getId()).filter(StringUtils::isNotBlank).distinct()
+                        .forEach(id -> filesPerCommit.merge(id, 1, Integer::sum));
+            }
+        });
+        Set<String> bulk = new HashSet<>();
+        filesPerCommit.forEach((id, count) -> {
+            if (count > MaintainabilityScoresAnalyzer.MAX_FILES_PER_COMMIT) {
+                bulk.add(id);
+            }
+        });
+        return bulk;
     }
 
     private static class FileContributor {

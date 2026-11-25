@@ -91,7 +91,7 @@ public class SokratesQueryService {
         List<Api.Landscape> result = new ArrayList<>();
         for (LandscapeLocation landscape : snapshot.landscapes()) {
             Metadata metadata = landscapeMetadata(landscape);
-            int count = (int) snapshot.repositories().stream().filter(inLandscape(landscape)).count();
+            int count = distinctByName(snapshot.repositories().stream().filter(inLandscape(landscape)).collect(Collectors.toList())).size();
             String indexPath = catalog.servedPath(new File(landscape.landscapeFolder(), "index.html"));
             result.add(new Api.Landscape(landscape.id(),
                     metadata != null && StringUtils.isNotBlank(metadata.getName()) ? metadata.getName() : landscape.id(),
@@ -147,8 +147,31 @@ public class SokratesQueryService {
                     .orElseThrow(() -> new NotFoundException("No landscape with id \"" + landscapeId + "\""));
             filter = inLandscape(landscape);
         }
-        return snapshot.repositories().parallelStream().filter(filter).map(this::load)
-                .filter(row -> row != null).collect(Collectors.toList());
+        List<RepositoryLocation> selected = snapshot.repositories().stream().filter(filter).collect(Collectors.toList());
+        return distinctByName(selected).parallelStream().map(this::load).filter(row -> row != null).collect(Collectors.toList());
+    }
+
+    /**
+     * One analysis per repository name, as the landscape counts them (includeOnlyOneRepositoryWithSameName): a
+     * leftover or moved copy would otherwise count a repository twice. The most recently generated one is kept; the
+     * others stay reachable by id. Unreadable analyses are dropped.
+     */
+    List<RepositoryLocation> distinctByName(List<RepositoryLocation> locations) {
+        Map<String, RepositoryLocation> byName = new LinkedHashMap<>();
+        List<RepositoryLocation> loadedLocations = locations.parallelStream().filter(location -> load(location) != null).collect(Collectors.toList());
+        for (RepositoryLocation location : loadedLocations) {
+            String name = load(location).item().name().toLowerCase(Locale.ROOT);
+            RepositoryLocation kept = byName.get(name);
+            if (kept == null || location.stamp() > kept.stamp()) {
+                if (kept != null) {
+                    LOG.info("Two analyses of " + name + ": using " + location.id() + ", not " + kept.id());
+                }
+                byName.put(name, location);
+            } else {
+                LOG.info("Two analyses of " + name + ": using " + kept.id() + ", not " + location.id());
+            }
+        }
+        return new ArrayList<>(byName.values());
     }
 
     // The findings are written after the analysis (by the agent skills), so they are counted per request, not per data.zip.
@@ -171,10 +194,8 @@ public class SokratesQueryService {
         if (byId.isPresent()) {
             return byId;
         }
-        return repositories.stream().filter(r -> {
-            Loaded row = load(r);
-            return row != null && wanted.equalsIgnoreCase(row.item().name());
-        }).findFirst();
+        // by name: the most recent analysis of that name, as in the lists
+        return distinctByName(repositories).stream().filter(r -> wanted.equalsIgnoreCase(load(r).item().name())).findFirst();
     }
 
     RepositoryLocation require(String idOrName) {
@@ -436,11 +457,11 @@ public class SokratesQueryService {
             label = null;
         } else if (StringUtils.isNotBlank(landscapeId)) {
             LandscapeLocation landscape = landscape(landscapeId);
-            locations = catalog.snapshot().repositories().stream().filter(inLandscape(landscape)).collect(Collectors.toList());
+            locations = distinctByName(catalog.snapshot().repositories().stream().filter(inLandscape(landscape)).collect(Collectors.toList()));
             identities = identities(landscape);
             label = landscape.id();
         } else {
-            locations = catalog.snapshot().repositories();
+            locations = distinctByName(catalog.snapshot().repositories());
             label = "all";
         }
         LandscapeIdentities people = identities;
@@ -558,10 +579,9 @@ public class SokratesQueryService {
         } else {
             locations = catalog.snapshot().repositories();
             if (StringUtils.isNotBlank(landscapeId)) {
-                LandscapeLocation landscape = catalog.snapshot().landscapes().stream().filter(l -> l.id().equals(landscapeId)).findFirst()
-                        .orElseThrow(() -> new NotFoundException("No landscape with id \"" + landscapeId + "\""));
-                locations = locations.stream().filter(inLandscape(landscape)).collect(Collectors.toList());
+                locations = locations.stream().filter(inLandscape(landscape(landscapeId))).collect(Collectors.toList());
             }
+            locations = distinctByName(locations);
         }
         int maxRank = StringUtils.isBlank(minSeverity) ? SEVERITIES.size() - 1 : SEVERITIES.indexOf(minSeverity.trim().toLowerCase(Locale.ROOT));
         if (maxRank < 0) {

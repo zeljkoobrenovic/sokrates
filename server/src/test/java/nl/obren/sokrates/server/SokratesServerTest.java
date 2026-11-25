@@ -180,6 +180,25 @@ class SokratesServerTest {
     }
 
     @Test
+    void countsEachRepositoryNameOnceKeepingTheNewestAnalysis() throws Exception {
+        // an older leftover copy of acme/infra in another folder of the landscape
+        File copy = repository(new File(root, "portfolio"), "old/acme-infra", "acme/infra", "stale copy", Map.of("tf", 1));
+        assertTrue(new File(copy, "reports/data/data.zip").setLastModified(1_000_000L));
+        service = new SokratesQueryService(new AnalysisCatalog(root, 0));
+
+        assertEquals(3, service.repositories(null, null, null, 0, 0).total());
+        assertEquals(2, service.landscapes().get(0).repositories());
+        Api.RepositoryDetails infra = service.repository("acme/infra").orElseThrow();
+        assertEquals("portfolio/acme/infra", infra.id(), "by name: the newest analysis");
+        assertEquals("stale copy", service.repository("portfolio/old/acme-infra").orElseThrow().description(), "still reachable by id");
+        assertEquals(2, service.experts(null, "portfolio", null, null, null, null, 10).repositories());
+        // the stale copy has no per-file contributors: counted, it would show up as not covered
+        Api.Experts terraform = service.experts(null, "portfolio", null, null, null, "tf", 10);
+        assertEquals(0, terraform.repositoriesNotCovered());
+        assertEquals(1, terraform.files());
+    }
+
+    @Test
     void filtersWithTheLandscapeSearchSyntax() {
         assertEquals(List.of("acme/payments"), names(service.repositories("mainLang:java,cs;payments", null, null, 0, 0)));
         assertEquals(List.of("acme/infra"), names(service.repositories("includesLang:py", null, null, 0, 0)));

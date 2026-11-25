@@ -93,7 +93,8 @@ public class MaintainabilityScoresAnalyzer {
     static final double SCORE_FLOOR = 0.5;
     static final int WINDOW_DAYS = 365;
     // Commits touching more main files than this are bulk changes (renames, formatting, imports), not tasks.
-    static final int MAX_FILES_PER_COMMIT = 300;
+    // Also the limit of text/mainFileContributors.txt (FileListsDataExporter), so "who knows" ignores them too.
+    public static final int MAX_FILES_PER_COMMIT = 300;
     static final int MIN_COMMITS = 10;
 
     // {measure, score} anchors, measures ascending.

@@ -5,6 +5,18 @@ everything listed under the most recent date.
 
 ## 2026-11-25
 
+### "Who knows" ignores bulk commits; the server counts each repository once
+
+Found by running `serve` on a real landscape (junit-team):
+
+- `text/mainFileContributors.txt` now leaves out commits that touched more than 300 main files (copyright-year
+  updates, formatting, renames), the threshold the ease-of-change scores already use. One copyright commit over 1,703
+  files had made its author the top expert of every file it touched. What to check: regenerate the analyses to get the
+  corrected file (the server reads whatever is there).
+- The server counts a repository name once, as the landscape does (`includeOnlyOneRepositoryWithSameName`): with two
+  analyses of the same repository below the root (a leftover or moved copy), the most recently generated one is used in
+  lists, landscape counts, landscape-wide `who_knows` and the findings search; the other stays reachable by its id.
+
 ### New `serve` command: a read-only REST API and MCP server over the analyses
 
 `serve -root <folder>` exposes the repository analyses and landscapes in a folder to tools and AI agents: a REST API
